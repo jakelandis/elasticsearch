@@ -1049,6 +1049,12 @@ understands this to mean `2016-04-01` as is explained in the <<date-math-index-n
 | `index_name_format`    | no        | yyyy-MM-dd                   | The format to be used when printing the parsed date into the index name. An valid Joda pattern is expected here.
 |======
 
+[[dissect-processor]]
+=== Dissect Processor
+
+TODO: !!
+
+
 [[fail-processor]]
 === Fail Processor
 Raises an exception. This is useful for when
