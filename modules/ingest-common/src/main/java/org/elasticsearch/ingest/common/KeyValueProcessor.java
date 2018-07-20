@@ -25,6 +25,9 @@ import org.elasticsearch.ingest.ConfigurationUtils;
 import org.elasticsearch.ingest.IngestDocument;
 import org.elasticsearch.ingest.Processor;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +35,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -101,8 +105,7 @@ public final class KeyValueProcessor extends AbstractProcessor {
         } else {
             keyPrefixer = val -> fieldPathPrefix + val;
         }
-        final Function<String, String[]> fieldSplitter = buildSplitter(fieldSplit, true);
-        Function<String, String[]> valueSplitter = buildSplitter(valueSplit, false);
+        Function<String, String[]> valueSplitter = buildSplitter(valueSplit);
         final Function<String, String> keyTrimmer = buildTrimmer(trimKey);
         final Function<String, String> bracketStrip;
         if (stripBrackets) {
@@ -119,7 +122,7 @@ public final class KeyValueProcessor extends AbstractProcessor {
                 }
                 throw new IllegalArgumentException("field [" + field + "] is null, cannot extract key-value pairs.");
             }
-            for (String part : fieldSplitter.apply(value)) {
+           for (String part : splitPattern(value, fieldSplit)) {
                 String[] kv = valueSplitter.apply(part);
                 if (kv.length != 2) {
                     throw new IllegalArgumentException("field [" + field + "] does not contain value_split [" + valueSplit + "]");
@@ -141,14 +144,58 @@ public final class KeyValueProcessor extends AbstractProcessor {
         }
     }
 
-    private static Function<String, String[]> buildSplitter(String split, boolean fields) {
-        int limit = fields ? 0 : 2;
+    private static Function<String, String[]> buildSplitter(String split) {
+        int limit = 2;
         if (split.length() > 2 || split.length() == 2 && split.charAt(0) != '\\') {
             Pattern splitPattern = Pattern.compile(split);
             return val -> splitPattern.split(val, limit);
         } else {
             return val -> val.split(split, limit);
         }
+    }
+
+    private static List<String> splitPattern(String inputString, String delimiterString) {
+        List<String> results = new ArrayList<>();
+        byte[] input = inputString.getBytes(StandardCharsets.UTF_8);
+        byte[] delimiter = delimiterString.getBytes(StandardCharsets.UTF_8);
+        int lookAheadMatches;
+        int valueStart = 0;
+        boolean ignore =false;
+
+        for (int i = 0; i < input.length; i++) {
+            lookAheadMatches = 0;
+            if(input[i] == (byte) 39 || input[i] == (byte) 34) {
+                ignore = !ignore;
+            }
+            if(ignore){
+                continue;
+            }
+            //potential match between delimiter and input string
+            if (delimiter.length > 0 && input[i] == delimiter[0]) {
+                //look ahead to see if the entire delimiter matches the input string
+                for (int j = 0; j < delimiter.length; j++) {
+                    if (i + j < input.length && input[i + j] == delimiter[j]) {
+                        lookAheadMatches++;
+                    }
+                }
+                //found a full delimiter match
+                if (lookAheadMatches == delimiter.length) {
+                    //record the key/value tuple
+                    byte[] value = Arrays.copyOfRange(input, valueStart, i);
+                    results.add(new String(value, StandardCharsets.UTF_8));
+                    //jump to the end of the match
+                    i += lookAheadMatches;
+                }
+                valueStart = i;
+            }
+        }
+        byte[] value = Arrays.copyOfRange(input, valueStart, input.length);
+        String valueString = new String(value, StandardCharsets.UTF_8);
+        if(!valueString.trim().isEmpty()){
+            results.add(valueString);
+        }
+
+        return results;
     }
 
     String getField() {

@@ -189,6 +189,15 @@ public class KeyValueProcessorTests extends ESTestCase {
         assertThat(ingestDocument.getFieldValue("target.arg_second", List.class), equalTo(Arrays.asList("world", "universe")));
     }
 
+    public void testDelimiterInQuotes() throws Exception {
+        IngestDocument ingestDocument = RandomDocumentPicks.randomIngestDocument(random());
+        String fieldName = RandomDocumentPicks.addRandomField(random(), ingestDocument, "first=hello second='world foo' second=universe");
+        Processor processor = createKvProcessor(fieldName, " ", "=", null, null, "target", false);
+        processor.execute(ingestDocument);
+        assertThat(ingestDocument.getFieldValue("target.first", String.class), equalTo("hello"));
+        assertThat(ingestDocument.getFieldValue("target.second", List.class), equalTo(Arrays.asList("'world foo'", "universe")));
+    }
+
     private static KeyValueProcessor createKvProcessor(String field, String fieldSplit, String valueSplit, Set<String> includeKeys,
                                                        Set<String> excludeKeys, String targetField,
                                                        boolean ignoreMissing) throws Exception {
