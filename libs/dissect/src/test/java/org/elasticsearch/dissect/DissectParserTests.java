@@ -275,7 +275,6 @@ public class DissectParserTests extends ESTestCase {
         assertThat(e.getMessage(), CoreMatchers.containsString("Unable to find match for dissect pattern"));
         assertThat(e.getMessage(), CoreMatchers.containsString(pattern));
         assertThat(e.getMessage(), input == null ? CoreMatchers.containsString("null") : CoreMatchers.containsString(input));
-
     }
 
     private void assertBadPattern(String pattern) {

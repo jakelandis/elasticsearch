@@ -229,12 +229,12 @@ public final class DissectParser {
                                     results.add(new DissectPair(key, ""));
                                 }
                             } else {
-                                break;
+                                break; //the while loop
                             }
                         }
                         //progress the keys/delimiter if possible
                         if (!it.hasNext()) {
-                            break; //the while loop
+                            break; //the for loop
                         }
                         dissectPair = it.next();
                         key = dissectPair.getKey();
