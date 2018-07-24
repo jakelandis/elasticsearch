@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Warmup(iterations = 10, time = 2, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 10, time = 5, timeUnit = TimeUnit.SECONDS)
-@Threads(2)
+@Threads(1)
 @Fork(2)
 public class DissectBenchmark {
     @Benchmark
