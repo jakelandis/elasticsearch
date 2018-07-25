@@ -22,7 +22,6 @@ package org.elasticsearch.dissect;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -88,11 +87,6 @@ import java.util.stream.Collectors;
 public final class DissectParser {
     private static final Pattern LEADING_DELIMITER_PATTERN = Pattern.compile("^(.*?)%");
     private static final Pattern KEY_DELIMITER_FIELD_PATTERN = Pattern.compile("%\\{([^}]*?)}([^%]*)", Pattern.DOTALL);
-    private static final EnumSet<DissectKey.Modifier> POST_PROCESSING_MODIFIERS = EnumSet.of(
-        DissectKey.Modifier.APPEND_WITH_ORDER,
-        DissectKey.Modifier.APPEND,
-        DissectKey.Modifier.FIELD_NAME,
-        DissectKey.Modifier.FIELD_VALUE);
     private static final EnumSet<DissectKey.Modifier> ASSOCIATE_MODIFIERS = EnumSet.of(
         DissectKey.Modifier.FIELD_NAME,
         DissectKey.Modifier.FIELD_VALUE);
@@ -101,15 +95,14 @@ public final class DissectParser {
         DissectKey.Modifier.APPEND_WITH_ORDER);
     private static final Function<DissectPair, String> KEY_NAME = val -> val.getKey().getName();
     private final List<DissectPair> matchPairs;
-    private final boolean needsPostParsing;
-    private final EnumSet<DissectKey.Modifier> allModifiers;
-    private final String appendSeparator;
     private final String pattern;
     private String leadingDelimiter = "";
+    private DissectMatch dissectMatch;
+
 
     public DissectParser(String pattern, String appendSeparator) {
         this.pattern = pattern;
-        this.appendSeparator = appendSeparator == null ? "" : appendSeparator;
+
         Matcher matcher = LEADING_DELIMITER_PATTERN.matcher(pattern);
         while (matcher.find()) {
             leadingDelimiter = matcher.group(1);
@@ -124,24 +117,50 @@ public final class DissectParser {
         if (matchPairs.isEmpty()) {
             throw new DissectException.PatternParse(pattern, "Unable to find any keys or delimiters.");
         }
+        int maxMatches = matchPairs.size();
+        int maxResults = Long.valueOf(matchPairs.stream()
+            .filter(dissectPair -> !dissectPair.getKey().skip()).map(KEY_NAME).distinct().count()).intValue();
 
-        List<DissectKey> keys = matchPairs.stream().map(DissectPair::getKey).collect(Collectors.toList());
-        this.allModifiers = getAllModifiers(keys);
-
-        if (allModifiers.contains(DissectKey.Modifier.FIELD_NAME) || allModifiers.contains(DissectKey.Modifier.FIELD_VALUE)) {
-            Map<String, List<DissectPair>> keyNameToDissectPairs = getAssociateMap(matchPairs);
-            for (Map.Entry<String, List<DissectPair>> entry : keyNameToDissectPairs.entrySet()) {
-                List<DissectPair> sameKeyNameList = entry.getValue();
-                if (sameKeyNameList.size() != 2) {
-                    throw new DissectException.PatternParse(pattern, "Found invalid key/reference associations: '"
-                        + sameKeyNameList.stream().map(KEY_NAME).collect(Collectors.joining(",")) +
-                        "' Please ensure each '?<key>' is matched with a matching '&<key>");
+        //append validation - look through all of the keys to see if there are any keys that need to participate in an append operation
+        // but don't have the '+' defined
+        Set<String> appendKeyNames = matchPairs.stream().filter(dissectPair -> APPEND_MODIFIERS.contains(dissectPair.getKey().getModifier()))
+            .map(KEY_NAME).distinct().collect(Collectors.toSet());
+        if(appendKeyNames.size() > 0){
+            List<DissectPair> modifiedMatchPairs = new ArrayList<>(matchPairs.size());
+            for(DissectPair p : matchPairs){
+                if(p.getKey().getModifier().equals(DissectKey.Modifier.NONE) && appendKeyNames.contains(p.getKey().getName())){
+                    modifiedMatchPairs.add(new DissectPair(new DissectKey(p.getKey(), DissectKey.Modifier.APPEND), p.getValue()));
+                }else{
+                    modifiedMatchPairs.add(p);
                 }
             }
+            matchPairs = modifiedMatchPairs;
         }
-        needsPostParsing = POST_PROCESSING_MODIFIERS.stream().anyMatch(allModifiers::contains);
+
+        //reference validation - ensure that '?' and '&' come in pairs
+        Map<String, List<DissectPair>> referenceGroupings = matchPairs.stream()
+            .filter(dissectPair -> ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
+            .collect(Collectors.groupingBy(KEY_NAME));
+        for (Map.Entry<String, List<DissectPair>> entry : referenceGroupings.entrySet()) {
+            if(entry.getValue().size() != 2) {
+                throw new DissectException.PatternParse(pattern, "Found invalid key/reference associations: '"
+                    + entry.getValue().stream().map(KEY_NAME).collect(Collectors.joining(",")) +
+                    "' Please ensure each '?<key>' is matched with a matching '&<key>");
+            }
+        }
+
+        this.dissectMatch = new DissectMatch(appendSeparator == null ? "" : appendSeparator, maxMatches, maxResults,
+            appendKeyNames.size(), referenceGroupings.size() * 2);
+//
+//        List<DissectKey> keys = matchPairs.stream().map(DissectPair::getKey).collect(Collectors.toList());
+//
+
+
+
         this.matchPairs = Collections.unmodifiableList(matchPairs);
     }
+
+
 
     /**
      * <p>Entry point to dissect a string into it's parts.</p>
@@ -162,20 +181,14 @@ public final class DissectParser {
      * {@code %{a},%{b},%{c},%{d}} and input string of {@code foo,,,} the match should be successful with empty values for b,c and d.
      * However, if the key modifier {@code ->}, is present it will simply skip over any delimiters just to the right of the key
      * without assigning any values.
-     * </p><p>
-     * Once the full string is parsed, it is validated that each key has a corresponding value and sent off for post processing.
-     * Key allModifiers may instruct the parsing to perform operations where the entire results set is needed. Post processing is used to
-     * obey those instructions and in doing it post parsing, helps to keep the string parsing logic simple.
-     * All post processing will occur before this method returns.
      * </p>
      *
      * @param inputString The string to dissect
-     * @return a List of {@link DissectPair}s that have the matched key/value pairs that results from the parse.
+     * @return TODO:
      * @throws DissectException if unable to dissect a pair into it's parts.
      */
-    public List<DissectPair> parse(String inputString) {
+    public Map<String, String> parse(String inputString) {
         Iterator<DissectPair> it = matchPairs.iterator();
-        List<DissectPair> results = new ArrayList<>();
         //ensure leading delimiter matches
         if (inputString != null && leadingDelimiter.equals(inputString.substring(0, leadingDelimiter.length()))) {
             byte[] input = inputString.getBytes(StandardCharsets.UTF_8);
@@ -203,7 +216,7 @@ public final class DissectParser {
                     if (lookAheadMatches == delimiter.length) {
                         //record the key/value tuple
                         byte[] value = Arrays.copyOfRange(input, valueStart, i);
-                        results.add(new DissectPair(key, new String(value, StandardCharsets.UTF_8)));
+                        dissectMatch.add(key, new String(value, StandardCharsets.UTF_8));
                         //jump to the end of the match
                         i += lookAheadMatches;
                         //look for consecutive delimiters (e.g. a,,,,d,e)
@@ -226,7 +239,7 @@ public final class DissectParser {
                                     dissectPair = it.next();
                                     key = dissectPair.getKey();
                                     //add the key with an empty value for the empty delimiter
-                                    results.add(new DissectPair(key, ""));
+                                    dissectMatch.add(key, "");
                                 }
                             } else {
                                 break; //the while loop
@@ -245,93 +258,81 @@ public final class DissectParser {
                 }
             }
             //the last key, grab the rest of the input (unless consecutive delimiters already grabbed the last key)
-            if (results.size() < matchPairs.size()) {
+            if (!dissectMatch.fullyMatched()) {
                 byte[] value = Arrays.copyOfRange(input, valueStart, input.length);
                 String valueString = new String(value, StandardCharsets.UTF_8);
-                results.add(new DissectPair(key, key.skipRightPadding() ? valueString.replaceFirst("\\s++$", "") : valueString));
+                dissectMatch.add(key, (key.skipRightPadding() ? valueString.replaceFirst("\\s++$", "") : valueString));
             }
         }
-        if (!isValid(results)) {
+        Map<String, String> results = dissectMatch.getResults();
+        if (!dissectMatch.valid(results)) {
             throw new DissectException.FindMatch(pattern, inputString);
         }
-        return postProcess(results.stream().filter(dissectPair -> !dissectPair.getKey().skip()).collect(Collectors.toList()));
-    }
-
-    /**
-     * Verify that each key has a entry in the result, don't rely only on size since some error cases would result in false positives
-     */
-    private boolean isValid(List<DissectPair> results) {
-        boolean valid = false;
-        if (results.size() == matchPairs.size()) {
-            Set<DissectKey> resultKeys = results.stream().map(DissectPair::getKey).collect(Collectors.toSet());
-            Set<DissectKey> sourceKeys = matchPairs.stream().map(DissectPair::getKey).collect(Collectors.toSet());
-            long intersectionCount = resultKeys.stream().filter(sourceKeys::contains).count();
-            valid = intersectionCount == results.size();
-        }
-        return valid;
-    }
-
-    private List<DissectPair> postProcess(List<DissectPair> results) {
-        if (needsPostParsing) {
-            if (allModifiers.contains(DissectKey.Modifier.APPEND) || allModifiers.contains(DissectKey.Modifier.APPEND_WITH_ORDER)) {
-                results = append(results);
-            }
-            if (allModifiers.contains(DissectKey.Modifier.FIELD_NAME)) { //FIELD_VALUE is guaranteed to also be present
-                results = associate(results);
-            }
-        }
         return results;
     }
 
-    private List<DissectPair> append(List<DissectPair> parserResult) {
-        List<DissectPair> results = new ArrayList<>(parserResult.size() - 1);
-        Map<String, List<DissectPair>> keyNameToDissectPairs = parserResult.stream().collect(Collectors.groupingBy(KEY_NAME));
-        for (Map.Entry<String, List<DissectPair>> entry : keyNameToDissectPairs.entrySet()) {
-            List<DissectPair> sameKeyNameList = entry.getValue();
-            long appendCount = sameKeyNameList.stream()
-                .filter(dissectPair -> APPEND_MODIFIERS.contains(dissectPair.getKey().getModifier())).count();
-            // grouped by key name may not include append modifiers, for example associate pairs...don't
-            if (appendCount > 0) {
-                Collections.sort(sameKeyNameList);
-                String value = sameKeyNameList.stream().map(DissectPair::getValue).collect(Collectors.joining(appendSeparator));
-                results.add(new DissectPair(sameKeyNameList.get(0).getKey(), value));
-            } else {
-                sameKeyNameList.forEach(results::add);
-            }
-        }
-        return results;
-    }
-
-    private List<DissectPair> associate(List<DissectPair> parserResult) {
-        List<DissectPair> results = new ArrayList<>(parserResult.size() - 1);
-        Map<String, List<DissectPair>> keyNameToDissectPairs = getAssociateMap(parserResult);
-        for (Map.Entry<String, List<DissectPair>> entry : keyNameToDissectPairs.entrySet()) {
-            List<DissectPair> sameKeyNameList = entry.getValue();
-            assert (sameKeyNameList.size() == 2);
-            Collections.sort(sameKeyNameList);
-            //based on the sort the key will always be first and value second.
-            String key = sameKeyNameList.get(0).getValue();
-            String value = sameKeyNameList.get(1).getValue();
-            results.add(new DissectPair(new DissectKey(key), value));
-        }
-        //add non associate modifiers to results
-        results.addAll(parserResult.stream()
-            .filter(dissectPair -> !ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
-            .collect(Collectors.toList()));
-        return results;
-    }
-
-
-    private Map<String, List<DissectPair>> getAssociateMap(List<DissectPair> dissectPairs) {
-        return dissectPairs.stream()
-            .filter(dissectPair -> ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
-            .collect(Collectors.groupingBy(KEY_NAME));
-    }
-
-    private EnumSet<DissectKey.Modifier> getAllModifiers(Collection<DissectKey> keys) {
-        Set<DissectKey.Modifier> modifiers = keys.stream().map(DissectKey::getModifier).collect(Collectors.toSet());
-        return modifiers.isEmpty() ? EnumSet.noneOf(DissectKey.Modifier.class) : EnumSet.copyOf(modifiers);
-    }
+//
+//    private List<DissectPair> postProcess(List<DissectPair> results) {
+//        if (needsPostParsing) {
+//            if (allModifiers.contains(DissectKey.Modifier.APPEND) || allModifiers.contains(DissectKey.Modifier.APPEND_WITH_ORDER)) {
+//                results = append(results);
+//            }
+//            if (allModifiers.contains(DissectKey.Modifier.FIELD_NAME)) { //FIELD_VALUE is guaranteed to also be present
+//                results = associate(results);
+//            }
+//        }
+//        return results;
+//    }
+//
+//    private List<DissectPair> append(List<DissectPair> parserResult) {
+//        List<DissectPair> results = new ArrayList<>(parserResult.size() - 1);
+//        Map<String, List<DissectPair>> keyNameToDissectPairs = parserResult.stream().collect(Collectors.groupingBy(KEY_NAME));
+//        for (Map.Entry<String, List<DissectPair>> entry : keyNameToDissectPairs.entrySet()) {
+//            List<DissectPair> sameKeyNameList = entry.getValue();
+//            long appendCount = sameKeyNameList.stream()
+//                .filter(dissectPair -> APPEND_MODIFIERS.contains(dissectPair.getKey().getModifier())).count();
+//            // grouped by key name may not include append modifiers, for example associate pairs...don't
+//            if (appendCount > 0) {
+//                Collections.sort(sameKeyNameList);
+//                String value = sameKeyNameList.stream().map(DissectPair::getValue).collect(Collectors.joining(appendSeparator));
+//                results.add(new DissectPair(sameKeyNameList.get(0).getKey(), value));
+//            } else {
+//                sameKeyNameList.forEach(results::add);
+//            }
+//        }
+//        return results;
+//    }
+//
+//    private List<DissectPair> associate(List<DissectPair> parserResult) {
+//        List<DissectPair> results = new ArrayList<>(parserResult.size() - 1);
+//        Map<String, List<DissectPair>> keyNameToDissectPairs = getAssociateMap(parserResult);
+//        for (Map.Entry<String, List<DissectPair>> entry : keyNameToDissectPairs.entrySet()) {
+//            List<DissectPair> sameKeyNameList = entry.getValue();
+//            assert (sameKeyNameList.size() == 2);
+//            Collections.sort(sameKeyNameList);
+//            //based on the sort the key will always be first and value second.
+//            String key = sameKeyNameList.get(0).getValue();
+//            String value = sameKeyNameList.get(1).getValue();
+//            results.add(new DissectPair(new DissectKey(key), value));
+//        }
+//        //add non associate modifiers to results
+//        results.addAll(parserResult.stream()
+//            .filter(dissectPair -> !ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
+//            .collect(Collectors.toList()));
+//        return results;
+//    }
+//
+//
+//    private Map<String, List<DissectPair>> getAssociateMap(List<DissectPair> dissectPairs) {
+//        return dissectPairs.stream()
+//            .filter(dissectPair -> ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
+//            .collect(Collectors.groupingBy(KEY_NAME));
+//    }
+//
+//    private EnumSet<DissectKey.Modifier> getAllModifiers(Collection<DissectKey> keys) {
+//        Set<DissectKey.Modifier> modifiers = keys.stream().map(DissectKey::getModifier).collect(Collectors.toSet());
+//        return modifiers.isEmpty() ? EnumSet.noneOf(DissectKey.Modifier.class) : EnumSet.copyOf(modifiers);
+//    }
 }
 
 

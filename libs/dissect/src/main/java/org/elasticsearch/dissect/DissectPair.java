@@ -77,6 +77,6 @@ public final class DissectPair implements Comparable<DissectPair> {
         if(this.getKey().getModifier().equals(DissectKey.Modifier.FIELD_VALUE)){
             return 1;
         }
-        return Integer.compare(this.getKey().getOrderPosition(), o.getKey().getOrderPosition());
+        return Integer.compare(this.getKey().getAppendPosition(), o.getKey().getAppendPosition());
     }
 }

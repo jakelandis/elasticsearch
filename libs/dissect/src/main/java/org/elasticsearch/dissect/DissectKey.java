@@ -41,7 +41,7 @@ public final class DissectKey {
     private final Modifier modifier;
     private boolean skip;
     private boolean skipRightPadding;
-    private int orderPosition;
+    private int appendPosition;
     private String name;
 
     /**
@@ -86,7 +86,7 @@ public final class DissectKey {
                 matcher = APPEND_WITH_ORDER_PATTERN.matcher(key);
                 while (matcher.find()) {
                     name = matcher.group(1);
-                    orderPosition = Short.valueOf(matcher.group(3));
+                    appendPosition = Short.valueOf(matcher.group(3));
                     skipRightPadding = matcher.group(4) != null;
                 }
                 break;
@@ -95,6 +95,19 @@ public final class DissectKey {
         if (name == null || (name.isEmpty() && !skip)) {
             throw new DissectException.KeyParse(key, "The key name could be determined");
         }
+    }
+
+    /**
+     * Copy constructor to explicitly override the modifier.
+     * @param key The key to copy (except for the modifier)
+     * @param modifier the modifer to use for this copy
+     */
+    DissectKey(DissectKey key, DissectKey.Modifier modifier){
+        this.modifier = modifier;
+        this.skipRightPadding = key.skipRightPadding;
+        this.skip = key.skip;
+        this.name = key.name;
+        this.appendPosition = key.appendPosition;
     }
 
     Modifier getModifier() {
@@ -109,8 +122,8 @@ public final class DissectKey {
         return skipRightPadding;
     }
 
-    int getOrderPosition() {
-        return orderPosition;
+    int getAppendPosition() {
+        return appendPosition;
     }
 
     public String getName() {
@@ -123,7 +136,7 @@ public final class DissectKey {
         return "DissectKey{" +
             "modifier=" + modifier +
             ", skip=" + skip +
-            ", orderPosition=" + orderPosition +
+            ", appendPosition=" + appendPosition +
             ", name='" + name + '\'' +
             '}';
     }
