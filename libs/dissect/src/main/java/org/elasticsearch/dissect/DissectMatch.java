@@ -68,7 +68,7 @@ public class DissectMatch {
             referenceResults.forEach((k, v) -> results.put(v.getKey(), v.getValue()));
         }
         if (appendCount > 0) {
-            appendResults.forEach((k, v) -> results.put(k, v.getAppenedResult()));
+            appendResults.forEach((k, v) -> results.put(k, v.getAppendResult()));
         }
         return results;
     }
@@ -76,18 +76,18 @@ public class DissectMatch {
 
     class AppendResult {
         private final Set<AppendValue> values = new TreeSet<>();
-        private final String appendSeperator;
+        private final String appendSeparator;
 
-        AppendResult(String appendSeperator) {
-            this.appendSeperator = appendSeperator;
+        AppendResult(String appendSeparator) {
+            this.appendSeparator = appendSeparator;
         }
 
         void addValue(String value, int order) {
             values.add(new AppendValue(value, order));
         }
 
-        String getAppenedResult() {
-            return values.stream().map(appendValue -> appendValue.getValue()).collect(Collectors.joining(appendSeperator));
+        String getAppendResult() {
+            return values.stream().map(AppendValue::getValue).collect(Collectors.joining(appendSeparator));
         }
     }
 

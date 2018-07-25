@@ -97,12 +97,16 @@ public final class DissectParser {
     private final List<DissectPair> matchPairs;
     private final String pattern;
     private String leadingDelimiter = "";
-    private DissectMatch dissectMatch;
+    private final int maxMatches;
+    private final int maxResults;
+    private final int appendCount;
+    private final int referenceCount;
+    private final String appendSeparator;
 
 
     public DissectParser(String pattern, String appendSeparator) {
         this.pattern = pattern;
-
+        this.appendSeparator = appendSeparator == null ? "" : appendSeparator;
         Matcher matcher = LEADING_DELIMITER_PATTERN.matcher(pattern);
         while (matcher.find()) {
             leadingDelimiter = matcher.group(1);
@@ -117,49 +121,48 @@ public final class DissectParser {
         if (matchPairs.isEmpty()) {
             throw new DissectException.PatternParse(pattern, "Unable to find any keys or delimiters.");
         }
-        int maxMatches = matchPairs.size();
-        int maxResults = Long.valueOf(matchPairs.stream()
+        this.maxMatches = matchPairs.size();
+        this.maxResults = Long.valueOf(matchPairs.stream()
             .filter(dissectPair -> !dissectPair.getKey().skip()).map(KEY_NAME).distinct().count()).intValue();
 
         //append validation - look through all of the keys to see if there are any keys that need to participate in an append operation
         // but don't have the '+' defined
         Set<String> appendKeyNames = matchPairs.stream().filter(dissectPair -> APPEND_MODIFIERS.contains(dissectPair.getKey().getModifier()))
             .map(KEY_NAME).distinct().collect(Collectors.toSet());
-        if(appendKeyNames.size() > 0){
+        if (appendKeyNames.size() > 0) {
             List<DissectPair> modifiedMatchPairs = new ArrayList<>(matchPairs.size());
-            for(DissectPair p : matchPairs){
-                if(p.getKey().getModifier().equals(DissectKey.Modifier.NONE) && appendKeyNames.contains(p.getKey().getName())){
+            for (DissectPair p : matchPairs) {
+                if (p.getKey().getModifier().equals(DissectKey.Modifier.NONE) && appendKeyNames.contains(p.getKey().getName())) {
                     modifiedMatchPairs.add(new DissectPair(new DissectKey(p.getKey(), DissectKey.Modifier.APPEND), p.getValue()));
-                }else{
+                } else {
                     modifiedMatchPairs.add(p);
                 }
             }
             matchPairs = modifiedMatchPairs;
         }
+        appendCount = appendKeyNames.size();
 
         //reference validation - ensure that '?' and '&' come in pairs
         Map<String, List<DissectPair>> referenceGroupings = matchPairs.stream()
             .filter(dissectPair -> ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
             .collect(Collectors.groupingBy(KEY_NAME));
         for (Map.Entry<String, List<DissectPair>> entry : referenceGroupings.entrySet()) {
-            if(entry.getValue().size() != 2) {
+            if (entry.getValue().size() != 2) {
                 throw new DissectException.PatternParse(pattern, "Found invalid key/reference associations: '"
                     + entry.getValue().stream().map(KEY_NAME).collect(Collectors.joining(",")) +
                     "' Please ensure each '?<key>' is matched with a matching '&<key>");
             }
         }
 
-        this.dissectMatch = new DissectMatch(appendSeparator == null ? "" : appendSeparator, maxMatches, maxResults,
-            appendKeyNames.size(), referenceGroupings.size() * 2);
+        referenceCount = referenceGroupings.size() * 2;
+
 //
 //        List<DissectKey> keys = matchPairs.stream().map(DissectPair::getKey).collect(Collectors.toList());
 //
 
 
-
         this.matchPairs = Collections.unmodifiableList(matchPairs);
     }
-
 
 
     /**
@@ -188,6 +191,7 @@ public final class DissectParser {
      * @throws DissectException if unable to dissect a pair into it's parts.
      */
     public Map<String, String> parse(String inputString) {
+        DissectMatch dissectMatch = new DissectMatch(appendSeparator, maxMatches, maxResults, appendCount, referenceCount);
         Iterator<DissectPair> it = matchPairs.iterator();
         //ensure leading delimiter matches
         if (inputString != null && leadingDelimiter.equals(inputString.substring(0, leadingDelimiter.length()))) {
