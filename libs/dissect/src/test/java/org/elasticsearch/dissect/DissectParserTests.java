@@ -33,6 +33,36 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlpha
 
 public class DissectParserTests extends ESTestCase {
 
+    public void testSyslog() {
+        assertMatch("%{timestamp} %{+timestamp} %{+timestamp} %{logsource} %{program}[%{pid}]: %{message}",
+            "Mar 16 00:01:25 evita postfix/smtpd[1713]: connect from camomile.cloud9.net[168.100.1.3]",
+            Arrays.asList("timestamp", "logsource", "program", "pid", "message"),
+            Arrays.asList("Mar 16 00:01:25", "evita", "postfix/smtpd", "1713", "connect from camomile.cloud9.net[168.100.1.3]"), " ");
+    }
+
+    public void testApacheLog(){
+        assertMatch("%{clientip} %{ident} %{auth} [%{timestamp}] \"%{verb} %{request} HTTP/%{httpversion}\" %{response} %{bytes} \"%{referrer}\" \"%{agent}\" %{->}",
+            "31.184.238.164 - - [24/Jul/2014:05:35:37 +0530] \"GET /logs/access.log HTTP/1.0\" 200 69849 " +
+            "\"http://8rursodiol.enjin.com\" \"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/30.0.1599.12785 YaBrowser/13.12.1599.12785 Safari/537.36\" \"www.dlwindianrailways.com\"",
+            Arrays.asList("clientip", "ident", "auth", "timestamp", "verb", "request", "httpversion", "response", "bytes", "referrer", "agent"),
+            Arrays.asList("31.184.238.164", "-", "-", "24/Jul/2014:05:35:37 +0530", "GET", "/logs/access.log", "1.0", "200", "69849",
+                "http://8rursodiol.enjin.com", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36" +
+                    " (KHTML, like Gecko) Chrome/30.0.1599.12785 YaBrowser/13.12.1599.12785 Safari/537.36"));
+    }
+    //assertEquals("31.184.238.164", matches.get("clientip"));
+//    assertEquals("-", matches.get("ident"));
+//    assertEquals("-", matches.get("auth"));
+//    assertEquals("24/Jul/2014:05:35:37 +0530", matches.get("timestamp"));
+//    assertEquals("GET", matches.get("verb"));
+//    assertEquals("/logs/access.log", matches.get("request"));
+//    assertEquals("1.0", matches.get("httpversion"));
+//    assertEquals("200", matches.get("response"));
+//    assertEquals("69849", matches.get("bytes"));
+//    assertEquals("\"http://8rursodiol.enjin.com\"", matches.get("referrer"));
+//    assertEquals(null, matches.get("port"));
+//    assertEquals("\"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.12785 " +
+//                     "YaBrowser/13.12.1599.12785 Safari/537.36\"", matches.get("agent"));
     public void testJavaDocExamples() {
         assertMatch("%{a} %{b},%{c}", "foo bar,baz", Arrays.asList("a", "b", "c"), Arrays.asList("foo", "bar", "baz"));
         assertMiss("%{a},%{b}:%{c}", "foo,bar,baz");
