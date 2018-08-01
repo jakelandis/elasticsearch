@@ -42,7 +42,7 @@ public class DissectParserTests extends ESTestCase {
         assertMatch("%{a->} %{b} %{c}", "foo         bar baz", Arrays.asList("a", "b", "c"), Arrays.asList("foo", "bar", "baz"));
         assertMatch("%{a} %{+a} %{+a}", "foo bar baz", Arrays.asList("a"), Arrays.asList("foobarbaz"));
         assertMatch("%{a} %{+a/2} %{+a/1}", "foo bar baz", Arrays.asList("a"), Arrays.asList("foobazbar"));
-        assertMatch("%{*a} %{b} %{&a}", "foo bar baz", Arrays.asList("foo", "b"), Arrays.asList("baz", "bar"));
+        assertMatch("%{?a} %{b} %{&a}", "foo bar baz", Arrays.asList("foo", "b"), Arrays.asList("baz", "bar"));
         assertMatch("%{a} %{} %{c}", "foo bar baz", Arrays.asList("a", "c"), Arrays.asList("foo", "baz"));
         assertMatch("%{a} %{?skipme} %{c}", "foo bar baz", Arrays.asList("a", "c"), Arrays.asList("foo", "baz"));
         assertMatch("%{a},%{b},%{c},%{d}", "foo,,,", Arrays.asList("a", "b", "c", "d"), Arrays.asList("foo", "", "", ""));
@@ -92,7 +92,6 @@ public class DissectParserTests extends ESTestCase {
         assertMatch("%{a->}   %{b->}---%{c}", "foo            bar------------baz",
             Arrays.asList("a", "b", "c"), Arrays.asList("foo", "bar", "baz"));
         assertMatch("%{->}-%{a}", "-----666", Arrays.asList("a"), Arrays.asList("666"));
-        assertMatch("%{?skipme->}-%{a}", "-----666", Arrays.asList("a"), Arrays.asList("666"));
         assertMatch("%{a},%{b},%{c},%{d},%{e},%{f}", "111,,333,,555,666",
             Arrays.asList("a", "b", "c", "d", "e", "f"), Arrays.asList("111", "", "333", "", "555", "666"));
         assertMatch("%{a}.࿏.%{b}", "⟳༒.࿏.༒⟲", Arrays.asList("a", "b"), Arrays.asList("⟳༒", "༒⟲"));
@@ -156,7 +155,7 @@ public class DissectParserTests extends ESTestCase {
         assertMatch("%{a}࿏%{+a} %{+a}", "⟳༒࿏༒⟲ 子", Arrays.asList("a"), Arrays.asList("⟳༒༒⟲子"));
         assertMatch("%{a}࿏%{+a/2} %{+a/1}", "⟳༒࿏༒⟲ 子", Arrays.asList("a"), Arrays.asList("⟳༒子༒⟲"));
         assertMatch("%{a->}࿏%{b}", "⟳༒࿏࿏࿏࿏࿏༒⟲", Arrays.asList("a", "b"), Arrays.asList("⟳༒", "༒⟲"));
-        assertMatch("%{*a}࿏%{&a}", "⟳༒࿏༒⟲", Arrays.asList("⟳༒"), Arrays.asList("༒⟲"));
+        assertMatch("%{?a}࿏%{&a}", "⟳༒࿏༒⟲", Arrays.asList("⟳༒"), Arrays.asList("༒⟲"));
         assertMatch("%{}࿏%{a}", "⟳༒࿏༒⟲", Arrays.asList("a"), Arrays.asList("༒⟲"));
     }
 
@@ -165,7 +164,7 @@ public class DissectParserTests extends ESTestCase {
         assertMatch("%{a} %{b}", "foo bar the rest", Arrays.asList("a", "b"), Arrays.asList("foo", "bar the rest"));
         assertMatch("%{} %{b}", "foo bar the rest", Arrays.asList("b"), Arrays.asList("bar the rest"));
         assertMatch("%{a} %{b->}", "foo bar the rest", Arrays.asList("a", "b"), Arrays.asList("foo", "bar the rest"));
-        assertMatch("%{*a} %{&a}", "foo bar the rest", Arrays.asList("foo"), Arrays.asList("bar the rest"));
+        assertMatch("%{?a} %{&a}", "foo bar the rest", Arrays.asList("foo"), Arrays.asList("bar the rest"));
         assertMatch("%{a} %{+a}", "foo bar the rest", Arrays.asList("a"), Arrays.asList("foo bar the rest"), " ");
     }
 
@@ -177,19 +176,18 @@ public class DissectParserTests extends ESTestCase {
     }
 
     public void testAssociate() {
-        assertMatch("%{*a} %{&a}", "foo bar", Arrays.asList("foo"), Arrays.asList("bar"));
-        assertMatch("%{&a} %{*a}", "foo bar", Arrays.asList("bar"), Arrays.asList("foo"));
-        assertMatch("%{*a} %{&a} %{*b} %{&b}", "foo bar baz lol", Arrays.asList("foo", "baz"), Arrays.asList("bar", "lol"));
-        assertMatch("%{*a} %{&a} %{c} %{*b} %{&b}", "foo bar x baz lol",
+        assertMatch("%{?a} %{&a}", "foo bar", Arrays.asList("foo"), Arrays.asList("bar"));
+        assertMatch("%{&a} %{?a}", "foo bar", Arrays.asList("bar"), Arrays.asList("foo"));
+        assertMatch("%{?a} %{&a} %{?b} %{&b}", "foo bar baz lol", Arrays.asList("foo", "baz"), Arrays.asList("bar", "lol"));
+        assertMatch("%{?a} %{&a} %{c} %{?b} %{&b}", "foo bar x baz lol",
             Arrays.asList("foo", "baz", "c"), Arrays.asList("bar", "lol", "x"));
-        assertBadPattern("%{*a} %{a}");
-        assertBadPattern("%{a} %{&a}");
-        assertMiss("%{*a} %{&a} {a} %{*b} %{&b}", "foo bar x baz lol");
+        assertMatch("%{?a} %{a}", "foo bar", Arrays.asList("a"), Arrays.asList("bar"));
+        assertMiss("%{?a} %{&a} {a} %{?b} %{&b}", "foo bar x baz lol");
     }
 
     public void testAppendAndAssociate() {
-        assertMatch("%{a} %{+a} %{*b} %{&b}", "foo bar baz lol", Arrays.asList("a", "baz"), Arrays.asList("foobar", "lol"));
-        assertMatch("%{a->} %{+a/2} %{+a/1} %{*b} %{&b}", "foo      bar baz lol x",
+        assertMatch("%{a} %{+a} %{?b} %{&b}", "foo bar baz lol", Arrays.asList("a", "baz"), Arrays.asList("foobar", "lol"));
+        assertMatch("%{a->} %{+a/2} %{+a/1} %{?b} %{&b}", "foo      bar baz lol x",
             Arrays.asList("a", "lol"), Arrays.asList("foobazbar", "x"));
     }
 
@@ -243,7 +241,7 @@ public class DissectParserTests extends ESTestCase {
         assertMatch("%{a->} %{b}", "foo bar", Arrays.asList("a", "b"), Arrays.asList("foo", "bar"));
         assertMatch("%{a->} %{b}", "foo            bar", Arrays.asList("a", "b"), Arrays.asList("foo", "bar"));
         assertMatch("%{->} %{a}", "foo            bar", Arrays.asList("a"), Arrays.asList("bar"));
-        assertMatch("%{a->} %{+a->} %{*b->} %{&b->} %{c}", "foo       bar    baz  lol    x",
+        assertMatch("%{a->} %{+a->} %{?b->} %{&b->} %{c}", "foo       bar    baz  lol    x",
             Arrays.asList("a", "baz", "c"), Arrays.asList("foobar", "lol", "x"));
     }
 
@@ -283,8 +281,8 @@ public class DissectParserTests extends ESTestCase {
     public void testBadPatternOrKey() {
         assertBadPattern("");
         assertBadPattern("{}");
-        assertBadPattern("%{*a} %{&b}");
-        assertBadKey("%{*}");
+        assertBadPattern("%{?a} %{&b}");
+        assertBadPattern("%{?}");
         assertBadKey("%{++}");
     }
 
@@ -320,7 +318,8 @@ public class DissectParserTests extends ESTestCase {
             boolean skip = test.path("skip").asBoolean();
             if (!skip) {
                 String name = test.path("name").asText();
-                logger.debug("Running Json specification: " + name);
+                //TODO
+                logger.info("Running Json specification: " + name);
                 String pattern = test.path("tok").asText();
                 String input = test.path("msg").asText();
                 String append = test.path("append").asText();
@@ -341,7 +340,7 @@ public class DissectParserTests extends ESTestCase {
         }
     }
 
-    private DissectException assertFail(String pattern, String input){
+    private DissectException assertFail(String pattern, String input) {
         return expectThrows(DissectException.class, () -> new DissectParser(pattern, null).parse(input));
     }
 

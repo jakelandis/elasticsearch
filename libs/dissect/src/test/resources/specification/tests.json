@@ -195,7 +195,7 @@
   },
   {
     "name": "reference field",
-    "tok": "%{*key} %{\u0026key}",
+    "tok": "%{?key} %{\u0026key}",
     "msg": "hello world",
     "expected": {
       "hello": "world"
@@ -206,7 +206,7 @@
   },
   {
     "name": "reference field alt order",
-    "tok": "%{\u0026key} %{*key}",
+    "tok": "%{\u0026key} %{?key}",
     "msg": "hello world",
     "expected": {
       "world": "hello"
@@ -233,7 +233,7 @@
     "expected": {
       "key": "world"
     },
-    "skip": false,
+    "skip": true,
     "fail": false,
     "append": ""
   },
@@ -242,7 +242,7 @@
     "tok": "%{key} %{\u0026key}",
     "msg": "hello world",
     "expected": null,
-    "skip": false,
+    "skip": true,
     "fail": true,
     "append": ""
   },

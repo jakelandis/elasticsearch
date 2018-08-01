@@ -61,9 +61,9 @@ import java.util.stream.Collectors;
  * result: {@code a=foobazbar}
  * </pre>
  * </li>
- * <li>{@code *} Instructs the parser to ignore the name of this key, instead use the value of key as the key name.
+ * <li>{@code ?} Instructs the parser to ignore the name of this key, instead use the value of key as the key name.
  * Requires another key with the same name and the {@code &} modifier to be the value. Example: <pre>
- * pattern: {@code %{*a} %{b} %{&a}}
+ * pattern: {@code %{?a} %{b} %{&a}}
  * string: {@code foo bar baz}
  * result: {@code foo=baz, b=bar}
  * </pre></li>
@@ -96,7 +96,7 @@ public final class DissectParser {
     private static final Pattern LEADING_DELIMITER_PATTERN = Pattern.compile("^(.*?)%");
     private static final Pattern KEY_DELIMITER_FIELD_PATTERN = Pattern.compile("%\\{([^}]*?)}([^%]*)", Pattern.DOTALL);
     private static final EnumSet<DissectKey.Modifier> ASSOCIATE_MODIFIERS = EnumSet.of(
-        DissectKey.Modifier.FIELD_NAME,
+        DissectKey.Modifier.FIELD_NAME_OR_NAMED_SKIP_KEY,
         DissectKey.Modifier.FIELD_VALUE);
     private static final EnumSet<DissectKey.Modifier> APPEND_MODIFIERS = EnumSet.of(
         DissectKey.Modifier.APPEND,
@@ -108,7 +108,7 @@ public final class DissectParser {
     private final int maxMatches;
     private final int maxResults;
     private final int appendCount;
-    private final int referenceCount;
+    private int referenceCount = 0;
     private final String appendSeparator;
 
     public DissectParser(String pattern, String appendSeparator) {
@@ -126,8 +126,25 @@ public final class DissectParser {
             matchPairs.add(new DissectPair(key, delimiter));
         }
         this.maxMatches = matchPairs.size();
+        //determine if `?` means named skip key, or part of a `?/&` pairing.
+        Map<String, List<DissectPair>> referenceGroupings = matchPairs.stream()
+            .filter(dissectPair -> ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
+            .collect(Collectors.groupingBy(KEY_NAME));
+        for (Map.Entry<String, List<DissectPair>> entry : referenceGroupings.entrySet()) {
+            if (entry.getValue().size() == 1) {
+                entry.getValue().get(0).getKey().setSkip(true);
+            } else if (entry.getValue().size() == 2) {
+                //ensure that one of the two is the `&` (and not two `?`'s)
+                long fieldValueCount = entry.getValue().stream()
+                    .filter(e -> e.getKey().getModifier().equals(DissectKey.Modifier.FIELD_VALUE)).count();
+                if (fieldValueCount == 1) {
+                    entry.getValue().forEach(k -> k.getKey().setSkip(false));
+                    referenceCount++;
+                }
+            }
+        }
         this.maxResults = Long.valueOf(matchPairs.stream()
-            .filter(dissectPair -> !dissectPair.getKey().skip()).map(KEY_NAME).distinct().count()).intValue();
+            .filter(dissectPair -> !dissectPair.getKey().isSkip()).map(KEY_NAME).distinct().count()).intValue();
         if (this.maxMatches == 0 || maxResults == 0) {
             throw new DissectException.PatternParse(pattern, "Unable to find any keys or delimiters.");
         }
@@ -149,19 +166,6 @@ public final class DissectParser {
         }
         appendCount = appendKeyNames.size();
 
-        //reference validation - ensure that '*' and '&' come in pairs
-        Map<String, List<DissectPair>> referenceGroupings = matchPairs.stream()
-            .filter(dissectPair -> ASSOCIATE_MODIFIERS.contains(dissectPair.getKey().getModifier()))
-            .collect(Collectors.groupingBy(KEY_NAME));
-        for (Map.Entry<String, List<DissectPair>> entry : referenceGroupings.entrySet()) {
-            if (entry.getValue().size() != 2) {
-                throw new DissectException.PatternParse(pattern, "Found invalid key/reference associations: '"
-                    + entry.getValue().stream().map(KEY_NAME).collect(Collectors.joining(",")) +
-                    "' Please ensure each '*<key>' is matched with a matching '&<key>");
-            }
-        }
-
-        referenceCount = referenceGroupings.size() * 2;
         this.matchPairs = Collections.unmodifiableList(matchPairs);
     }
 
@@ -170,7 +174,7 @@ public final class DissectParser {
      * <p>Entry point to dissect a string into it's parts.</p>
      *
      * @param inputString The string to dissect
-     * @return TODO:
+     * @return the result set
      * @throws DissectException if unable to dissect a pair into it's parts.
      */
     public Map<String, String> parse(String inputString) {

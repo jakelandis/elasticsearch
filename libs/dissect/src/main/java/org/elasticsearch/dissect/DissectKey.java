@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
  * @see DissectParser
  */
 public final class DissectKey {
-    private static final Pattern LEFT_MODIFIER_PATTERN = Pattern.compile("([+*&?])(.*?)(->)?$", Pattern.DOTALL);
+    private static final Pattern LEFT_MODIFIER_PATTERN = Pattern.compile("([+&?])(.*?)(->)?$", Pattern.DOTALL);
     private static final Pattern RIGHT_PADDING_PATTERN = Pattern.compile("^(.*?)(->)?$", Pattern.DOTALL);
     private static final Pattern APPEND_WITH_ORDER_PATTERN = Pattern.compile("[+](.*?)(/)([0-9]+)(->)?$", Pattern.DOTALL);
     private final Modifier modifier;
@@ -62,14 +62,6 @@ public final class DissectKey {
                 }
                 skip = name.isEmpty();
                 break;
-            case NAMED_SKIP:
-                matcher = LEFT_MODIFIER_PATTERN.matcher(key);
-                while (matcher.find()) {
-                    name = matcher.group(2);
-                    skipRightPadding = matcher.group(3) != null;
-                }
-                skip = true;
-                break;
             case APPEND:
                 matcher = LEFT_MODIFIER_PATTERN.matcher(key);
                 while (matcher.find()) {
@@ -77,12 +69,13 @@ public final class DissectKey {
                     skipRightPadding = matcher.group(3) != null;
                 }
                 break;
-            case FIELD_NAME:
+            case FIELD_NAME_OR_NAMED_SKIP_KEY:
                 matcher = LEFT_MODIFIER_PATTERN.matcher(key);
                 while (matcher.find()) {
                     name = matcher.group(2);
                     skipRightPadding = matcher.group(3) != null;
                 }
+                skip = true;
                 break;
             case FIELD_VALUE:
                 matcher = LEFT_MODIFIER_PATTERN.matcher(key);
@@ -123,8 +116,12 @@ public final class DissectKey {
         return modifier;
     }
 
-    boolean skip() {
+    boolean isSkip() {
         return skip;
+    }
+
+    void setSkip(boolean skip){
+        this.skip = skip;
     }
 
     boolean skipRightPadding() {
@@ -151,9 +148,9 @@ public final class DissectKey {
     }
 
     public enum Modifier {
-        NONE(""), APPEND_WITH_ORDER("/"), APPEND("+"), FIELD_NAME("*"), FIELD_VALUE("&"), NAMED_SKIP("?");
+        NONE(""), APPEND_WITH_ORDER("/"), APPEND("+"), FIELD_NAME_OR_NAMED_SKIP_KEY("?"), FIELD_VALUE("&");
 
-        private static final Pattern MODIFIER_PATTERN = Pattern.compile("[/+*&?]");
+        private static final Pattern MODIFIER_PATTERN = Pattern.compile("[/+&?]");
 
         private final String modifier;
 

@@ -67,7 +67,7 @@ final class DissectMatch {
      */
     void add(DissectKey key, String value) {
         matches++;
-        if (key.skip()) {
+        if (key.isSkip()) {
             return;
         }
         switch (key.getModifier()) {
@@ -81,7 +81,7 @@ final class DissectMatch {
                 appendResults.computeIfAbsent(key.getName(),
                     k -> new AppendResult(appendSeparator)).addValue(value, key.getAppendPosition());
                 break;
-            case FIELD_NAME:
+            case FIELD_NAME_OR_NAMED_SKIP_KEY:
                 referenceResults.computeIfAbsent(key.getName(), k -> new ReferenceResult()).setKey(value);
                 break;
             case FIELD_VALUE:
