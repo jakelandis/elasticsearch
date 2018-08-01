@@ -139,6 +139,16 @@ public class DissectKeyTests extends ESTestCase {
         assertThat(dissectKey.getName(), equalTo(keyName));
     }
 
+    public void testNamedSkipKey() {
+        String keyName = "myname";
+        DissectKey dissectKey = new DissectKey("?" +keyName);
+        assertThat(dissectKey.getModifier(), equalTo(DissectKey.Modifier.FIELD_NAME_OR_NAMED_SKIP_KEY));
+        assertThat(dissectKey.isSkip(), is(true));
+        assertThat(dissectKey.skipRightPadding(), is(false));
+        assertThat(dissectKey.getAppendPosition(), equalTo(0));
+        assertThat(dissectKey.getName(), equalTo(keyName));
+    }
+
     public void testSkipKeyWithPadding() {
         String keyName = "";
         DissectKey dissectKey = new DissectKey(keyName  + "->");

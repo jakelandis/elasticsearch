@@ -317,9 +317,8 @@ public class DissectParserTests extends ESTestCase {
             JsonNode test = tests.next();
             boolean skip = test.path("skip").asBoolean();
             if (!skip) {
-                String name = test.path("name").asText();
-                //TODO
-                logger.info("Running Json specification: " + name);
+                String name = test.path("name").asText();         
+                logger.debug("Running Json specification: " + name);
                 String pattern = test.path("tok").asText();
                 String input = test.path("msg").asText();
                 String append = test.path("append").asText();
