@@ -267,17 +267,17 @@ public final class DissectParser {
                 }
             }
             //the last key, grab the rest of the input (unless consecutive delimiters already grabbed the last key)
-//            if (!dissectMatch.fullyMatched()) {
-//                byte[] value = Arrays.copyOfRange(input, valueStart, input.length);
-//                String valueString = new String(value, StandardCharsets.UTF_8);
-//                dissectMatch.add(key, (key.skipRightPadding() ? valueString.replaceFirst("\\s++$", "") : valueString));
-//            }
+            if (!dissectMatch.fullyMatched()) {
+                byte[] value = Arrays.copyOfRange(input, valueStart, input.length);
+                String valueString = new String(value, StandardCharsets.UTF_8);
+                dissectMatch.add(key, (key.skipRightPadding() ? valueString.replaceFirst("\\s++$", "") : valueString));
+            }
         }
-//        Map<String, String> results = dissectMatch.getResults();
-//        if (!dissectMatch.isValid(results)) {
-//            throw new DissectException.FindMatch(pattern, inputString);
-//        }
-        return Collections.singletonMap("","");
+        Map<String, String> results = dissectMatch.getResults();
+        if (!dissectMatch.isValid(results)) {
+            throw new DissectException.FindMatch(pattern, inputString);
+        }
+        return results;
     }
 
     /**

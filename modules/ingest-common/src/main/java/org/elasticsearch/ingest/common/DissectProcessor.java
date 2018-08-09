@@ -73,7 +73,7 @@ public final class DissectProcessor extends AbstractProcessor {
         } else if (input == null) {
             throw new IllegalArgumentException("field [" + field + "] is null, cannot process it.");
         }
-        dissectParser.parse(input);//.forEach(ingestDocument::setFieldValue);
+        dissectParser.parse(input).forEach(ingestDocument::setFieldValue);
     }
 
     @Override
