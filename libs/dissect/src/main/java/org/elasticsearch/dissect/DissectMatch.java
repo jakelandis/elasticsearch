@@ -33,7 +33,8 @@ final class DissectMatch {
 
     private final String appendSeparator;
     private final Map<String, String> results;
-    private final Map<String, String> simpleResults;
+    private final String[] simpleResultsKey;
+    private final String[] simpleResultsValue;
     private final Map<String, ReferenceResult> referenceResults;
     private final Map<String, AppendResult> appendResults;
     private int implicitAppendOrder = -1000;
@@ -42,6 +43,7 @@ final class DissectMatch {
     private final int appendCount;
     private final int referenceCount;
     private final int simpleCount;
+    private int runingSimpleCount = 0;
     private int matches = 0;
 
     DissectMatch(String appendSeparator, int maxMatches, int maxResults, int appendCount, int referenceCount) {
@@ -55,7 +57,8 @@ final class DissectMatch {
         this.appendSeparator = appendSeparator;
         results = new HashMap<>(maxResults);
         this.simpleCount = maxMatches - referenceCount - appendCount;
-        simpleResults = simpleCount <= 0 ? null : new HashMap<>(simpleCount);
+        simpleResultsKey = simpleCount <= 0 ? null : new String[simpleCount];
+        simpleResultsValue = simpleCount <= 0 ? null : new String[simpleCount];
         referenceResults = referenceCount <= 0 ? null : new HashMap<>(referenceCount);
         appendResults = appendCount <= 0 ? null : new HashMap<>(appendCount);
     }
@@ -72,7 +75,12 @@ final class DissectMatch {
         }
         switch (key.getModifier()) {
             case NONE:
-                simpleResults.put(key.getName(), value);
+                String name = key.getName();
+                if(name != null && !name.isEmpty()) {
+                    simpleResultsKey[runingSimpleCount] = key.getName();
+                    simpleResultsValue[runingSimpleCount] = value;
+                    runingSimpleCount++;
+                }
                 break;
             case APPEND:
                 appendResults.computeIfAbsent(key.getName(), k -> new AppendResult(appendSeparator)).addValue(value, implicitAppendOrder++);
@@ -110,9 +118,11 @@ final class DissectMatch {
      */
     Map<String, String> getResults() {
         results.clear();
-        if (simpleCount > 0) {
-            results.putAll(simpleResults);
+        for(int i = 0; i < runingSimpleCount; i++){
+           // System.out.println("adding result " + simpleResultsKey[i]  + " : " + simpleResultsValue[i]);
+            results.put(simpleResultsKey[i], simpleResultsValue[i]);
         }
+
         if (referenceCount > 0) {
             referenceResults.forEach((k, v) -> results.put(v.getKey(), v.getValue()));
         }
