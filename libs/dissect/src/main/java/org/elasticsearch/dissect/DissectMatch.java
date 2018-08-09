@@ -70,24 +70,24 @@ final class DissectMatch {
         if (key.skip()) {
             return;
         }
-        switch (key.getModifier()) {
-            case NONE:
-                simpleResults.put(key.getName(), value);
-                break;
-            case APPEND:
-                appendResults.computeIfAbsent(key.getName(), k -> new AppendResult(appendSeparator)).addValue(value, implicitAppendOrder++);
-                break;
-            case APPEND_WITH_ORDER:
-                appendResults.computeIfAbsent(key.getName(),
-                    k -> new AppendResult(appendSeparator)).addValue(value, key.getAppendPosition());
-                break;
-            case FIELD_NAME:
-                referenceResults.computeIfAbsent(key.getName(), k -> new ReferenceResult()).setKey(value);
-                break;
-            case FIELD_VALUE:
-                referenceResults.computeIfAbsent(key.getName(), k -> new ReferenceResult()).setValue(value);
-                break;
-        }
+//        switch (key.getModifier()) {
+//            case NONE:
+//                simpleResults.put(key.getName(), value);
+//                break;
+//            case APPEND:
+//                appendResults.computeIfAbsent(key.getName(), k -> new AppendResult(appendSeparator)).addValue(value, implicitAppendOrder++);
+//                break;
+//            case APPEND_WITH_ORDER:
+//                appendResults.computeIfAbsent(key.getName(),
+//                    k -> new AppendResult(appendSeparator)).addValue(value, key.getAppendPosition());
+//                break;
+//            case FIELD_NAME:
+//                referenceResults.computeIfAbsent(key.getName(), k -> new ReferenceResult()).setKey(value);
+//                break;
+//            case FIELD_VALUE:
+//                referenceResults.computeIfAbsent(key.getName(), k -> new ReferenceResult()).setValue(value);
+//                break;
+//        }
     }
 
     boolean fullyMatched() {
@@ -109,16 +109,16 @@ final class DissectMatch {
      * @return the map of the results.
      */
     Map<String, String> getResults() {
-        results.clear();
-        if (simpleCount > 0) {
-            results.putAll(simpleResults);
-        }
-        if (referenceCount > 0) {
-            referenceResults.forEach((k, v) -> results.put(v.getKey(), v.getValue()));
-        }
-        if (appendCount > 0) {
-            appendResults.forEach((k, v) -> results.put(k, v.getAppendResult()));
-        }
+//        results.clear();
+//        if (simpleCount > 0) {
+//            results.putAll(simpleResults);
+//        }
+//        if (referenceCount > 0) {
+//            referenceResults.forEach((k, v) -> results.put(v.getKey(), v.getValue()));
+//        }
+//        if (appendCount > 0) {
+//            appendResults.forEach((k, v) -> results.put(k, v.getAppendResult()));
+//        }
 
         return results;
     }
