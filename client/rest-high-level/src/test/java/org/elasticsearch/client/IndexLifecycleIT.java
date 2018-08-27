@@ -26,6 +26,7 @@ import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsRequest;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.indexlifecycle.ILMStatusResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.protocol.xpack.indexlifecycle.ExplainLifecycleRequest;
 import org.elasticsearch.protocol.xpack.indexlifecycle.ExplainLifecycleResponse;
@@ -166,35 +167,30 @@ public class IndexLifecycleIT extends ESRestHighLevelClientTestCase {
         createIndex("baz", Settings.builder().put("index.lifecycle.name", "eggplant").build());
         createIndex("squash", Settings.EMPTY);
 
-        // TODO: NORELEASE convert this to using the high level client once
-        // there are APIs for it
-        Request statusReq = new Request("GET", "/_ilm/status");
-        Response statusResponse = client().performRequest(statusReq);
-        String statusResponseString = EntityUtils.toString(statusResponse.getEntity());
-        assertEquals("{\"operation_mode\":\"RUNNING\"}", statusResponseString);
+        MasterTimeoutRequest statusRequest = new MasterTimeoutRequest(){};
+        ILMStatusResponse statusResponse = execute(statusRequest, highLevelClient().indexLifecycle()::StatusILM,
+            highLevelClient().indexLifecycle()::StatusILMAsync);
+        assertEquals(statusResponse.getOperationMode(), ILMStatusResponse.OperationMode.RUNNING);
 
         StopILMRequest stopReq = new StopILMRequest();
         AcknowledgedResponse stopResponse = execute(stopReq, highLevelClient().indexLifecycle()::stopILM,
                 highLevelClient().indexLifecycle()::stopILMAsync);
         assertTrue(stopResponse.isAcknowledged());
 
-        // TODO: NORELEASE convert this to using the high level client once there are APIs for it
-        statusReq = new Request("GET", "/_ilm/status");
-        statusResponse = client().performRequest(statusReq);
-        statusResponseString = EntityUtils.toString(statusResponse.getEntity());
-        assertThat(statusResponseString,
-                Matchers.anyOf(equalTo("{\"operation_mode\":\"STOPPING\"}"), equalTo("{\"operation_mode\":\"STOPPED\"}")));
+
+        statusResponse = execute(statusRequest, highLevelClient().indexLifecycle()::StatusILM,
+            highLevelClient().indexLifecycle()::StatusILMAsync);
+        assertThat(statusResponse.getOperationMode(),
+                Matchers.anyOf(equalTo(ILMStatusResponse.OperationMode.STOPPING), equalTo(ILMStatusResponse.OperationMode.STOPPED)));
 
         StartILMRequest startReq = new StartILMRequest();
         AcknowledgedResponse startResponse = execute(startReq, highLevelClient().indexLifecycle()::startILM,
                 highLevelClient().indexLifecycle()::startILMAsync);
         assertTrue(startResponse.isAcknowledged());
 
-        // TODO: NORELEASE convert this to using the high level client once there are APIs for it
-        statusReq = new Request("GET", "/_ilm/status");
-        statusResponse = client().performRequest(statusReq);
-        statusResponseString = EntityUtils.toString(statusResponse.getEntity());
-        assertEquals("{\"operation_mode\":\"RUNNING\"}", statusResponseString);
+        statusResponse = execute(statusRequest, highLevelClient().indexLifecycle()::StatusILM,
+            highLevelClient().indexLifecycle()::StatusILMAsync);
+        assertEquals(statusResponse.getOperationMode(), ILMStatusResponse.OperationMode.RUNNING);
     }
 
     public void testExplainLifecycle() throws Exception {

@@ -21,6 +21,7 @@ package org.elasticsearch.client;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.indexlifecycle.ILMStatusResponse;
 import org.elasticsearch.protocol.xpack.indexlifecycle.ExplainLifecycleRequest;
 import org.elasticsearch.protocol.xpack.indexlifecycle.ExplainLifecycleResponse;
 import org.elasticsearch.protocol.xpack.indexlifecycle.SetIndexLifecyclePolicyRequest;
@@ -148,5 +149,35 @@ public class IndexLifecycleClient {
                                       ActionListener<ExplainLifecycleResponse> listener) {
         restHighLevelClient.performRequestAsyncAndParseEntity(request, RequestConverters::explainLifecycle, options,
                 ExplainLifecycleResponse::fromXContent, listener, emptySet());
+    }
+
+    //TODO: what ever changes are needed to support the master and normal timeout.
+
+    /**
+     * Get the status of index lifecycle management
+     * See <a href="https://fix-me-when-we-have-docs.com">
+     * the docs</a> for more.
+     *
+     * @param request the request with user defined timeouts.
+     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+     */
+    public ILMStatusResponse StatusILM(MasterTimeoutRequest request, RequestOptions options) throws IOException {
+        return restHighLevelClient.performRequestAndParseEntity(request, RequestConverters::getIndexLifecycleStatus, options,
+            ILMStatusResponse::fromXContent, emptySet());
+    }
+
+    /**
+     * Asynchronously get the status of index lifecycle management
+     * See <a href="https://fix-me-when-we-have-docs.com">
+     * the docs</a> for more.
+     *
+     * @param request  the request with user defined timeouts.
+     * @param options  the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+     * @param listener the listener to be notified upon request completion
+     */
+    public void StatusILMAsync(MasterTimeoutRequest request, RequestOptions options,
+                               ActionListener<ILMStatusResponse> listener) {
+        restHighLevelClient.performRequestAsyncAndParseEntity(request, RequestConverters::getIndexLifecycleStatus, options,
+            ILMStatusResponse::fromXContent, listener, emptySet());
     }
 }

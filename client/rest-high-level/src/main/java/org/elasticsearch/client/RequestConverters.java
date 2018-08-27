@@ -1212,6 +1212,17 @@ final class RequestConverters {
         return request;
     }
 
+    static Request getIndexLifecycleStatus(MasterTimeoutRequest ilmStatusRequest){
+        Request request = new Request(HttpGet.METHOD_NAME,
+            new EndpointBuilder()
+                .addPathPartAsIs("_ilm")
+                .addPathPartAsIs("status")
+            .build());
+        Params params = new Params(request);
+        params.withMasterTimeout(ilmStatusRequest.masterNodeTimeout());
+        return request;
+    }
+
     static Request explainLifecycle(ExplainLifecycleRequest explainLifecycleRequest) {
         String[] indices = explainLifecycleRequest.indices() == null ? Strings.EMPTY_ARRAY : explainLifecycleRequest.indices();
         Request request = new Request(HttpGet.METHOD_NAME,
