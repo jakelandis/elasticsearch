@@ -162,7 +162,7 @@ public class IndexLifecycleClient {
      * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
      */
     public ILMStatusResponse StatusILM(MasterTimeoutRequest request, RequestOptions options) throws IOException {
-        return restHighLevelClient.performRequestAndParseEntity(request, RequestConverters::getIndexLifecycleStatus, options,
+        return restHighLevelClient.performRequestAndParseEntity(request, RequestConverters::statusILM, options,
             ILMStatusResponse::fromXContent, emptySet());
     }
 
@@ -177,7 +177,7 @@ public class IndexLifecycleClient {
      */
     public void StatusILMAsync(MasterTimeoutRequest request, RequestOptions options,
                                ActionListener<ILMStatusResponse> listener) {
-        restHighLevelClient.performRequestAsyncAndParseEntity(request, RequestConverters::getIndexLifecycleStatus, options,
+        restHighLevelClient.performRequestAsyncAndParseEntity(request, RequestConverters::statusILM, options,
             ILMStatusResponse::fromXContent, listener, emptySet());
     }
 }

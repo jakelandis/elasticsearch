@@ -1212,7 +1212,7 @@ final class RequestConverters {
         return request;
     }
 
-    static Request getIndexLifecycleStatus(MasterTimeoutRequest ilmStatusRequest){
+    static Request statusILM(MasterTimeoutRequest ilmStatusRequest){
         Request request = new Request(HttpGet.METHOD_NAME,
             new EndpointBuilder()
                 .addPathPartAsIs("_ilm")

@@ -2678,6 +2678,20 @@ public class RequestConvertersTests extends ESTestCase {
         assertThat(request.getParameters(), equalTo(expectedParams));
     }
 
+    public void testStatusILM() throws Exception {
+        MasterTimeoutRequest req = new MasterTimeoutRequest(){};
+        Map<String, String> expectedParams = new HashMap<>();
+        setRandomMasterTimeout(req, expectedParams);
+       //TODO: update when get timeout
+        // setRandomTimeout(req::masterNodeTimeout, AcknowledgedRequest.DEFAULT_ACK_TIMEOUT, expectedParams);
+
+        Request request = RequestConverters.statusILM(req);
+        assertThat(request.getMethod(), equalTo(HttpGet.METHOD_NAME));
+        assertThat(request.getEndpoint(), equalTo("/_ilm/status"));
+        assertThat(request.getParameters(), equalTo(expectedParams));
+    }
+
+
     public void testExplainLifecycle() throws Exception {
         ExplainLifecycleRequest req = new ExplainLifecycleRequest();
         String[] indices = rarely() ? null : randomIndicesNames(0, 10);
@@ -2838,6 +2852,18 @@ public class RequestConvertersTests extends ESTestCase {
             expectedParams.put("master_timeout", MasterNodeRequest.DEFAULT_MASTER_NODE_TIMEOUT.getStringRep());
         }
     }
+
+    private static void setRandomMasterTimeout(MasterTimeoutRequest<?> request, Map<String, String> expectedParams) {
+        if (randomBoolean()) {
+            String masterTimeout = randomTimeValue();
+            request.masterNodeTimeout(masterTimeout);
+            expectedParams.put("master_timeout", masterTimeout);
+        } else {
+            expectedParams.put("master_timeout", MasterNodeRequest.DEFAULT_MASTER_NODE_TIMEOUT.getStringRep());
+        }
+    }
+
+
 
     private static void setRandomWaitForActiveShards(Consumer<ActiveShardCount> setter, Map<String, String> expectedParams) {
         setRandomWaitForActiveShards(setter, ActiveShardCount.DEFAULT, expectedParams);
