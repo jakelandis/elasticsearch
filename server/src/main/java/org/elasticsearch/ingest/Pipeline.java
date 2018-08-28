@@ -44,7 +44,7 @@ public final class Pipeline {
     private final Integer version;
     private final CompoundProcessor compoundProcessor;
 
-    public Pipeline(String id, @Nullable String description, @Nullable Integer version, CompoundProcessor compoundProcessor) {
+    Pipeline(String id, @Nullable String description, @Nullable Integer version, CompoundProcessor compoundProcessor) {
         this.id = id;
         this.description = description;
         this.compoundProcessor = compoundProcessor;

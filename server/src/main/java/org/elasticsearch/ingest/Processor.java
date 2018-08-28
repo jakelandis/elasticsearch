@@ -25,6 +25,7 @@ import org.elasticsearch.index.analysis.AnalysisRegistry;
 import org.elasticsearch.script.ScriptService;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.BiFunction;
 import java.util.function.LongSupplier;
@@ -51,6 +52,15 @@ public interface Processor {
      * Gets the tag of a processor.
      */
     String getTag();
+
+
+    /**
+     * Optionally contribute per processor stats.
+     * @return {@link Optional#empty()}
+     */
+    default Optional<IngestStatsHolder> getStats(){
+        return Optional.empty();
+    }
 
     /**
      * A factory that knows how to construct a processor based on a map of maps.

@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -96,9 +98,15 @@ public class CompoundProcessor implements Processor {
     @Override
     public void execute(IngestDocument ingestDocument) throws Exception {
         for (Processor processor : processors) {
+            Optional<IngestStatsHolder> stats = processor.getStats();
             try {
+                stats.ifPresent(IngestStatsHolder::preIngest);
+                long startTimeInNanos = System.nanoTime();
                 processor.execute(ingestDocument);
+                long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
+                stats.ifPresent(statsHolder -> statsHolder.postIngest(ingestTimeInMillis));
             } catch (Exception e) {
+                stats.ifPresent(IngestStatsHolder::ingestFailed);
                 if (ignoreFailure) {
                     continue;
                 }
