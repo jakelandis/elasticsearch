@@ -58,7 +58,7 @@ public interface Processor {
      * Optionally contribute per processor stats.
      * @return {@link Optional#empty()}
      */
-    default Optional<IngestStatsHolder> getStats(){
+    default Optional<IngestMetrics> getStats(){
         return Optional.empty();
     }
 

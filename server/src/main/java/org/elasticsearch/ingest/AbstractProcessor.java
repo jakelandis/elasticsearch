@@ -27,15 +27,15 @@ import java.util.Optional;
  */
 public abstract class AbstractProcessor implements Processor {
     protected final String tag;
-    private final IngestStatsHolder statsHolder;
+    private final IngestMetrics statsHolder;
 
     protected AbstractProcessor(String tag) {
         this.tag = tag;
-        this.statsHolder = new IngestStatsHolder();
+        this.statsHolder = new IngestMetrics();
     }
 
     @Override
-    final public Optional<IngestStatsHolder> getStats() {
+    final public Optional<IngestMetrics> getStats() {
         return Optional.of(statsHolder);
     }
 

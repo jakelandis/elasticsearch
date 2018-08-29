@@ -77,8 +77,8 @@ public class IngestService implements ClusterStateApplier {
     // are loaded, so in the cluster state we just save the pipeline config and here we keep the actual pipelines around.
     private volatile Map<String, Pipeline> pipelines = new HashMap<>();
     private final ThreadPool threadPool;
-    private final IngestStatsHolder totalStats = new IngestStatsHolder();
-    private volatile Map<String, IngestStatsHolder> statsHolderPerPipeline = Collections.emptyMap();
+    private final IngestMetrics totalStats = new IngestMetrics();
+    private volatile Map<String, IngestMetrics> statsHolderPerPipeline = Collections.emptyMap();
 
     public IngestService(ClusterService clusterService, ThreadPool threadPool,
                          Environment env, ScriptService scriptService, AnalysisRegistry analysisRegistry,
@@ -358,15 +358,17 @@ public class IngestService implements ClusterStateApplier {
     }
 
     public IngestStats stats() {
-        Map<String, IngestStatsHolder> statsHolderPerPipeline = this.statsHolderPerPipeline;
+        Map<String, IngestMetrics> statsHolderPerPipeline = this.statsHolderPerPipeline;
 
-        Map<String, Tuple<IngestStats.Stats, List<IngestStats.Stats>>> statsPerPipeline = new HashMap<>(statsHolderPerPipeline.size());
-        for (Map.Entry<String, IngestStatsHolder> entry : statsHolderPerPipeline.entrySet()) {
-            List<IngestStats.Stats> perProcessorStats = new ArrayList<>();
+        Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline = new HashMap<>(statsHolderPerPipeline.size());
+        for (Map.Entry<String, IngestMetrics> entry : statsHolderPerPipeline.entrySet()) {
+            List<Tuple<String, IngestStats.Stats>> perProcessorStats = new ArrayList<>();
             String pipelineId = entry.getKey();
-            for(Processor processor : pipelines.get(pipelineId).getProcessors()){
-                Optional<IngestStatsHolder> stat = processor.getStats();
-                stat.ifPresent(ingestStatsHolder -> perProcessorStats.add(ingestStatsHolder.createStats()));
+            for (Processor processor : pipelines.get(pipelineId).getProcessors()) {
+                Optional<IngestMetrics> stat = processor.getStats();
+                String tag = processor.getTag();
+                String name = (tag != null && tag.isEmpty() == false) ? processor.getType() + ";tag=" + tag : processor.getType();
+                stat.ifPresent(ingestMetrics -> perProcessorStats.add(new Tuple<>(name, ingestMetrics.createStats())));
             }
             statsPerPipeline.put(entry.getKey(), new Tuple<>(entry.getValue().createStats(), perProcessorStats));
         }
@@ -376,7 +378,7 @@ public class IngestService implements ClusterStateApplier {
 
     void updatePipelineStats(IngestMetadata ingestMetadata) {
         boolean changed = false;
-        Map<String, IngestStatsHolder> newStatsPerPipeline = new HashMap<>(statsHolderPerPipeline);
+        Map<String, IngestMetrics> newStatsPerPipeline = new HashMap<>(statsHolderPerPipeline);
         Iterator<String> iterator = newStatsPerPipeline.keySet().iterator();
         while (iterator.hasNext()) {
             String pipeline = iterator.next();
@@ -387,7 +389,7 @@ public class IngestService implements ClusterStateApplier {
         }
         for (String pipeline : ingestMetadata.getPipelines().keySet()) {
             if (newStatsPerPipeline.containsKey(pipeline) == false) {
-                newStatsPerPipeline.put(pipeline, new IngestStatsHolder());
+                newStatsPerPipeline.put(pipeline, new IngestMetrics());
                 changed = true;
             }
         }
@@ -405,10 +407,10 @@ public class IngestService implements ClusterStateApplier {
         long startTimeInNanos = System.nanoTime();
         // the pipeline specific stat holder may not exist and that is fine:
         // (e.g. the pipeline may have been removed while we're ingesting a document
-        Optional<IngestStatsHolder> pipelineStats = Optional.ofNullable(statsHolderPerPipeline.get(pipeline.getId()));
+        Optional<IngestMetrics> pipelineStats = Optional.ofNullable(statsHolderPerPipeline.get(pipeline.getId()));
         try {
             totalStats.preIngest();
-            pipelineStats.ifPresent(IngestStatsHolder::preIngest);
+            pipelineStats.ifPresent(IngestMetrics::preIngest);
             String index = indexRequest.index();
             String type = indexRequest.type();
             String id = indexRequest.id();
@@ -433,7 +435,7 @@ public class IngestService implements ClusterStateApplier {
             indexRequest.source(ingestDocument.getSourceAndMetadata());
         } catch (Exception e) {
             totalStats.ingestFailed();
-            pipelineStats.ifPresent(IngestStatsHolder::ingestFailed);
+            pipelineStats.ifPresent(IngestMetrics::ingestFailed);
             throw e;
         } finally {
             long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);

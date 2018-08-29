@@ -98,15 +98,15 @@ public class CompoundProcessor implements Processor {
     @Override
     public void execute(IngestDocument ingestDocument) throws Exception {
         for (Processor processor : processors) {
-            Optional<IngestStatsHolder> stats = processor.getStats();
+            Optional<IngestMetrics> stats = processor.getStats();
             try {
-                stats.ifPresent(IngestStatsHolder::preIngest);
+                stats.ifPresent(IngestMetrics::preIngest);
                 long startTimeInNanos = System.nanoTime();
                 processor.execute(ingestDocument);
                 long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
                 stats.ifPresent(statsHolder -> statsHolder.postIngest(ingestTimeInMillis));
             } catch (Exception e) {
-                stats.ifPresent(IngestStatsHolder::ingestFailed);
+                stats.ifPresent(IngestMetrics::ingestFailed);
                 if (ignoreFailure) {
                     continue;
                 }

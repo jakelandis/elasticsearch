@@ -6,7 +6,7 @@ import org.elasticsearch.common.metrics.MeanMetric;
 /**
  * //TODO: something about not need to care if using abstractprocessor
  */
-public class IngestStatsHolder {
+public class IngestMetrics {
 
     private final MeanMetric ingestMetric = new MeanMetric();
     private final CounterMetric ingestCurrent = new CounterMetric();
