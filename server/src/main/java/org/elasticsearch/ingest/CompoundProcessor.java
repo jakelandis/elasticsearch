@@ -98,15 +98,14 @@ public class CompoundProcessor implements Processor {
     @Override
     public void execute(IngestDocument ingestDocument) throws Exception {
         for (Processor processor : processors) {
-            Optional<IngestMetrics> stats = processor.getStats();
+            Optional<IngestMetrics> metrics = processor.getMetrics();
+            long startTimeInNanos = System.nanoTime();
             try {
-                stats.ifPresent(IngestMetrics::preIngest);
-                long startTimeInNanos = System.nanoTime();
-                processor.execute(ingestDocument);
-                long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
-                stats.ifPresent(statsHolder -> statsHolder.postIngest(ingestTimeInMillis));
+                measuredExecute(processor, ingestDocument, metrics);
             } catch (Exception e) {
-                stats.ifPresent(IngestMetrics::ingestFailed);
+                long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
+                metrics.ifPresent(m -> m.postIngest(ingestTimeInMillis));
+                metrics.ifPresent(IngestMetrics::ingestFailed);
                 if (ignoreFailure) {
                     continue;
                 }
@@ -127,15 +126,25 @@ public class CompoundProcessor implements Processor {
         try {
             putFailureMetadata(ingestDocument, exception);
             for (Processor processor : onFailureProcessors) {
+                Optional<IngestMetrics> metrics = processor.getMetrics();
                 try {
-                    processor.execute(ingestDocument);
+                    measuredExecute(processor, ingestDocument, metrics);
                 } catch (Exception e) {
+                    metrics.ifPresent(IngestMetrics::ingestFailed);
                     throw newCompoundProcessorException(e, processor.getType(), processor.getTag());
                 }
             }
         } finally {
             removeFailureMetadata(ingestDocument);
         }
+    }
+
+    private void measuredExecute(Processor processor, IngestDocument ingestDocument, Optional<IngestMetrics> metrics) throws Exception {
+        metrics.ifPresent(IngestMetrics::preIngest);
+        long startTimeInNanos = System.nanoTime();
+        processor.execute(ingestDocument);
+        long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
+        metrics.ifPresent(m -> m.postIngest(ingestTimeInMillis));
     }
 
     private void putFailureMetadata(IngestDocument ingestDocument, ElasticsearchException cause) {

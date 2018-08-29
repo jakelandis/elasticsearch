@@ -53,12 +53,11 @@ public interface Processor {
      */
     String getTag();
 
-
     /**
-     * Optionally contribute per processor stats.
+     * Optionally contribute per processor metrics.
      * @return {@link Optional#empty()}
      */
-    default Optional<IngestMetrics> getStats(){
+    default Optional<IngestMetrics> getMetrics(){
         return Optional.empty();
     }
 

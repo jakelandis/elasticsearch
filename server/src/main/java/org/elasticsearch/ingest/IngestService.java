@@ -360,20 +360,40 @@ public class IngestService implements ClusterStateApplier {
     public IngestStats stats() {
         Map<String, IngestMetrics> statsHolderPerPipeline = this.statsHolderPerPipeline;
 
-        Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline = new HashMap<>(statsHolderPerPipeline.size());
+        //Map of pipelineName -> (pipelineStats, List[(processorName -> processorStats)])
+        Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline =
+            new HashMap<>(statsHolderPerPipeline.size());
         for (Map.Entry<String, IngestMetrics> entry : statsHolderPerPipeline.entrySet()) {
             List<Tuple<String, IngestStats.Stats>> perProcessorStats = new ArrayList<>();
             String pipelineId = entry.getKey();
             for (Processor processor : pipelines.get(pipelineId).getProcessors()) {
-                Optional<IngestMetrics> stat = processor.getStats();
-                String tag = processor.getTag();
-                String name = (tag != null && tag.isEmpty() == false) ? processor.getType() + ";tag=" + tag : processor.getType();
-                stat.ifPresent(ingestMetrics -> perProcessorStats.add(new Tuple<>(name, ingestMetrics.createStats())));
+                //TODO: recurse below
+                if (processor instanceof CompoundProcessor) {
+                    CompoundProcessor compoundProcessor = (CompoundProcessor) processor;
+                    for (Processor innerProcessor : compoundProcessor.getProcessors()) {
+                        addPerProcessorStat(innerProcessor, perProcessorStats, false);
+                    }
+                    for (Processor innerProcessor : compoundProcessor.getOnFailureProcessors()) {
+                        addPerProcessorStat(innerProcessor, perProcessorStats, true);
+                    }
+                } else {
+                    addPerProcessorStat(processor, perProcessorStats, false);
+                }
             }
+
             statsPerPipeline.put(entry.getKey(), new Tuple<>(entry.getValue().createStats(), perProcessorStats));
         }
 
         return new IngestStats(totalStats.createStats(), statsPerPipeline);
+    }
+
+    private void addPerProcessorStat(Processor processor, List<Tuple<String, IngestStats.Stats>> perProcessorStats, boolean onFailure ){
+        Optional<IngestMetrics> stat = processor.getMetrics();
+        String tag = processor.getTag();
+        String name = (tag != null && tag.isEmpty() == false) ? processor.getType() + ";tag=" + tag : processor.getType();
+        final String finalName = onFailure ? name + ";on_failure=true" : name;
+        stat.ifPresent(ingestMetrics ->
+            perProcessorStats.add(new Tuple<>(finalName, ingestMetrics.createStats())));
     }
 
     void updatePipelineStats(IngestMetadata ingestMetadata) {

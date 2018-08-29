@@ -22,21 +22,20 @@ package org.elasticsearch.ingest;
 import java.util.Optional;
 
 /**
- * An Abstract Processor that holds a processorTag field and stats to be used
- * by other processors.
+ * An Abstract Processor that holds the tag field and metrics.
  */
 public abstract class AbstractProcessor implements Processor {
     protected final String tag;
-    private final IngestMetrics statsHolder;
+    private final IngestMetrics metrics;
 
     protected AbstractProcessor(String tag) {
         this.tag = tag;
-        this.statsHolder = new IngestMetrics();
+        this.metrics = new IngestMetrics();
     }
 
     @Override
-    final public Optional<IngestMetrics> getStats() {
-        return Optional.of(statsHolder);
+    final public Optional<IngestMetrics> getMetrics() {
+        return Optional.of(metrics);
     }
 
     @Override
