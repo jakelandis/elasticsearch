@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +41,7 @@ public class CompoundProcessor implements Processor {
     private final boolean ignoreFailure;
     private final List<Processor> processors;
     private final List<Processor> onFailureProcessors;
+    private final List<ProcessorWithMetric> processorsWithMetrics;
 
     public CompoundProcessor(Processor... processor) {
         this(false, Arrays.asList(processor), Collections.emptyList());
@@ -50,6 +52,26 @@ public class CompoundProcessor implements Processor {
         this.ignoreFailure = ignoreFailure;
         this.processors = processors;
         this.onFailureProcessors = onFailureProcessors;
+        processorsWithMetrics = new ArrayList<>(processors.size());
+        processors.forEach(p -> processorsWithMetrics.add(new ProcessorWithMetric(p)));
+    }
+
+    class ProcessorWithMetric{
+        private final Processor processor;
+        private final IngestMetrics metric;
+
+        ProcessorWithMetric(Processor processor) {
+            this.processor = processor;
+            this.metric = new IngestMetrics();
+        }
+
+        public Processor getProcessor() {
+            return processor;
+        }
+
+        public IngestMetrics getMetric() {
+            return metric;
+        }
     }
 
     public boolean isIgnoreFailure() {
@@ -62,6 +84,10 @@ public class CompoundProcessor implements Processor {
 
     public List<Processor> getProcessors() {
         return processors;
+    }
+
+    public List<ProcessorWithMetric> getProcessorsWithMetrics() {
+        return processorsWithMetrics;
     }
 
     public List<Processor> flattenProcessors() {
@@ -94,24 +120,31 @@ public class CompoundProcessor implements Processor {
 
     @Override
     public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
-        for (Processor processor : processors) {
+        for (ProcessorWithMetric processorWithMetric : processorsWithMetrics) {
+            long startTimeInNanos = System.nanoTime();
             try {
-                if (processor.execute(ingestDocument) == null) {
+                processorWithMetric.getMetric().preIngest();
+                if (processorWithMetric.getProcessor().execute(ingestDocument) == null) {
                     return null;
                 }
             } catch (Exception e) {
+                processorWithMetric.getMetric().ingestFailed();
                 if (ignoreFailure) {
                     continue;
                 }
 
                 ElasticsearchException compoundProcessorException =
-                    newCompoundProcessorException(e, processor.getType(), processor.getTag());
+                    newCompoundProcessorException(e, processorWithMetric.getProcessor().getType(),
+                        processorWithMetric.getProcessor().getTag());
                 if (onFailureProcessors.isEmpty()) {
                     throw compoundProcessorException;
                 } else {
                     executeOnFailure(ingestDocument, compoundProcessorException);
                     break;
                 }
+            } finally {
+                long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
+                processorWithMetric.getMetric().postIngest(ingestTimeInMillis);
             }
         }
         return ingestDocument;
