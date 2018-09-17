@@ -21,9 +21,13 @@ package org.elasticsearch.action.ingest;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRunnable;
+import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.ingest.ConditionalProcessor;
 import org.elasticsearch.ingest.IngestDocument;
+import org.elasticsearch.ingest.IngestStats;
 import org.elasticsearch.ingest.Pipeline;
 import org.elasticsearch.ingest.CompoundProcessor;
+import org.elasticsearch.ingest.Processor;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayList;
@@ -47,9 +51,9 @@ class SimulateExecutionService {
             CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList);
             try {
                 verbosePipelineProcessor.execute(ingestDocument);
-                return new SimulateDocumentVerboseResult(processorResultList);
+                return new SimulateDocumentVerboseResult(processorResultList, getStats(verbosePipelineProcessor));
             } catch (Exception e) {
-                return new SimulateDocumentVerboseResult(processorResultList);
+                return new SimulateDocumentVerboseResult(processorResultList, getStats(verbosePipelineProcessor));
             }
         } else {
             try {
@@ -61,6 +65,33 @@ class SimulateExecutionService {
         }
     }
 
+    private  List<Tuple<String, IngestStats.Stats>> getStats(CompoundProcessor verbosePipelineProcessor){
+        List<Tuple<String, IngestStats.Stats>> processorStats = new ArrayList<>();
+        //TODO: reuse the same naming code as
+        //only surface the top level non-failure processors
+        for (CompoundProcessor.ProcessorWithMetric processorWithMetric : verbosePipelineProcessor.getProcessorsWithMetrics()) {
+            Processor processor = processorWithMetric.getProcessor();
+            if (processor instanceof CompoundProcessor) {
+                CompoundProcessor innerProcessor = (CompoundProcessor) processor;
+                for (CompoundProcessor.ProcessorWithMetric innerProcessorWithMetric : innerProcessor.getProcessorsWithMetrics()) {
+                    processorStats.add(new Tuple<>(getName(innerProcessorWithMetric.getProcessor()), innerProcessorWithMetric.getMetric().createStats()));
+                }
+            } else {
+                processorStats.add(new Tuple<>(getName(processor), processorWithMetric.getMetric().createStats()));
+            }
+        }
+        return processorStats;
+
+    }
+
+    private String getName(Processor processor){
+        String tag = processor.getTag();
+        // conditionals are implemented as wrappers around the real processor, so get the real processor for metrics
+        if(processor instanceof ConditionalProcessor){
+            processor = ((ConditionalProcessor) processor).getProcessor();
+        }
+        return (tag != null && tag.isEmpty() == false) ? processor.getType() + ";tag=" + tag : processor.getType();
+    }
     public void execute(SimulatePipelineRequest.Parsed request, ActionListener<SimulatePipelineResponse> listener) {
         threadPool.executor(THREAD_POOL_NAME).execute(new ActionRunnable<SimulatePipelineResponse>(listener) {
             @Override

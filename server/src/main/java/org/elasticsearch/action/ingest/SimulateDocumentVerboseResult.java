@@ -19,11 +19,13 @@
 package org.elasticsearch.action.ingest;
 
 import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.ingest.IngestStats;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,20 +40,21 @@ import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constru
 public final class SimulateDocumentVerboseResult implements SimulateDocumentResult {
     public static final String PROCESSOR_RESULT_FIELD = "processor_results";
     private final List<SimulateProcessorResult> processorResults;
-
+    private List<Tuple<String, IngestStats.Stats>> processorStats; //TODO: anyway to make this final ?
     @SuppressWarnings("unchecked")
     public static final ConstructingObjectParser<SimulateDocumentVerboseResult, Void> PARSER =
         new ConstructingObjectParser<>(
             "simulate_document_verbose_result",
             true,
-            a -> new SimulateDocumentVerboseResult((List<SimulateProcessorResult>)a[0])
+            a -> new SimulateDocumentVerboseResult((List<SimulateProcessorResult>)a[0], null)
         );
     static {
         PARSER.declareObjectArray(constructorArg(), SimulateProcessorResult.PARSER, new ParseField(PROCESSOR_RESULT_FIELD));
     }
 
-    public SimulateDocumentVerboseResult(List<SimulateProcessorResult> processorResults) {
+    public SimulateDocumentVerboseResult(List<SimulateProcessorResult> processorResults, List<Tuple<String, IngestStats.Stats>> processorStats) {
         this.processorResults = processorResults;
+        this.processorStats = processorStats;
     }
 
     /**
@@ -85,6 +88,19 @@ public final class SimulateDocumentVerboseResult implements SimulateDocumentResu
             processorResult.toXContent(builder, params);
         }
         builder.endArray();
+
+        if(processorStats != null) {
+            builder.startArray("stats");
+            for (Tuple<String, IngestStats.Stats> singleStat : processorStats) {
+                builder.startObject();
+                builder.startObject(singleStat.v1());
+                singleStat.v2().toXContent(builder, params);
+                builder.endObject();
+                builder.endObject();
+            }
+            builder.endArray();
+        }
+
         builder.endObject();
         return builder;
     }

@@ -63,7 +63,7 @@ public class ConditionalProcessor extends AbstractProcessor {
     /**
      * The processor for which this conditional enables/disables
      */
-    Processor getProcessor() {
+    public Processor getProcessor() {
         return processor;
     }
 

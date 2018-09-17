@@ -398,6 +398,7 @@ public class IngestService implements ClusterStateApplier {
 
     private String getName(Processor processor){
         String tag = processor.getTag();
+        // conditionals are implemented as wrappers around the real processor, so get the real processor for metrics
         if(processor instanceof ConditionalProcessor){
             processor = ((ConditionalProcessor) processor).getProcessor();
         }

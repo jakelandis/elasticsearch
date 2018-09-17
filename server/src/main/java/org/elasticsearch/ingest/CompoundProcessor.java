@@ -56,7 +56,7 @@ public class CompoundProcessor implements Processor {
         processors.forEach(p -> processorsWithMetrics.add(new ProcessorWithMetric(p)));
     }
 
-    class ProcessorWithMetric{
+    public class ProcessorWithMetric{
         private final Processor processor;
         private final IngestMetrics metric;
 

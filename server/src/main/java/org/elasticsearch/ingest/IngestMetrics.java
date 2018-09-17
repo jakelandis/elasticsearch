@@ -3,7 +3,7 @@ package org.elasticsearch.ingest;
 import org.elasticsearch.common.metrics.CounterMetric;
 import org.elasticsearch.common.metrics.MeanMetric;
 
-class IngestMetrics {
+public class IngestMetrics {
 
     private final MeanMetric ingestMetric = new MeanMetric();
     private final CounterMetric ingestCurrent = new CounterMetric();
@@ -22,7 +22,7 @@ class IngestMetrics {
         ingestFailed.inc();
     }
 
-    IngestStats.Stats createStats() {
+    public IngestStats.Stats createStats() {
         return new IngestStats.Stats(ingestMetric.count(), ingestMetric.sum(), ingestCurrent.count(), ingestFailed.count());
     }
 }

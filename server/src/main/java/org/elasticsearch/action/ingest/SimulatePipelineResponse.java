@@ -77,7 +77,7 @@ public class SimulatePipelineResponse extends ActionResponse implements ToXConte
                                 results.add(SimulateProcessorResult.fromXContent(parser));
                             }
                             ensureExpectedToken(Token.END_ARRAY, token, parser::getTokenLocation);
-                            result = new SimulateDocumentVerboseResult(results);
+                            result = new SimulateDocumentVerboseResult(results, null); //TODO: is null right here ?
                         } else {
                             parser.skipChildren();
                         }
