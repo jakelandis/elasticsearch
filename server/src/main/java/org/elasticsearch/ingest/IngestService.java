@@ -37,6 +37,7 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest;
+import org.elasticsearch.action.admin.indices.rollover.Condition;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.ingest.DeletePipelineRequest;
 import org.elasticsearch.action.ingest.PutPipelineRequest;
@@ -397,6 +398,9 @@ public class IngestService implements ClusterStateApplier {
 
     private String getName(Processor processor){
         String tag = processor.getTag();
+        if(processor instanceof ConditionalProcessor){
+            processor = ((ConditionalProcessor) processor).getProcessor();
+        }
         return (tag != null && tag.isEmpty() == false) ? processor.getType() + ";tag=" + tag : processor.getType();
     }
 

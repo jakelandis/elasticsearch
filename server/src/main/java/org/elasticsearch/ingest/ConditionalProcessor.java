@@ -60,6 +60,13 @@ public class ConditionalProcessor extends AbstractProcessor {
         return ingestDocument;
     }
 
+    /**
+     * The processor for which this conditional enables/disables
+     */
+    Processor getProcessor() {
+        return processor;
+    }
+
     @Override
     public String getType() {
         return TYPE;
