@@ -3,7 +3,10 @@ package org.elasticsearch.ingest;
 import org.elasticsearch.common.metrics.CounterMetric;
 import org.elasticsearch.common.metrics.MeanMetric;
 
-public class IngestMetrics {
+/**
+ * Metrics common to ingest node pipeline and processors. Call {@link #createStats()} to convert metrics to stats useful for API's.
+ */
+class IngestMetrics {
 
     private final MeanMetric ingestMetric = new MeanMetric();
     private final CounterMetric ingestCurrent = new CounterMetric();
@@ -22,7 +25,7 @@ public class IngestMetrics {
         ingestFailed.inc();
     }
 
-    public IngestStats.Stats createStats() {
+    IngestStats.Stats createStats() {
         return new IngestStats.Stats(ingestMetric.count(), ingestMetric.sum(), ingestCurrent.count(), ingestFailed.count());
     }
 }

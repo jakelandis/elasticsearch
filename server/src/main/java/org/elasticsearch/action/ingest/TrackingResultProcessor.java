@@ -21,6 +21,7 @@ package org.elasticsearch.action.ingest;
 
 import org.elasticsearch.ingest.CompoundProcessor;
 import org.elasticsearch.ingest.IngestDocument;
+import org.elasticsearch.ingest.PipelineProcessor;
 import org.elasticsearch.ingest.Processor;
 
 import java.util.ArrayList;
@@ -57,6 +58,10 @@ public final class TrackingResultProcessor implements Processor {
         return ingestDocument;
     }
 
+    public Processor getActualProcessor() {
+        return actualProcessor;
+    }
+
     @Override
     public String getType() {
         return actualProcessor.getType();
@@ -70,7 +75,9 @@ public final class TrackingResultProcessor implements Processor {
     public static CompoundProcessor decorate(CompoundProcessor compoundProcessor, List<SimulateProcessorResult> processorResultList) {
         List<Processor> processors = new ArrayList<>(compoundProcessor.getProcessors().size());
         for (Processor processor : compoundProcessor.getProcessors()) {
-            if (processor instanceof CompoundProcessor) {
+            if (processor instanceof PipelineProcessor) {
+                processors.add(decorate(((PipelineProcessor) processor).getPipeline().getCompoundProcessor(), processorResultList));
+            } else if (processor instanceof CompoundProcessor) {
                 processors.add(decorate((CompoundProcessor) processor, processorResultList));
             } else {
                 processors.add(new TrackingResultProcessor(compoundProcessor.isIgnoreFailure(), processor, processorResultList));
@@ -78,7 +85,9 @@ public final class TrackingResultProcessor implements Processor {
         }
         List<Processor> onFailureProcessors = new ArrayList<>(compoundProcessor.getProcessors().size());
         for (Processor processor : compoundProcessor.getOnFailureProcessors()) {
-            if (processor instanceof CompoundProcessor) {
+            if (processor instanceof PipelineProcessor) {
+                onFailureProcessors.add(decorate(((PipelineProcessor) processor).getPipeline().getCompoundProcessor(), processorResultList));
+            } else if (processor instanceof CompoundProcessor) {
                 onFailureProcessors.add(decorate((CompoundProcessor) processor, processorResultList));
             } else {
                 onFailureProcessors.add(new TrackingResultProcessor(compoundProcessor.isIgnoreFailure(), processor, processorResultList));
@@ -86,5 +95,35 @@ public final class TrackingResultProcessor implements Processor {
         }
         return new CompoundProcessor(compoundProcessor.isIgnoreFailure(), processors, onFailureProcessors);
     }
+
+//    public static CompoundProcessor unDecorate(CompoundProcessor compoundProcessor) {
+//        List<Processor> processors = new ArrayList<>(compoundProcessor.getProcessors().size());
+//        for (Processor processor : compoundProcessor.getProcessors()) {
+//            if(processor instanceof TrackingResultProcessor){
+//                processor = ((TrackingResultProcessor)processor).actualProcessor;
+//            }else{
+//                throw new IllegalStateException("all processors must be TrackingResultProcessor to unDecorate them");
+//            }
+//            if (processor instanceof CompoundProcessor) {
+//                processors.add(unDecorate((CompoundProcessor) processor));
+//            } else {
+//                processors.add(processor);
+//            }
+//        }
+//        List<Processor> onFailureProcessors = new ArrayList<>(compoundProcessor.getProcessors().size());
+//        for (Processor processor : compoundProcessor.getOnFailureProcessors()) {
+//            if(processor instanceof TrackingResultProcessor){
+//                processor = ((TrackingResultProcessor)processor).actualProcessor;
+//            }else{
+//                throw new IllegalStateException("all processors must be TrackingResultProcessor to unDecorate them");
+//            }
+//            if (processor instanceof CompoundProcessor) {
+//                onFailureProcessors.add(unDecorate((CompoundProcessor) processor));
+//            } else {
+//                onFailureProcessors.add(processor);
+//            }
+//        }
+//        return new CompoundProcessor(compoundProcessor.isIgnoreFailure(), processors, onFailureProcessors);
+//    }
 }
 

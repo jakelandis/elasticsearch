@@ -41,6 +41,7 @@ import org.elasticsearch.action.admin.indices.rollover.Condition;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.ingest.DeletePipelineRequest;
 import org.elasticsearch.action.ingest.PutPipelineRequest;
+import org.elasticsearch.action.ingest.TrackingResultProcessor;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
@@ -368,41 +369,71 @@ public class IngestService implements ClusterStateApplier {
 
     public IngestStats stats() {
         Map<String, IngestMetrics> statsHolderPerPipeline = this.statsHolderPerPipeline;
-
-        //Map<String, IngestStats.Stats> statsPerPipeline = new HashMap<>(statsHolderPerPipeline.size());
         Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline = new HashMap<>(statsHolderPerPipeline.size());
         for (Map.Entry<String, IngestMetrics> entry : statsHolderPerPipeline.entrySet()) {
-            List<Tuple<String, IngestStats.Stats>> processorStats = new ArrayList<>();
             String pipelineId = entry.getKey();
             IngestMetrics pipelineMetrics = entry.getValue();
             Pipeline pipeline = pipelines.get(pipelineId);
             //pipeline here may be null if this is called when the pipeline is removed, but before the statsHolderPerPipeline is updated
-            if (pipeline != null) {
-                //only surface the top level non-failure processors
-                for (CompoundProcessor.ProcessorWithMetric processorWithMetric : pipeline.getCompoundProcessor().getProcessorsWithMetrics()) {
-                    Processor processor = processorWithMetric.getProcessor();
-                    if (processor instanceof CompoundProcessor) {
-                        CompoundProcessor innerProcessor = (CompoundProcessor) processor;
-                        for (CompoundProcessor.ProcessorWithMetric innerProcessorWithMetric : innerProcessor.getProcessorsWithMetrics()) {
-                            processorStats.add(new Tuple<>(getName(innerProcessorWithMetric.getProcessor()), innerProcessorWithMetric.getMetric().createStats()));
-                        }
-                    } else {
-                        processorStats.add(new Tuple<>(getName(processor), processorWithMetric.getMetric().createStats()));
-                    }
-                }
+            if(pipeline != null) {
+                CompoundProcessor rootProcessor = pipeline.getCompoundProcessor();
+                List<Tuple<String, IngestStats.Stats>> processorStats = new ArrayList<>();
+                statsPerPipeline.put(pipelineId, new Tuple<>(pipelineMetrics.createStats(), getProcessorStats(rootProcessor, processorStats)));
             }
-            statsPerPipeline.put(pipelineId, new Tuple<>(pipelineMetrics.createStats(), processorStats));
         }
         return new IngestStats(totalStats.createStats(), statsPerPipeline);
     }
 
-    private String getName(Processor processor){
+    public static List<Tuple<String, IngestStats.Stats>> getProcessorStats(CompoundProcessor rootProcessor, List<Tuple<String, IngestStats.Stats>> processorStats){
+
+        //only surface the top level non-failure processors
+        for (CompoundProcessor.ProcessorWithMetric processorWithMetric :rootProcessor.getProcessorsWithMetrics()) {
+            Processor processor = processorWithMetric.getProcessor();
+            if (processor instanceof CompoundProcessor) {
+                CompoundProcessor innerProcessor = (CompoundProcessor) processor;
+                for (CompoundProcessor.ProcessorWithMetric innerProcessorWithMetric : innerProcessor.getProcessorsWithMetrics()) {
+                    if(innerProcessorWithMetric.getProcessor() instanceof CompoundProcessor){
+                        getProcessorStats((CompoundProcessor) innerProcessorWithMetric.getProcessor(), processorStats);
+
+                    }else {
+                        processorStats.add(new Tuple<>(getName(innerProcessorWithMetric.getProcessor()), innerProcessorWithMetric.getMetric().createStats()));
+                    }
+                }
+            } else {
+                processorStats.add(new Tuple<>(getName(processor), processorWithMetric.getMetric().createStats()));
+            }
+        }
+        return processorStats;
+    }
+
+    private static String getName(Processor processor){
         String tag = processor.getTag();
+
+        // simulate wraps the actual processors
+        if(processor instanceof TrackingResultProcessor){
+            processor = ((TrackingResultProcessor)processor).getActualProcessor();
+        }
         // conditionals are implemented as wrappers around the real processor, so get the real processor for metrics
         if(processor instanceof ConditionalProcessor){
             processor = ((ConditionalProcessor) processor).getProcessor();
         }
-        return (tag != null && tag.isEmpty() == false) ? processor.getType() + ";tag=" + tag : processor.getType();
+        String innerPipelineName = "";
+        if(processor instanceof PipelineProcessor){
+            innerPipelineName = ((PipelineProcessor) processor).getPipelineName();
+        }
+        StringBuilder sb = new StringBuilder(5);
+        sb.append(processor.getType());
+        if(!innerPipelineName.isEmpty()){
+            //pipeline processor will look like `"pipeline;name="foo-pipeline"
+            sb.append(";name=");
+            sb.append(innerPipelineName);
+        }
+        if(tag != null && !tag.isEmpty()){
+            sb.append(";tag=");
+            sb.append(tag);
+        }
+
+        return sb.toString();
     }
 
     void updatePipelineStats(IngestMetadata ingestMetadata) {
