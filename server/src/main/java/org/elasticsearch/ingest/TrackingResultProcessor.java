@@ -61,6 +61,10 @@ public final class TrackingResultProcessor implements Processor {
         return actualProcessor.getType();
     }
 
+    Processor getActualProcessor() {
+        return actualProcessor;
+    }
+
     @Override
     public String getTag() {
         return actualProcessor.getTag();
