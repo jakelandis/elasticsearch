@@ -19,6 +19,7 @@
 
 package org.elasticsearch.ingest;
 
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -28,14 +29,15 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class IngestStats implements Writeable, ToXContentFragment {
-    private final Stats totalStats;
-    private final Map<String, Stats> statsPerPipeline;
+    private  Stats totalStats; //TODO: put back to final
+    private  Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline; //TODO: put back to final
 
-    public IngestStats(Stats totalStats, Map<String, Stats> statsPerPipeline) {
+    public IngestStats(Stats totalStats, Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>>statsPerPipeline) {
         this.totalStats = totalStats;
         this.statsPerPipeline = statsPerPipeline;
     }
@@ -43,23 +45,25 @@ public class IngestStats implements Writeable, ToXContentFragment {
     /**
      * Read from a stream.
      */
+    //TODO !!
     public IngestStats(StreamInput in) throws IOException {
-        this.totalStats = new Stats(in);
-        int size = in.readVInt();
-        this.statsPerPipeline = new HashMap<>(size);
-        for (int i = 0; i < size; i++) {
-            statsPerPipeline.put(in.readString(), new Stats(in));
-        }
+//        this.totalStats = new Stats(in);
+//        int size = in.readVInt();
+//        this.statsPerPipeline = new HashMap<>(size);
+//        for (int i = 0; i < size; i++) {
+//            statsPerPipeline.put(in.readString(), new Stats(in));
+//        }
     }
 
+    //TODO !!
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        totalStats.writeTo(out);
-        out.writeVInt(statsPerPipeline.size());
-        for (Map.Entry<String, Stats> entry : statsPerPipeline.entrySet()) {
-            out.writeString(entry.getKey());
-            entry.getValue().writeTo(out);
-        }
+//        totalStats.writeTo(out);
+//        out.writeVInt(statsPerPipeline.size());
+//        for (Map.Entry<String, Stats> entry : statsPerPipeline.entrySet()) {
+//            out.writeString(entry.getKey());
+//            entry.getValue().writeTo(out);
+//        }
     }
 
 
@@ -73,7 +77,7 @@ public class IngestStats implements Writeable, ToXContentFragment {
     /**
      * @return The stats on a per pipeline basis
      */
-    public Map<String, Stats> getStatsPerPipeline() {
+    public Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> getStatsPerPipeline() {
         return statsPerPipeline;
     }
 
@@ -84,9 +88,21 @@ public class IngestStats implements Writeable, ToXContentFragment {
         totalStats.toXContent(builder, params);
         builder.endObject();
         builder.startObject("pipelines");
-        for (Map.Entry<String, Stats> entry : statsPerPipeline.entrySet()) {
+        for (Map.Entry<String, Tuple<Stats, List<Tuple<String,Stats>>>> entry : statsPerPipeline.entrySet()) {
             builder.startObject(entry.getKey());
-            entry.getValue().toXContent(builder, params);
+            Stats pipelineStats = entry.getValue().v1();
+            pipelineStats.toXContent(builder, params);
+            List<Tuple<String,Stats>> perProcessorStats = entry.getValue().v2();
+            builder.startArray("processors");
+            for (Tuple<String,Stats> processorStats : perProcessorStats) {
+                builder.startObject();
+                builder.startObject(processorStats.v1());
+                processorStats.v2().toXContent(builder, params);
+                builder.endObject();
+                builder.endObject();
+            }
+
+            builder.endArray();
             builder.endObject();
         }
         builder.endObject();

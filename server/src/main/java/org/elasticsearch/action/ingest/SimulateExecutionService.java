@@ -21,9 +21,12 @@ package org.elasticsearch.action.ingest;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRunnable;
-import org.elasticsearch.ingest.IngestDocument;
-import org.elasticsearch.ingest.Pipeline;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.ingest.CompoundProcessor;
+import org.elasticsearch.ingest.IngestDocument;
+import org.elasticsearch.ingest.IngestService;
+import org.elasticsearch.ingest.IngestStats;
+import org.elasticsearch.ingest.Pipeline;
 import org.elasticsearch.ingest.PipelineProcessor;
 import org.elasticsearch.threadpool.ThreadPool;
 
@@ -50,14 +53,16 @@ class SimulateExecutionService {
         final Set<PipelineProcessor> pipelinesSeen = Collections.newSetFromMap(new IdentityHashMap<>());
         if (verbose) {
             List<SimulateProcessorResult> processorResultList = new ArrayList<>();
+            List<Tuple<String, IngestStats.Stats>> processorStats = new ArrayList<>();
             CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList, pipelinesSeen);
             try {
                 Pipeline verbosePipeline = new Pipeline(pipeline.getId(), pipeline.getDescription(), pipeline.getVersion(),
                     verbosePipelineProcessor);
                 ingestDocument.executePipeline(verbosePipeline);
-                return new SimulateDocumentVerboseResult(processorResultList);
+
+                return new SimulateDocumentVerboseResult(processorResultList, IngestService.getProcessorStats(verbosePipelineProcessor, processorStats));
             } catch (Exception e) {
-                return new SimulateDocumentVerboseResult(processorResultList);
+                return new SimulateDocumentVerboseResult(processorResultList, IngestService.getProcessorStats(verbosePipelineProcessor, processorStats));
             }
         } else {
             try {
