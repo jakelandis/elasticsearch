@@ -33,6 +33,7 @@ import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.test.ESTestCase;
+import org.hamcrest.CoreMatchers;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -95,19 +96,13 @@ public class ConditionalProcessorTests extends ESTestCase {
         processor.execute(ingestDocument);
         assertThat(ingestDocument.getSourceAndMetadata().get(conditionalField), is(falseValue));
         assertThat(ingestDocument.getSourceAndMetadata(), not(hasKey("foo")));
-        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), equalTo(0L));
+        assertStats(processor, 0, 0, 0);
 
         ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
         ingestDocument.setFieldValue(conditionalField, falseValue);
         ingestDocument.setFieldValue("error", true);
         processor.execute(ingestDocument);
-        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), equalTo(0L));
+        assertStats(processor, 0, 0, 0);
 
         //true, always call processor and increments metrics
         ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
@@ -115,20 +110,14 @@ public class ConditionalProcessorTests extends ESTestCase {
         processor.execute(ingestDocument);
         assertThat(ingestDocument.getSourceAndMetadata().get(conditionalField), is(trueValue));
         assertThat(ingestDocument.getSourceAndMetadata().get("foo"), is("bar"));
-        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(1L));
-        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), greaterThanOrEqualTo(2L));
+        assertStats(processor, 1, 0, 2);
 
         ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
         ingestDocument.setFieldValue(conditionalField, trueValue);
         ingestDocument.setFieldValue("error", true);
         IngestDocument finalIngestDocument = ingestDocument;
         expectThrows(RuntimeException.class, () -> processor.execute(finalIngestDocument));
-        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(2L));
-        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
-        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(1L));
-        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), greaterThanOrEqualTo(4L));
+        assertStats(processor, 2, 1, 4);
     }
 
     @SuppressWarnings("unchecked")
@@ -174,6 +163,14 @@ public class ConditionalProcessorTests extends ESTestCase {
         Exception e = expectedException.get();
         assertThat(e, instanceOf(UnsupportedOperationException.class));
         assertEquals("Mutating ingest documents in conditionals is not supported", e.getMessage());
-        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
+        assertStats(processor, 0, 0, 0);
+    }
+
+    private static void assertStats(ConditionalProcessor conditionalProcessor, long count, long failed, long time) {
+        IngestStats.Stats stats = conditionalProcessor.getMetric().createStats();
+        assertThat(stats.getIngestCount(), equalTo(count));
+        assertThat(stats.getIngestCurrent(), equalTo(0L));
+        assertThat(stats.getIngestFailedCount(), equalTo(failed));
+        assertThat(stats.getIngestTimeInMillis(), greaterThanOrEqualTo(time));
     }
 }

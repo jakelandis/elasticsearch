@@ -88,6 +88,14 @@ public class IngestStats implements Writeable, ToXContentFragment {
         return statsPerPipeline;
     }
 
+    public IngestStats.Stats getStatsForPipeline(String id) {
+        return statsPerPipeline.get(id).v1();
+    }
+
+    public List<Tuple<String, Stats>> getProcessorStatsForPipeline(String id) {
+        return statsPerPipeline.get(id).v2();
+    }
+
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject("ingest");
