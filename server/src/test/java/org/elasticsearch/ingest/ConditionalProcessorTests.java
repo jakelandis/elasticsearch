@@ -34,6 +34,9 @@ import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.test.ESTestCase;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
@@ -66,6 +69,10 @@ public class ConditionalProcessorTests extends ESTestCase {
             new Processor() {
                 @Override
                 public IngestDocument execute(final IngestDocument ingestDocument) throws Exception {
+                    Thread.sleep(2); //to ensure timer is incremented
+                    if(ingestDocument.hasField("error")){
+                        throw new RuntimeException("error");
+                    }
                     ingestDocument.setFieldValue("foo", "bar");
                     return ingestDocument;
                 }
@@ -81,18 +88,47 @@ public class ConditionalProcessorTests extends ESTestCase {
                 }
             });
 
-        IngestDocument ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
-        ingestDocument.setFieldValue(conditionalField, trueValue);
-        processor.execute(ingestDocument);
-        assertThat(ingestDocument.getSourceAndMetadata().get(conditionalField), is(trueValue));
-        assertThat(ingestDocument.getSourceAndMetadata().get("foo"), is("bar"));
-
+        //false, never call processor never increments metrics
         String falseValue = "falsy";
-        ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
+        IngestDocument ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
         ingestDocument.setFieldValue(conditionalField, falseValue);
         processor.execute(ingestDocument);
         assertThat(ingestDocument.getSourceAndMetadata().get(conditionalField), is(falseValue));
         assertThat(ingestDocument.getSourceAndMetadata(), not(hasKey("foo")));
+        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), equalTo(0L));
+
+        ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
+        ingestDocument.setFieldValue(conditionalField, falseValue);
+        ingestDocument.setFieldValue("error", true);
+        processor.execute(ingestDocument);
+        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), equalTo(0L));
+
+        //true, always call processor and increments metrics
+        ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
+        ingestDocument.setFieldValue(conditionalField, trueValue);
+        processor.execute(ingestDocument);
+        assertThat(ingestDocument.getSourceAndMetadata().get(conditionalField), is(trueValue));
+        assertThat(ingestDocument.getSourceAndMetadata().get("foo"), is("bar"));
+        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(1L));
+        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), greaterThanOrEqualTo(2L));
+
+        ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
+        ingestDocument.setFieldValue(conditionalField, trueValue);
+        ingestDocument.setFieldValue("error", true);
+        IngestDocument finalIngestDocument = ingestDocument;
+        expectThrows(RuntimeException.class, () -> processor.execute(finalIngestDocument));
+        assertThat(processor.getMetric().createStats().getIngestCount(), equalTo(2L));
+        assertThat(processor.getMetric().createStats().getIngestCurrent(), equalTo(0L));
+        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(1L));
+        assertThat(processor.getMetric().createStats().getIngestTimeInMillis(), greaterThanOrEqualTo(4L));
     }
 
     @SuppressWarnings("unchecked")
@@ -138,5 +174,6 @@ public class ConditionalProcessorTests extends ESTestCase {
         Exception e = expectedException.get();
         assertThat(e, instanceOf(UnsupportedOperationException.class));
         assertEquals("Mutating ingest documents in conditionals is not supported", e.getMessage());
+        assertThat(processor.getMetric().createStats().getIngestFailedCount(), equalTo(0L));
     }
 }

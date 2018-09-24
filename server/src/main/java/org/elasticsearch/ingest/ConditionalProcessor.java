@@ -65,6 +65,7 @@ public class ConditionalProcessor extends AbstractProcessor {
                 return processor.execute(ingestDocument);
             } catch (Exception e) {
                 metric.ingestFailed();
+                throw e;
             } finally {
                 long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
                 metric.postIngest(ingestTimeInMillis);

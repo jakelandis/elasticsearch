@@ -58,24 +58,6 @@ public class CompoundProcessor implements Processor {
         processors.forEach(p -> processorsWithMetrics.add(new Tuple<>(p, new IngestMetric())));
     }
 
-    public class ProcessorWithMetric{
-        private final Processor processor;
-        private final IngestMetric metric;
-
-        ProcessorWithMetric(Processor processor) {
-            this.processor = processor;
-            this.metric = new IngestMetric();
-        }
-
-        public Processor getProcessor() {
-            return processor;
-        }
-
-        public IngestMetric getMetric() {
-            return metric;
-        }
-    }
-
     public List<Tuple<Processor, IngestMetric>> getProcessorsWithMetrics() {
         return processorsWithMetrics;
     }

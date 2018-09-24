@@ -34,10 +34,16 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class IngestStats implements Writeable, ToXContentFragment {
-    private  Stats totalStats; //TODO: put back to final
-    private  Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline; //TODO: put back to final
+    private final Stats totalStats;
+    private final Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline;
 
-    public IngestStats(Stats totalStats, Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>>statsPerPipeline) {
+    /**
+     * @param totalStats       - The total stats for Ingest. This is the logically the sum of all pipeline stats,
+     *                         and pipeline stats are logically the sum of the processor stats.
+     * @param statsPerPipeline - A Map(pipelineId -> Tuple(pipelineStats, List(perProcessorStats))
+     *                         where perProcessorStats = Tuple(processorDisplayName, processorStats)
+     */
+    public IngestStats(Stats totalStats, Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> statsPerPipeline) {
         this.totalStats = totalStats;
         this.statsPerPipeline = statsPerPipeline;
     }
@@ -45,25 +51,25 @@ public class IngestStats implements Writeable, ToXContentFragment {
     /**
      * Read from a stream.
      */
-    //TODO !!
     public IngestStats(StreamInput in) throws IOException {
-//        this.totalStats = new Stats(in);
-//        int size = in.readVInt();
-//        this.statsPerPipeline = new HashMap<>(size);
-//        for (int i = 0; i < size; i++) {
-//            statsPerPipeline.put(in.readString(), new Stats(in));
-//        }
+        this.totalStats = new Stats(in);
+        int size = in.readVInt();
+        this.statsPerPipeline = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            statsPerPipeline.put(in.readString(), new Tuple<>(new Stats(in), null));
+            //TODO: add processor metrics
+        }
     }
 
-    //TODO !!
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-//        totalStats.writeTo(out);
-//        out.writeVInt(statsPerPipeline.size());
-//        for (Map.Entry<String, Stats> entry : statsPerPipeline.entrySet()) {
-//            out.writeString(entry.getKey());
-//            entry.getValue().writeTo(out);
-//        }
+        totalStats.writeTo(out);
+        out.writeVInt(statsPerPipeline.size());
+        for (Map.Entry<String, Tuple<Stats, List<Tuple<String, Stats>>>> entry : statsPerPipeline.entrySet()) {
+            out.writeString(entry.getKey());
+            entry.getValue().v1().writeTo(out);
+            //TODO: add the processor metrics
+        }
     }
 
 
@@ -75,7 +81,8 @@ public class IngestStats implements Writeable, ToXContentFragment {
     }
 
     /**
-     * @return The stats on a per pipeline basis
+     * @return The stats on a per pipeline basis.  A Map(pipelineId -> Tuple(pipelineStats, List(perProcessorStats))
+     * where perProcessorStats = Tuple(processorDisplayName, processorStats)
      */
     public Map<String, Tuple<IngestStats.Stats, List<Tuple<String, IngestStats.Stats>>>> getStatsPerPipeline() {
         return statsPerPipeline;

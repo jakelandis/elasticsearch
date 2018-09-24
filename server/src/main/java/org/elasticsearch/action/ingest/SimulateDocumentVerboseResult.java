@@ -40,13 +40,14 @@ import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constru
 public final class SimulateDocumentVerboseResult implements SimulateDocumentResult {
     public static final String PROCESSOR_RESULT_FIELD = "processor_results";
     private final List<SimulateProcessorResult> processorResults;
-    private List<Tuple<String, IngestStats.Stats>> processorStats; //TODO: anyway to make this final ?
+    private final List<Tuple<String, IngestStats.Stats>> processorStats; //TODO: anyway to make this final ?
     @SuppressWarnings("unchecked")
     public static final ConstructingObjectParser<SimulateDocumentVerboseResult, Void> PARSER =
         new ConstructingObjectParser<>(
             "simulate_document_verbose_result",
             true,
             a -> new SimulateDocumentVerboseResult((List<SimulateProcessorResult>)a[0], null)
+            //TODO: ^^ fix the null up there!
         );
     static {
         PARSER.declareObjectArray(constructorArg(), SimulateProcessorResult.PARSER, new ParseField(PROCESSOR_RESULT_FIELD));
@@ -63,8 +64,11 @@ public final class SimulateDocumentVerboseResult implements SimulateDocumentResu
     public SimulateDocumentVerboseResult(StreamInput in) throws IOException {
         int size = in.readVInt();
         processorResults = new ArrayList<>(size);
+        //TODO: fix this ... should need to be null here.
+            this.processorStats = null;
         for (int i = 0; i < size; i++) {
             processorResults.add(new SimulateProcessorResult(in));
+            //TODO: add the per processor metrics
         }
     }
 
@@ -73,6 +77,7 @@ public final class SimulateDocumentVerboseResult implements SimulateDocumentResu
         out.writeVInt(processorResults.size());
         for (SimulateProcessorResult result : processorResults) {
             result.writeTo(out);
+            //TODO: add the per processor metrics
         }
     }
 
@@ -89,6 +94,7 @@ public final class SimulateDocumentVerboseResult implements SimulateDocumentResu
         }
         builder.endArray();
 
+        //TODO: I dont think this is the right place to put this!
         if(processorStats != null) {
             builder.startArray("stats");
             for (Tuple<String, IngestStats.Stats> singleStat : processorStats) {

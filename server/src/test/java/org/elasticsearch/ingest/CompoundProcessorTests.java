@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
@@ -49,13 +50,25 @@ public class CompoundProcessorTests extends ESTestCase {
     }
 
     public void testSingleProcessor() throws Exception {
-        TestProcessor processor = new TestProcessor(ingestDocument -> {});
+        TestProcessor processor = new TestProcessor(ingestDocument -> {
+            try {
+                Thread.sleep(2);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+        });
         CompoundProcessor compoundProcessor = new CompoundProcessor(processor);
         assertThat(compoundProcessor.getProcessors().size(), equalTo(1));
         assertThat(compoundProcessor.getProcessors().get(0), sameInstance(processor));
         assertThat(compoundProcessor.getOnFailureProcessors().isEmpty(), is(true));
         compoundProcessor.execute(ingestDocument);
         assertThat(processor.getInvokedCounter(), equalTo(1));
+        assertThat(compoundProcessor.getProcessorsWithMetrics().get(0).v1(), equalTo(processor));
+        IngestStats.Stats stats = compoundProcessor.getProcessorsWithMetrics().get(0).v2().createStats();
+        assertThat(stats.getIngestCount(), equalTo(1L));
+        assertThat(stats.getIngestCurrent(), equalTo(0L));
+        assertThat(stats.getIngestFailedCount(), equalTo(0L));
+        assertThat(stats.getIngestTimeInMillis(), greaterThanOrEqualTo(2L));
     }
 
     public void testSingleProcessorWithException() throws Exception {
