@@ -20,6 +20,8 @@
 package org.elasticsearch.ingest;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.metrics.Metric;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +43,7 @@ public class CompoundProcessor implements Processor {
     private final boolean ignoreFailure;
     private final List<Processor> processors;
     private final List<Processor> onFailureProcessors;
-    private final List<ProcessorWithMetric> processorsWithMetrics;
+    private final List<Tuple<Processor, IngestMetric>> processorsWithMetrics;
 
     public CompoundProcessor(Processor... processor) {
         this(false, Arrays.asList(processor), Collections.emptyList());
@@ -53,7 +55,7 @@ public class CompoundProcessor implements Processor {
         this.processors = processors;
         this.onFailureProcessors = onFailureProcessors;
         processorsWithMetrics = new ArrayList<>(processors.size());
-        processors.forEach(p -> processorsWithMetrics.add(new ProcessorWithMetric(p)));
+        processors.forEach(p -> processorsWithMetrics.add(new Tuple<>(p, new IngestMetric())));
     }
 
     public class ProcessorWithMetric{
@@ -74,7 +76,7 @@ public class CompoundProcessor implements Processor {
         }
     }
 
-    public List<ProcessorWithMetric> getProcessorsWithMetrics() {
+    public List<Tuple<Processor, IngestMetric>> getProcessorsWithMetrics() {
         return processorsWithMetrics;
     }
 
@@ -120,23 +122,23 @@ public class CompoundProcessor implements Processor {
 
     @Override
     public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
-        for (ProcessorWithMetric processorWithMetric : processorsWithMetrics) {
-            Processor processor = processorWithMetric.getProcessor();
+        for (Tuple<Processor, IngestMetric> processorWithMetric : processorsWithMetrics) {
+            Processor processor = processorWithMetric.v1();
+            IngestMetric metric = processorWithMetric.v2();
             long startTimeInNanos = System.nanoTime();
             try {
-                processorWithMetric.getMetric().preIngest();
+                metric.preIngest();
                 if (processor.execute(ingestDocument) == null) {
                     return null;
                 }
             } catch (Exception e) {
-                processorWithMetric.getMetric().ingestFailed();
+                metric.ingestFailed();
                 if (ignoreFailure) {
                     continue;
                 }
 
                 ElasticsearchException compoundProcessorException =
-                    newCompoundProcessorException(e, processorWithMetric.getProcessor().getType(),
-                        processorWithMetric.getProcessor().getTag());
+                    newCompoundProcessorException(e, processor.getType(), processor.getTag());
                 if (onFailureProcessors.isEmpty()) {
                     throw compoundProcessorException;
                 } else {
@@ -145,7 +147,7 @@ public class CompoundProcessor implements Processor {
                 }
             } finally {
                 long ingestTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeInNanos);
-                processorWithMetric.getMetric().postIngest(ingestTimeInMillis);
+                metric.postIngest(ingestTimeInMillis);
             }
         }
         return ingestDocument;
