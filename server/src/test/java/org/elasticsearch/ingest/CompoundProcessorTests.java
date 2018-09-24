@@ -63,12 +63,8 @@ public class CompoundProcessorTests extends ESTestCase {
         assertThat(compoundProcessor.getOnFailureProcessors().isEmpty(), is(true));
         compoundProcessor.execute(ingestDocument);
         assertThat(processor.getInvokedCounter(), equalTo(1));
-        assertThat(compoundProcessor.getProcessorsWithMetrics().get(0).v1(), equalTo(processor));
-        IngestStats.Stats stats = compoundProcessor.getProcessorsWithMetrics().get(0).v2().createStats();
-        assertThat(stats.getIngestCount(), equalTo(1L));
-        assertThat(stats.getIngestCurrent(), equalTo(0L));
-        assertThat(stats.getIngestFailedCount(), equalTo(0L));
-        assertThat(stats.getIngestTimeInMillis(), greaterThanOrEqualTo(2L));
+        assertStats(compoundProcessor, 1, 0, 2);
+
     }
 
     public void testSingleProcessorWithException() throws Exception {
@@ -84,6 +80,8 @@ public class CompoundProcessorTests extends ESTestCase {
             assertThat(e.getRootCause().getMessage(), equalTo("error"));
         }
         assertThat(processor.getInvokedCounter(), equalTo(1));
+        assertStats(compoundProcessor, 1, 1, 0);
+
     }
 
     public void testIgnoreFailure() throws Exception {
@@ -92,13 +90,20 @@ public class CompoundProcessorTests extends ESTestCase {
         CompoundProcessor compoundProcessor = new CompoundProcessor(true, Arrays.asList(processor1, processor2), Collections.emptyList());
         compoundProcessor.execute(ingestDocument);
         assertThat(processor1.getInvokedCounter(), equalTo(1));
+        assertStats(0, compoundProcessor, 1, 1, 0);
         assertThat(processor2.getInvokedCounter(), equalTo(1));
+        assertStats(1, compoundProcessor, 1, 0, 0);
         assertThat(ingestDocument.getFieldValue("field", String.class), equalTo("value"));
     }
 
     public void testSingleProcessorWithOnFailureProcessor() throws Exception {
         TestProcessor processor1 = new TestProcessor("id", "first", ingestDocument -> {throw new RuntimeException("error");});
         TestProcessor processor2 = new TestProcessor(ingestDocument -> {
+            try {
+                Thread.sleep(2); //the metrics should include the failure as part of it's timing
+            } catch (InterruptedException e) {
+                //do nothing
+            }
             Map<String, Object> ingestMetadata = ingestDocument.getIngestMetadata();
             assertThat(ingestMetadata.size(), equalTo(3));
             assertThat(ingestMetadata.get(CompoundProcessor.ON_FAILURE_MESSAGE_FIELD), equalTo("error"));
@@ -107,16 +112,22 @@ public class CompoundProcessorTests extends ESTestCase {
         });
 
         CompoundProcessor compoundProcessor = new CompoundProcessor(false, Collections.singletonList(processor1),
-                Collections.singletonList(processor2));
+            Collections.singletonList(processor2));
         compoundProcessor.execute(ingestDocument);
 
         assertThat(processor1.getInvokedCounter(), equalTo(1));
+        assertStats(0, compoundProcessor, 1, 1, 2);
         assertThat(processor2.getInvokedCounter(), equalTo(1));
     }
 
     public void testSingleProcessorWithNestedFailures() throws Exception {
         TestProcessor processor = new TestProcessor("id", "first", ingestDocument -> {throw new RuntimeException("error");});
         TestProcessor processorToFail = new TestProcessor("id2", "second", ingestDocument -> {
+            try {
+                Thread.sleep(2); //the metrics should include the failure as part of it's timing
+            } catch (InterruptedException e) {
+                //do nothing
+            }
             Map<String, Object> ingestMetadata = ingestDocument.getIngestMetadata();
             assertThat(ingestMetadata.size(), equalTo(3));
             assertThat(ingestMetadata.get(CompoundProcessor.ON_FAILURE_MESSAGE_FIELD), equalTo("error"));
@@ -125,6 +136,11 @@ public class CompoundProcessorTests extends ESTestCase {
             throw new RuntimeException("error");
         });
         TestProcessor lastProcessor = new TestProcessor(ingestDocument -> {
+            try {
+                Thread.sleep(2); //the metrics should include the failure as part of it's timing
+            } catch (InterruptedException e) {
+                //do nothing
+            }
             Map<String, Object> ingestMetadata = ingestDocument.getIngestMetadata();
             assertThat(ingestMetadata.size(), equalTo(3));
             assertThat(ingestMetadata.get(CompoundProcessor.ON_FAILURE_MESSAGE_FIELD), equalTo("error"));
@@ -132,13 +148,14 @@ public class CompoundProcessorTests extends ESTestCase {
             assertThat(ingestMetadata.get(CompoundProcessor.ON_FAILURE_PROCESSOR_TAG_FIELD), equalTo("id2"));
         });
         CompoundProcessor compoundOnFailProcessor = new CompoundProcessor(false, Collections.singletonList(processorToFail),
-                Collections.singletonList(lastProcessor));
+            Collections.singletonList(lastProcessor));
         CompoundProcessor compoundProcessor = new CompoundProcessor(false, Collections.singletonList(processor),
-                Collections.singletonList(compoundOnFailProcessor));
+            Collections.singletonList(compoundOnFailProcessor));
         compoundProcessor.execute(ingestDocument);
 
         assertThat(processorToFail.getInvokedCounter(), equalTo(1));
         assertThat(lastProcessor.getInvokedCounter(), equalTo(1));
+        assertStats(0, compoundProcessor, 1, 1, 4); //only the original failure is counted
     }
 
     public void testCompoundProcessorExceptionFailWithoutOnFailure() throws Exception {
@@ -159,12 +176,13 @@ public class CompoundProcessorTests extends ESTestCase {
 
         assertThat(firstProcessor.getInvokedCounter(), equalTo(1));
         assertThat(secondProcessor.getInvokedCounter(), equalTo(1));
+        assertStats(0, compoundProcessor, 1, 1, 0);
     }
 
     public void testCompoundProcessorExceptionFail() throws Exception {
         TestProcessor firstProcessor = new TestProcessor("id1", "first", ingestDocument -> {throw new RuntimeException("error");});
         TestProcessor failProcessor =
-                new TestProcessor("tag_fail", "fail", ingestDocument -> {throw new RuntimeException("custom error message");});
+            new TestProcessor("tag_fail", "fail", ingestDocument -> {throw new RuntimeException("custom error message");});
         TestProcessor secondProcessor = new TestProcessor("id3", "second", ingestDocument -> {
             Map<String, Object> ingestMetadata = ingestDocument.getIngestMetadata();
             assertThat(ingestMetadata.entrySet(), hasSize(3));
@@ -182,12 +200,13 @@ public class CompoundProcessorTests extends ESTestCase {
 
         assertThat(firstProcessor.getInvokedCounter(), equalTo(1));
         assertThat(secondProcessor.getInvokedCounter(), equalTo(1));
+        assertStats(0, compoundProcessor, 1, 1, 0);
     }
 
     public void testCompoundProcessorExceptionFailInOnFailure() throws Exception {
         TestProcessor firstProcessor = new TestProcessor("id1", "first", ingestDocument -> {throw new RuntimeException("error");});
         TestProcessor failProcessor =
-                new TestProcessor("tag_fail", "fail", ingestDocument -> {throw new RuntimeException("custom error message");});
+            new TestProcessor("tag_fail", "fail", ingestDocument -> {throw new RuntimeException("custom error message");});
         TestProcessor secondProcessor = new TestProcessor("id3", "second", ingestDocument -> {
             Map<String, Object> ingestMetadata = ingestDocument.getIngestMetadata();
             assertThat(ingestMetadata.entrySet(), hasSize(3));
@@ -205,6 +224,7 @@ public class CompoundProcessorTests extends ESTestCase {
 
         assertThat(firstProcessor.getInvokedCounter(), equalTo(1));
         assertThat(secondProcessor.getInvokedCounter(), equalTo(1));
+        assertStats(0, compoundProcessor, 1, 1, 0);
     }
 
     public void testBreakOnFailure() throws Exception {
@@ -217,6 +237,18 @@ public class CompoundProcessorTests extends ESTestCase {
         assertThat(firstProcessor.getInvokedCounter(), equalTo(1));
         assertThat(secondProcessor.getInvokedCounter(), equalTo(0));
         assertThat(onFailureProcessor.getInvokedCounter(), equalTo(1));
+        assertStats(0, pipeline, 1, 1, 0);
+    }
 
+    private void assertStats(CompoundProcessor compoundProcessor, long count,  long failed, long time) {
+        assertStats(0, compoundProcessor, count, failed, time);
+    }
+
+    private void assertStats(int processor, CompoundProcessor compoundProcessor, long count,  long failed, long time) {
+        IngestStats.Stats stats = compoundProcessor.getProcessorsWithMetrics().get(processor).v2().createStats();
+        assertThat(stats.getIngestCount(), equalTo(count));
+        assertThat(stats.getIngestCurrent(), equalTo(0L));
+        assertThat(stats.getIngestFailedCount(), equalTo(failed));
+        assertThat(stats.getIngestTimeInMillis(), greaterThanOrEqualTo(time));
     }
 }
