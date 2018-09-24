@@ -267,7 +267,9 @@ public class IngestService implements ClusterStateApplier {
                     List<Tuple<Processor, IngestMetric>> newPerProcessMetrics = new ArrayList<>();
                     getProcessorMetrics(originalPipeline.getCompoundProcessor(), oldPerProcessMetrics);
                     getProcessorMetrics(pipeline.getCompoundProcessor(), newPerProcessMetrics);
-                    //Best attempt to populate new metrics with old metrics parallel array.
+                    //Best attempt to populate new processor metrics using a parallel array of the old metrics. There are cases were it may
+                    //not be intuitive why the per processor metrics get reset. Unique and consistent id's per processor or semantic equals
+                    //for each processor are needed if this parallel arrays approach proves to be insufficient.
                     if(newPerProcessMetrics.size() == oldPerProcessMetrics.size()) {
                         Iterator<Tuple<Processor, IngestMetric>> oldMetricsIterator = oldPerProcessMetrics.iterator();
                         for (Tuple<Processor, IngestMetric> compositeMetric : newPerProcessMetrics) {

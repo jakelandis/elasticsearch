@@ -831,7 +831,10 @@ public class IngestServiceTests extends ESTestCase {
         //pipeline
         assertPipelineStats(afterThirdRequestStats, "_id1", 2, 0, 0);
         assertPipelineStats(afterThirdRequestStats, "_id2", 1, 0, 0);
-        //processor, the number of processor for id1 pipeline changed, so the per-processor metrics are not carried forward
+        //The number of processors for the "id1" pipeline changed, so the per-processor metrics are not carried forward. This is
+        //due to the parallel array's used to identify which metrics to carry forward. With out unique ids or semantic equals for each
+        //processor, parallel arrays are the best option for of carrying forward metrics between pipeline changes. However, in some cases,
+        //like this one it may not readily obvious why the metrics were not carried forward.
         assertProcessorStats(0, afterThirdRequestStats, "_id1", 1, 0, 0);
         assertProcessorStats(1, afterThirdRequestStats, "_id1", 1, 0, 0);
         assertProcessorStats(0, afterThirdRequestStats, "_id2", 1, 0, 0);
@@ -854,8 +857,8 @@ public class IngestServiceTests extends ESTestCase {
         assertPipelineStats(afterForthRequestStats, "_id1", 3, 0, 0);
         assertPipelineStats(afterForthRequestStats, "_id2", 1, 0, 0);
         //processor
-        assertProcessorStats(0, afterForthRequestStats, "_id1", 1, 1, 0); //not carried forward, type changed
-        assertProcessorStats(1, afterForthRequestStats, "_id1", 2, 0, 0); //carried forward from old stats
+        assertProcessorStats(0, afterForthRequestStats, "_id1", 1, 1, 0); //not carried forward since type changed
+        assertProcessorStats(1, afterForthRequestStats, "_id1", 2, 0, 0); //carried forward and added from old stats
         assertProcessorStats(0, afterForthRequestStats, "_id2", 1, 0, 0);
     }
 
