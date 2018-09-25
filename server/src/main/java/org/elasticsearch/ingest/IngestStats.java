@@ -28,6 +28,7 @@ import org.elasticsearch.common.xcontent.ToXContentFragment;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +57,15 @@ public class IngestStats implements Writeable, ToXContentFragment {
         int size = in.readVInt();
         this.statsPerPipeline = new HashMap<>(size);
         for (int i = 0; i < size; i++) {
-            statsPerPipeline.put(in.readString(), new Tuple<>(new Stats(in), null));
-            //TODO: add processor metrics
+            String pipelineName = in.readString();
+            Stats pipelineStats = new Stats(in);
+            int processorsSize = in.readVInt();
+            List<Tuple<String, IngestStats.Stats>> processors = new ArrayList<>(processorsSize);
+            for (int j = 0; j < processorsSize; j++) {
+                String processorName = in.readString();
+                processors.add(new Tuple<>(processorName, new Stats(in)));
+            }
+            statsPerPipeline.put(pipelineName, new Tuple<>(pipelineStats, processors));
         }
     }
 
@@ -66,12 +74,20 @@ public class IngestStats implements Writeable, ToXContentFragment {
         totalStats.writeTo(out);
         out.writeVInt(statsPerPipeline.size());
         for (Map.Entry<String, Tuple<Stats, List<Tuple<String, Stats>>>> entry : statsPerPipeline.entrySet()) {
-            out.writeString(entry.getKey());
-            entry.getValue().v1().writeTo(out);
-            //TODO: add the processor metrics
+            String pipelineName = entry.getKey();
+            Stats pipelineStats = entry.getValue().v1();
+            out.writeString(pipelineName);
+            pipelineStats.writeTo(out);
+            List<Tuple<String, Stats>> processorStats = entry.getValue().v2();
+            out.writeVInt(processorStats.size());
+            for(Tuple<String, Stats> processorTuple : processorStats){
+                String processorName = processorTuple.v1();
+                Stats processorStat = processorTuple.v2();
+                out.writeString(processorName);
+                processorStat.writeTo(out);
+            }
         }
     }
-
 
     /**
      * @return The accumulated stats for all pipelines
