@@ -19,13 +19,11 @@
 package org.elasticsearch.action.ingest;
 
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.ingest.IngestStats;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,21 +37,22 @@ import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constru
  */
 public final class SimulateDocumentVerboseResult implements SimulateDocumentResult {
     public static final String PROCESSOR_RESULT_FIELD = "processor_results";
+    public static final String PROCESSOR_STATS_FIELD = "processor_stats";
     private final List<SimulateProcessorResult> processorResults;
-    private final List<Tuple<String, IngestStats.Stats>> processorStats; //TODO: anyway to make this final ?
+    private final List<SimulateProcessorStatsResult> processorStats; //TODO: anyway to make this final ?
     @SuppressWarnings("unchecked")
     public static final ConstructingObjectParser<SimulateDocumentVerboseResult, Void> PARSER =
         new ConstructingObjectParser<>(
             "simulate_document_verbose_result",
             true,
-            a -> new SimulateDocumentVerboseResult((List<SimulateProcessorResult>)a[0], null)
-            //TODO: ^^ fix the null up there!
+            a -> new SimulateDocumentVerboseResult((List<SimulateProcessorResult>)a[0], (List<SimulateProcessorStatsResult>)a[1])
         );
     static {
         PARSER.declareObjectArray(constructorArg(), SimulateProcessorResult.PARSER, new ParseField(PROCESSOR_RESULT_FIELD));
+        PARSER.declareObjectArray(constructorArg(), SimulateProcessorStatsResult.PARSER, new ParseField(PROCESSOR_STATS_FIELD));
     }
 
-    public SimulateDocumentVerboseResult(List<SimulateProcessorResult> processorResults, List<Tuple<String, IngestStats.Stats>> processorStats) {
+    public SimulateDocumentVerboseResult(List<SimulateProcessorResult> processorResults, List<SimulateProcessorStatsResult> processorStats) {
         this.processorResults = processorResults;
         this.processorStats = processorStats;
     }
@@ -93,20 +92,11 @@ public final class SimulateDocumentVerboseResult implements SimulateDocumentResu
             processorResult.toXContent(builder, params);
         }
         builder.endArray();
-
-        //TODO: I dont think this is the right place to put this!
-        if(processorStats != null) {
-            builder.startArray("stats");
-            for (Tuple<String, IngestStats.Stats> singleStat : processorStats) {
-                builder.startObject();
-                builder.startObject(singleStat.v1());
-                singleStat.v2().toXContent(builder, params);
-                builder.endObject();
-                builder.endObject();
-            }
-            builder.endArray();
+        builder.startArray(PROCESSOR_STATS_FIELD);
+        for (SimulateProcessorStatsResult processorStat : processorStats) {
+            processorStat.toXContent(builder, params);
         }
-
+        builder.endArray();
         builder.endObject();
         return builder;
     }

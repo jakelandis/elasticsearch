@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.elasticsearch.ingest.TrackingResultProcessor.decorate;
 
@@ -60,9 +61,13 @@ class SimulateExecutionService {
                     verbosePipelineProcessor);
                 ingestDocument.executePipeline(verbosePipeline);
 
-                return new SimulateDocumentVerboseResult(processorResultList, IngestService.getProcessorStats(verbosePipelineProcessor, processorStats));
+                return new SimulateDocumentVerboseResult(processorResultList,
+                    IngestService.getProcessorStats(verbosePipelineProcessor, processorStats).stream()
+                        .map(SimulateProcessorStatsResult::new).collect(Collectors.toList()));
             } catch (Exception e) {
-                return new SimulateDocumentVerboseResult(processorResultList, IngestService.getProcessorStats(verbosePipelineProcessor, processorStats));
+                return new SimulateDocumentVerboseResult(processorResultList,
+                    IngestService.getProcessorStats(verbosePipelineProcessor, processorStats).stream()
+                        .map(SimulateProcessorStatsResult::new).collect(Collectors.toList()));
             }
         } else {
             try {
