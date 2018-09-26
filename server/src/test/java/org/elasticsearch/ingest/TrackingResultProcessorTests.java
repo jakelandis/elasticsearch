@@ -84,7 +84,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         RuntimeException exception = new RuntimeException("processor failed");
         TestProcessor testProcessor = new TestProcessor(ingestDocument -> {  throw exception; });
         CompoundProcessor actualProcessor = new CompoundProcessor(testProcessor);
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen, null);
 
         try {
             trackingProcessor.execute(ingestDocument);
@@ -110,7 +110,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
                 Arrays.asList(failProcessor, onFailureProcessor),
                 Arrays.asList(onFailureProcessor, failProcessor))),
             Arrays.asList(onFailureProcessor));
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen, null);
         trackingProcessor.execute(ingestDocument);
 
         SimulateProcessorResult expectedFailResult = new SimulateProcessorResult(failProcessor.getTag(), ingestDocument);
@@ -148,7 +148,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         TestProcessor testProcessor = new TestProcessor(ingestDocument -> {  throw exception; });
         CompoundProcessor actualProcessor = new CompoundProcessor(true, Collections.singletonList(testProcessor),
             Collections.emptyList());
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen, null);
 
         trackingProcessor.execute(ingestDocument);
 
@@ -174,11 +174,10 @@ public class TrackingResultProcessorTests extends ESTestCase {
         String key2 = randomAlphaOfLength(10);
         String key3 = randomAlphaOfLength(10);
 
-
         String scriptName = "conditionalScript";
 
         ScriptService scriptService = new ScriptService(Settings.builder().build(), Collections.singletonMap(Script.DEFAULT_SCRIPT_LANG,
-            new MockScriptEngine(Script.DEFAULT_SCRIPT_LANG, Collections.singletonMap(scriptName, ctx -> false))),
+            new MockScriptEngine(Script.DEFAULT_SCRIPT_LANG, Collections.singletonMap(scriptName, ctx -> true))),
             new HashMap<>(ScriptModule.CORE_CONTEXTS)
         );
 
@@ -192,11 +191,6 @@ public class TrackingResultProcessorTests extends ESTestCase {
                 factory.create(Collections.emptyMap(), null, pipelineConfig2))
         ));
 
-//        Pipeline pipeline1 = new Pipeline(
-//            pipelineId1, null, null, new CompoundProcessor(
-//            new TestProcessor(ingestDocument -> {ingestDocument.setFieldValue(key1, randomInt()); }),
-//                factory.create(Collections.emptyMap(), null, pipelineConfig2)));
-
         Pipeline pipeline2 = new Pipeline(
             pipelineId2, null, null, new CompoundProcessor(
             new TestProcessor(ingestDocument -> {ingestDocument.setFieldValue(key2, randomInt()); }),
@@ -208,7 +202,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         PipelineProcessor pipelineProcessor = factory.create(Collections.emptyMap(), null, pipelineConfig1);
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor);
 
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen, null);
 
         trackingProcessor.execute(ingestDocument);
 
@@ -258,7 +252,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         PipelineProcessor pipelineProcessor = factory.create(Collections.emptyMap(), null, pipelineConfig);
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor);
 
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen, null);
 
         trackingProcessor.execute(ingestDocument);
 
@@ -300,7 +294,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor);
 
         IllegalStateException exception = expectThrows(IllegalStateException.class,
-            () -> decorate(actualProcessor, resultList, pipelinesSeen));
+            () -> decorate(actualProcessor, resultList, pipelinesSeen, null));
         assertThat(exception.getMessage(), equalTo("Cycle detected for pipeline: pipeline1"));
     }
 
@@ -322,7 +316,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
 
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor, pipelineProcessor);
 
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen, null);
 
         trackingProcessor.execute(ingestDocument);
 
