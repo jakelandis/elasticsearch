@@ -55,7 +55,8 @@ class SimulateExecutionService {
         if (verbose) {
             List<SimulateProcessorResult> processorResultList = new ArrayList<>();
             List<Tuple<String, IngestStats.Stats>> processorStats = new ArrayList<>();
-            CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList, pipelinesSeen);
+            CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList,
+                pipelinesSeen, null);
             try {
                 Pipeline verbosePipeline = new Pipeline(pipeline.getId(), pipeline.getDescription(), pipeline.getVersion(),
                     verbosePipelineProcessor);
