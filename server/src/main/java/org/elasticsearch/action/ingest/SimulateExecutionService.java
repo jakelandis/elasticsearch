@@ -50,7 +50,7 @@ class SimulateExecutionService {
         final Set<PipelineProcessor> pipelinesSeen = Collections.newSetFromMap(new IdentityHashMap<>());
         if (verbose) {
             List<SimulateProcessorResult> processorResultList = new ArrayList<>();
-            CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList, pipelinesSeen);
+            CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList, pipelinesSeen, null);
             try {
                 Pipeline verbosePipeline = new Pipeline(pipeline.getId(), pipeline.getDescription(), pipeline.getVersion(),
                     verbosePipelineProcessor);

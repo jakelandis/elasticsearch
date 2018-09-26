@@ -20,6 +20,7 @@
 package org.elasticsearch.ingest;
 
 import org.elasticsearch.action.ingest.SimulateProcessorResult;
+import org.elasticsearch.script.ScriptService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,38 +68,58 @@ public final class TrackingResultProcessor implements Processor {
     }
 
     public static CompoundProcessor decorate(CompoundProcessor compoundProcessor, List<SimulateProcessorResult> processorResultList,
-                                             Set<PipelineProcessor> pipelinesSeen) {
+                                             Set<PipelineProcessor> pipelinesSeen, ConditionalProcessor conditionalWrapper) {
         List<Processor> processors = new ArrayList<>(compoundProcessor.getProcessors().size());
         for (Processor processor : compoundProcessor.getProcessors()) {
+            //special case of a pipeline processor with conditional
+
+            if(processor instanceof ConditionalProcessor && ((ConditionalProcessor) processor).getProcessor() instanceof PipelineProcessor){
+                    conditionalWrapper = (ConditionalProcessor) processor;
+                    processor = ((ConditionalProcessor) processor).getProcessor();
+            }
+
             if (processor instanceof PipelineProcessor) {
                 PipelineProcessor pipelineProcessor = ((PipelineProcessor) processor);
                 if (pipelinesSeen.add(pipelineProcessor) == false) {
                     throw new IllegalStateException("Cycle detected for pipeline: " + pipelineProcessor.getPipeline().getId());
                 }
-                processors.add(decorate(pipelineProcessor.getPipeline().getCompoundProcessor(), processorResultList, pipelinesSeen));
+                processors.add(decorate(pipelineProcessor.getPipeline().getCompoundProcessor(), processorResultList, pipelinesSeen, conditionalWrapper));
+                conditionalWrapper = null;
                 pipelinesSeen.remove(pipelineProcessor);
             } else if (processor instanceof CompoundProcessor) {
-                processors.add(decorate((CompoundProcessor) processor, processorResultList, pipelinesSeen));
+                processors.add(decorate((CompoundProcessor) processor, processorResultList, pipelinesSeen, conditionalWrapper));
             } else {
-                processors.add(new TrackingResultProcessor(compoundProcessor.isIgnoreFailure(), processor, processorResultList));
+                if(conditionalWrapper == null){
+                    processors.add(new TrackingResultProcessor(compoundProcessor.isIgnoreFailure(), processor, processorResultList));
+                }else {
+                    processors.add(
+                        new ConditionalProcessor("fake-conditional", conditionalWrapper.getCondition(), conditionalWrapper.getScriptService(),new TrackingResultProcessor(compoundProcessor.isIgnoreFailure(), processor, processorResultList)));
+                }
             }
         }
         List<Processor> onFailureProcessors = new ArrayList<>(compoundProcessor.getProcessors().size());
-        for (Processor processor : compoundProcessor.getOnFailureProcessors()) {
-            if (processor instanceof PipelineProcessor) {
-                PipelineProcessor pipelineProcessor = ((PipelineProcessor) processor);
-                if (pipelinesSeen.add(pipelineProcessor) == false) {
-                    throw new IllegalStateException("Cycle detected for pipeline: " + pipelineProcessor.getPipeline().getId());
-                }
-                onFailureProcessors.add(decorate(pipelineProcessor.getPipeline().getCompoundProcessor(), processorResultList,
-                    pipelinesSeen));
-                pipelinesSeen.remove(pipelineProcessor);
-            } else if (processor instanceof CompoundProcessor) {
-                onFailureProcessors.add(decorate((CompoundProcessor) processor, processorResultList, pipelinesSeen));
-            } else {
-                onFailureProcessors.add(new TrackingResultProcessor(compoundProcessor.isIgnoreFailure(), processor, processorResultList));
-            }
-        }
+//        for (Processor processor : compoundProcessor.getOnFailureProcessors()) {
+//            //special case of a pipeline processor with conditional
+////            if(processor instanceof ConditionalProcessor){
+////                ConditionalProcessor conditionalProcessor = (ConditionalProcessor)processor;
+////                if(conditionalProcessor.getProcessor() instanceof PipelineProcessor){
+////                    processor = conditionalProcessor.getProcessor();
+////                }
+////            }
+//            if (processor instanceof PipelineProcessor) {
+//                PipelineProcessor pipelineProcessor = ((PipelineProcessor) processor);
+//                if (pipelinesSeen.add(pipelineProcessor) == false) {
+//                    throw new IllegalStateException("Cycle detected for pipeline: " + pipelineProcessor.getPipeline().getId());
+//                }
+//                onFailureProcessors.add(decorate(pipelineProcessor.getPipeline().getCompoundProcessor(), processorResultList,
+//                    pipelinesSeen));
+//                pipelinesSeen.remove(pipelineProcessor);
+//            } else if (processor instanceof CompoundProcessor) {
+//                onFailureProcessors.add(decorate((CompoundProcessor) processor, processorResultList, pipelinesSeen));
+//            } else {
+//                onFailureProcessors.add(new TrackingResultProcessor(compoundProcessor.isIgnoreFailure(), processor, processorResultList));
+//            }
+//        }
         return new CompoundProcessor(compoundProcessor.isIgnoreFailure(), processors, onFailureProcessors);
     }
 }

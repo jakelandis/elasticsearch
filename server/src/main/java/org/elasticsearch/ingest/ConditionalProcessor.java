@@ -65,6 +65,18 @@ public class ConditionalProcessor extends AbstractProcessor {
         return TYPE;
     }
 
+    Processor getProcessor() {
+        return processor;
+    }
+
+    Script getCondition() {
+        return condition;
+    }
+
+    ScriptService getScriptService() {
+        return scriptService;
+    }
+
     private static Object wrapUnmodifiable(Object raw) {
         // Wraps all mutable types that the JSON parser can create by immutable wrappers.
         // Any inputs not wrapped are assumed to be immutable

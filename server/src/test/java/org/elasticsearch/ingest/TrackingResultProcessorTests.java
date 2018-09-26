@@ -21,6 +21,12 @@ package org.elasticsearch.ingest;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ingest.SimulateProcessorResult;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.script.MockScriptEngine;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptModule;
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 
@@ -155,25 +161,51 @@ public class TrackingResultProcessorTests extends ESTestCase {
     }
 
     public void testActualPipelineProcessor() throws Exception {
-        String pipelineId = "pipeline1";
+        String pipelineId1 = "pipeline1";
+        String pipelineId2 = "pipeline2";
         IngestService ingestService = mock(IngestService.class);
-        Map<String, Object> pipelineConfig = new HashMap<>();
-        pipelineConfig.put("pipeline", pipelineId);
+        Map<String, Object> pipelineConfig1 = new HashMap<>();
+        pipelineConfig1.put("pipeline", pipelineId1);
+        Map<String, Object> pipelineConfig2 = new HashMap<>();
+        pipelineConfig2.put("pipeline", pipelineId2);
         PipelineProcessor.Factory factory = new PipelineProcessor.Factory(ingestService);
 
         String key1 = randomAlphaOfLength(10);
         String key2 = randomAlphaOfLength(10);
         String key3 = randomAlphaOfLength(10);
 
-        Pipeline pipeline = new Pipeline(
-            pipelineId, null, null, new CompoundProcessor(
-            new TestProcessor(ingestDocument -> {ingestDocument.setFieldValue(key1, randomInt()); }),
-            new TestProcessor(ingestDocument -> {ingestDocument.setFieldValue(key2, randomInt()); }),
-            new TestProcessor(ingestDocument -> { ingestDocument.setFieldValue(key3, randomInt()); }))
-        );
-        when(ingestService.getPipeline(pipelineId)).thenReturn(pipeline);
 
-        PipelineProcessor pipelineProcessor = factory.create(Collections.emptyMap(), null, pipelineConfig);
+        String scriptName = "conditionalScript";
+
+        ScriptService scriptService = new ScriptService(Settings.builder().build(), Collections.singletonMap(Script.DEFAULT_SCRIPT_LANG,
+            new MockScriptEngine(Script.DEFAULT_SCRIPT_LANG, Collections.singletonMap(scriptName, ctx -> false))),
+            new HashMap<>(ScriptModule.CORE_CONTEXTS)
+        );
+
+        //conditional pipeline
+        Pipeline pipeline1 = new Pipeline(
+            pipelineId1, null, null, new CompoundProcessor(
+            new TestProcessor(ingestDocument -> {ingestDocument.setFieldValue(key1, randomInt()); }),
+            new ConditionalProcessor(
+                randomAlphaOfLength(10),
+                new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, scriptName, Collections.emptyMap()), scriptService,
+                factory.create(Collections.emptyMap(), null, pipelineConfig2))
+        ));
+
+//        Pipeline pipeline1 = new Pipeline(
+//            pipelineId1, null, null, new CompoundProcessor(
+//            new TestProcessor(ingestDocument -> {ingestDocument.setFieldValue(key1, randomInt()); }),
+//                factory.create(Collections.emptyMap(), null, pipelineConfig2)));
+
+        Pipeline pipeline2 = new Pipeline(
+            pipelineId2, null, null, new CompoundProcessor(
+            new TestProcessor(ingestDocument -> {ingestDocument.setFieldValue(key2, randomInt()); }),
+            new TestProcessor(ingestDocument -> { ingestDocument.setFieldValue(key3, randomInt()); })));
+
+        when(ingestService.getPipeline(pipelineId1)).thenReturn(pipeline1);
+        when(ingestService.getPipeline(pipelineId2)).thenReturn(pipeline2);
+
+        PipelineProcessor pipelineProcessor = factory.create(Collections.emptyMap(), null, pipelineConfig1);
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor);
 
         CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
@@ -182,7 +214,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
 
         SimulateProcessorResult expectedResult = new SimulateProcessorResult(actualProcessor.getTag(), ingestDocument);
 
-        verify(ingestService).getPipeline(pipelineId);
+        // verify(ingestService).getPipeline(pipelineId1);
         assertThat(resultList.size(), equalTo(3));
 
         assertTrue(resultList.get(0).getIngestDocument().hasField(key1));
