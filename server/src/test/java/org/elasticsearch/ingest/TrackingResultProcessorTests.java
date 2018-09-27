@@ -28,10 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.elasticsearch.ingest.CompoundProcessor.ON_FAILURE_MESSAGE_FIELD;
 import static org.elasticsearch.ingest.CompoundProcessor.ON_FAILURE_PROCESSOR_TAG_FIELD;
@@ -50,13 +48,11 @@ public class TrackingResultProcessorTests extends ESTestCase {
 
     private IngestDocument ingestDocument;
     private List<SimulateProcessorResult> resultList;
-    private Set<PipelineProcessor> pipelinesSeen;
 
     @Before
     public void init() {
         ingestDocument = new IngestDocument(new HashMap<>(), new HashMap<>());
         resultList = new ArrayList<>();
-        pipelinesSeen = Collections.newSetFromMap(new IdentityHashMap<>());
     }
 
     public void testActualProcessor() throws Exception {
@@ -78,7 +74,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         RuntimeException exception = new RuntimeException("processor failed");
         TestProcessor testProcessor = new TestProcessor(ingestDocument -> {  throw exception; });
         CompoundProcessor actualProcessor = new CompoundProcessor(testProcessor);
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList);
 
         try {
             trackingProcessor.execute(ingestDocument);
@@ -104,7 +100,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
                 Arrays.asList(failProcessor, onFailureProcessor),
                 Arrays.asList(onFailureProcessor, failProcessor))),
             Arrays.asList(onFailureProcessor));
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList);
         trackingProcessor.execute(ingestDocument);
 
         SimulateProcessorResult expectedFailResult = new SimulateProcessorResult(failProcessor.getTag(), ingestDocument);
@@ -142,7 +138,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         TestProcessor testProcessor = new TestProcessor(ingestDocument -> {  throw exception; });
         CompoundProcessor actualProcessor = new CompoundProcessor(true, Collections.singletonList(testProcessor),
             Collections.emptyList());
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList);
 
         trackingProcessor.execute(ingestDocument);
 
@@ -176,7 +172,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         PipelineProcessor pipelineProcessor = factory.create(Collections.emptyMap(), null, pipelineConfig);
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor);
 
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList);
 
         trackingProcessor.execute(ingestDocument);
 
@@ -226,7 +222,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         PipelineProcessor pipelineProcessor = factory.create(Collections.emptyMap(), null, pipelineConfig);
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor);
 
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList);
 
         trackingProcessor.execute(ingestDocument);
 
@@ -268,7 +264,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor);
 
         IllegalStateException exception = expectThrows(IllegalStateException.class,
-            () -> decorate(actualProcessor, resultList, pipelinesSeen));
+            () -> decorate(actualProcessor, resultList));
         assertThat(exception.getMessage(), equalTo("Cycle detected for pipeline: pipeline1"));
     }
 
@@ -290,7 +286,7 @@ public class TrackingResultProcessorTests extends ESTestCase {
 
         CompoundProcessor actualProcessor = new CompoundProcessor(pipelineProcessor, pipelineProcessor);
 
-        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList, pipelinesSeen);
+        CompoundProcessor trackingProcessor = decorate(actualProcessor, resultList);
 
         trackingProcessor.execute(ingestDocument);
 
