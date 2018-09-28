@@ -23,13 +23,14 @@ import org.elasticsearch.action.ingest.SimulateProcessorResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Processor to be used within Simulate API to keep track of processors executed in pipeline.
  */
 public class TrackingResultProcessor implements Processor {
 
-    private  Processor actualProcessor;
+    private Processor actualProcessor;
     private final List<SimulateProcessorResult> processorResultList;
     private final boolean ignoreFailure;
 
@@ -42,13 +43,13 @@ public class TrackingResultProcessor implements Processor {
     @Override
     public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
         try {
-            if(actualProcessor instanceof ConditionalProcessor){
+            if (actualProcessor instanceof ConditionalProcessor) {
                 ConditionalProcessor conditionalProcessor = (ConditionalProcessor) actualProcessor;
-                if(conditionalProcessor.evaluate(ingestDocument) == false){
+                if (conditionalProcessor.evaluate(ingestDocument) == false) {
                     return ingestDocument;
                 }
 
-                if(conditionalProcessor.getProcessor() instanceof PipelineProcessor){
+                if (conditionalProcessor.getProcessor() instanceof PipelineProcessor) {
                     actualProcessor = conditionalProcessor.getProcessor();
                 }
             }
@@ -61,7 +62,8 @@ public class TrackingResultProcessor implements Processor {
                     verbosePipelineProcessor);
                 ingestDocument.executePipeline(verbosePipeline);
 
-            } else {
+            } else
+                {
                 actualProcessor.execute(ingestDocument);
                 processorResultList.add(new SimulateProcessorResult(actualProcessor.getTag(), new IngestDocument(ingestDocument)));
             }
@@ -84,6 +86,39 @@ public class TrackingResultProcessor implements Processor {
     @Override
     public String getTag() {
         return actualProcessor.getTag();
+    }
+
+    public static void checkForCycles(Pipeline pipeline, Set<PipelineProcessor> pipelinesSeen) {
+        for (Processor processor : pipeline.getCompoundProcessor().getProcessors()) {
+            if(processor instanceof ConditionalProcessor){
+                processor = ((ConditionalProcessor)processor).getProcessor();
+            }
+            if (processor instanceof PipelineProcessor) {
+                PipelineProcessor pipelineProcessor = ((PipelineProcessor) processor);
+                if (pipelinesSeen.add(pipelineProcessor) == false) {
+                    throw new IllegalStateException("Possible cycle detected between pipelines [" + pipelineProcessor.getPipeline().getId() + "] and [" + pipeline.getId() + "]");
+                }
+                checkForCycles(pipelineProcessor.getPipeline(), pipelinesSeen);
+                pipelinesSeen.remove(pipelineProcessor);
+            } else if (processor instanceof CompoundProcessor) {
+                checkForCycles(pipeline, pipelinesSeen);
+            }
+        }
+        for (Processor processor : pipeline.getCompoundProcessor().getOnFailureProcessors()) {
+            if(processor instanceof ConditionalProcessor){
+                processor = ((ConditionalProcessor)processor).getProcessor();
+            }
+            if (processor instanceof PipelineProcessor) {
+                PipelineProcessor pipelineProcessor = ((PipelineProcessor) processor);
+                if (pipelinesSeen.add(pipelineProcessor) == false) {
+                    throw new IllegalStateException("Possible cycle detected between pipelines [" + pipelineProcessor.getPipeline().getId() + "] and [" + pipeline.getId() + "]");
+                }
+                checkForCycles(pipelineProcessor.getPipeline(), pipelinesSeen);
+                pipelinesSeen.remove(pipelineProcessor);
+            } else if (processor instanceof CompoundProcessor) {
+                checkForCycles(pipeline, pipelinesSeen);
+            }
+        }
     }
 
     public static CompoundProcessor decorate(CompoundProcessor compoundProcessor, List<SimulateProcessorResult> processorResultList) {

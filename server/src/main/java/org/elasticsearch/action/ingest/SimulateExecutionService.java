@@ -24,11 +24,16 @@ import org.elasticsearch.action.ActionRunnable;
 import org.elasticsearch.ingest.CompoundProcessor;
 import org.elasticsearch.ingest.IngestDocument;
 import org.elasticsearch.ingest.Pipeline;
+import org.elasticsearch.ingest.PipelineProcessor;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
+import static org.elasticsearch.ingest.TrackingResultProcessor.checkForCycles;
 import static org.elasticsearch.ingest.TrackingResultProcessor.decorate;
 
 class SimulateExecutionService {
@@ -42,6 +47,8 @@ class SimulateExecutionService {
     }
 
     SimulateDocumentResult executeDocument(Pipeline pipeline, IngestDocument ingestDocument, boolean verbose) {
+        final Set<PipelineProcessor> pipelinesSeen = Collections.newSetFromMap(new IdentityHashMap<>());
+        checkForCycles(pipeline, pipelinesSeen);
         if (verbose) {
             List<SimulateProcessorResult> processorResultList = new ArrayList<>();
             CompoundProcessor verbosePipelineProcessor = decorate(pipeline.getCompoundProcessor(), processorResultList);
