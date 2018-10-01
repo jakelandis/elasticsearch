@@ -82,14 +82,6 @@ public class ConditionalProcessor extends AbstractProcessor {
         return metric;
     }
 
-    Script getCondition() {
-        return condition;
-    }
-
-    ScriptService getScriptService() {
-       return scriptService;
-    }
-
     @Override
     public String getType() {
         return TYPE;
