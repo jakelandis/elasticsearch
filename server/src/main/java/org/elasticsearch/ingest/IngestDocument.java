@@ -554,7 +554,7 @@ public final class IngestDocument {
         return template.newInstance(createTemplateModel()).execute();
     }
 
-    private Map<String, Object> createTemplateModel() {
+    Map<String, Object> createTemplateModel() {
         Map<String, Object> model = new HashMap<>(sourceAndMetadata);
         model.put(SourceFieldMapper.NAME, sourceAndMetadata);
         // If there is a field in the source with the name '_ingest' it gets overwritten here,

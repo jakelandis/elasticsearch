@@ -19,24 +19,34 @@
 
 package org.elasticsearch.ingest;
 
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.script.TemplateScript;
+
 import java.util.Map;
 
 public class PipelineProcessor extends AbstractProcessor {
 
     public static final String TYPE = "pipeline";
 
-    private final String pipelineName;
+    private final TemplateScript.Factory pipelineNameTemplate;
 
+    //TODO: is this safe ?
+    private String pipelineName;
     private final IngestService ingestService;
 
-    private PipelineProcessor(String tag, String pipelineName, IngestService ingestService) {
+    private PipelineProcessor(String tag, TemplateScript.Factory pipelineNameTemplate, IngestService ingestService) {
         super(tag);
-        this.pipelineName = pipelineName;
+        this.pipelineNameTemplate = pipelineNameTemplate;
+
         this.ingestService = ingestService;
     }
 
     @Override
     public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
+        Map<String, Object> model = ingestDocument.createTemplateModel();
+        //is this safe and performant ?
+        pipelineName = pipelineNameTemplate.newInstance(model).execute();
+
         Pipeline pipeline = ingestService.getPipeline(pipelineName);
         if (pipeline == null) {
             throw new IllegalStateException("Pipeline processor configured for non-existent pipeline [" + pipelineName + ']');
@@ -60,9 +70,12 @@ public class PipelineProcessor extends AbstractProcessor {
     public static final class Factory implements Processor.Factory {
 
         private final IngestService ingestService;
+        private final ScriptService scriptService;
 
-        public Factory(IngestService ingestService) {
+
+        public Factory(IngestService ingestService, ScriptService scriptService) {
             this.ingestService = ingestService;
+            this.scriptService = scriptService;
         }
 
         @Override
@@ -70,7 +83,11 @@ public class PipelineProcessor extends AbstractProcessor {
             Map<String, Object> config) throws Exception {
             String pipeline =
                 ConfigurationUtils.readStringProperty(TYPE, processorTag, config, "name");
-            return new PipelineProcessor(processorTag, pipeline, ingestService);
+
+            TemplateScript.Factory pipelineNameTemplate = ConfigurationUtils.compileTemplate(TYPE, processorTag,
+                "pipeline", pipeline, scriptService);
+
+            return new PipelineProcessor(processorTag, pipelineNameTemplate, ingestService);
         }
     }
 }
