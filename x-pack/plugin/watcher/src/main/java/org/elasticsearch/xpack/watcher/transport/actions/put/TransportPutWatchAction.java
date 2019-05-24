@@ -5,6 +5,7 @@
  */
 package org.elasticsearch.xpack.watcher.transport.actions.put;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -105,7 +106,8 @@ public class TransportPutWatchAction extends WatcherTransportAction<PutWatchRequ
 
                 if (isUpdate) {
                     UpdateRequest updateRequest = new UpdateRequest(Watch.INDEX, Watch.DOC_TYPE, request.getId());
-                    if (request.getIfSeqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO) {
+                    boolean useSeqNoForCAS = clusterService.state().nodes().getMinNodeVersion().onOrAfter(Version.V_6_7_0);
+                    if (request.getIfSeqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO && useSeqNoForCAS) {
                         updateRequest.setIfSeqNo(request.getIfSeqNo());
                         updateRequest.setIfPrimaryTerm(request.getIfPrimaryTerm());
                     } else {
