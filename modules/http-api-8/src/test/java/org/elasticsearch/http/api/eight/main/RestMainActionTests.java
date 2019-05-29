@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.rest.action;
+package org.elasticsearch.http.api.eight.main;
 
 import org.elasticsearch.Build;
 import org.elasticsearch.Version;
@@ -27,9 +27,11 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.http.api.eight.main.HttpMain;
 import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.rest.action.RestMainAction;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.rest.FakeRestRequest;
 
@@ -57,7 +59,7 @@ public class RestMainActionTests extends ESTestCase {
             }
         };
 
-        BytesRestResponse response = RestMainAction.convertMainResponse(mainResponse, restRequest, builder);
+        BytesRestResponse response = HttpMain.convertMainResponse(mainResponse, restRequest, builder);
         assertNotNull(response);
         assertThat(response.status(), equalTo(RestStatus.OK));
 
@@ -82,7 +84,7 @@ public class RestMainActionTests extends ESTestCase {
         }
         RestRequest restRequest = new FakeRestRequest.Builder(xContentRegistry()).withParams(params).build();
 
-        BytesRestResponse response = RestMainAction.convertMainResponse(mainResponse, restRequest, builder);
+        BytesRestResponse response = HttpMain.convertMainResponse(mainResponse, restRequest, builder);
         assertNotNull(response);
         assertThat(response.status(), equalTo(RestStatus.OK));
         assertThat(response.content().length(), greaterThan(0));

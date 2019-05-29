@@ -1,0 +1,20 @@
+esplugin {
+    description 'Elasticsearch HTTP API v8'
+    classname 'HttpApi8Plugin'
+}
+
+compileJava {
+    //TODO: Figure the the nightmare that is the correct gradle support for Java based annotations processors
+    //TODO: don't forget IntelliJ and Eclipse support
+    //https://github.com/gradle/gradle/issues/2300
+    //https://github.com/tbroyer/gradle-apt-plugin
+    options.compilerArgs += [
+            "-processor",
+            "org.elasticsearch.http.codegen.HttpApiGenerator"
+    ]
+}
+
+dependencies {
+    compile project(path: ':modules:http-annotations')
+    annotationProcessor project(path: ':modules:http-code-generator')
+}
