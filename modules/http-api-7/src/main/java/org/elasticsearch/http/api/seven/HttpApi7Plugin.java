@@ -6,7 +6,7 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
-import org.elasticsearch.http.api.seven.main.HttpMain;
+import org.elasticsearch.http.api.seven.main.MainRestRequest;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestController;
@@ -25,7 +25,7 @@ public class HttpApi7Plugin extends Plugin implements ActionPlugin {
                                              Supplier<DiscoveryNodes> nodesInCluster) {
 
         List<RestHandler> restHandlers = new ArrayList<>(0);
-        restHandlers.add(new HttpMain(settings, restController));
+        restHandlers.add(new MainRestRequest(settings, restController));
         return restHandlers;
     }
 

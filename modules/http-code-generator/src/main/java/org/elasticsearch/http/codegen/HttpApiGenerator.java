@@ -12,7 +12,7 @@ import java.util.Set;
 import static javax.lang.model.SourceVersion.RELEASE_11;
 
 @SupportedSourceVersion(RELEASE_11)
-@SupportedAnnotationTypes("org.elasticsearch.http.Foo")
+@SupportedAnnotationTypes("org.elasticsearch.http.ModeledHttpResponse")
 public class HttpApiGenerator extends AbstractProcessor {
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {

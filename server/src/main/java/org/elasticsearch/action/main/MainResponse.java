@@ -34,7 +34,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import java.io.IOException;
 import java.util.Objects;
 
-public class MainResponse extends ActionResponse implements ToXContentObject {
+public class MainResponse extends ActionResponse {
 
     private String nodeName;
     private Version version;
@@ -42,7 +42,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
     private String clusterUuid;
     private Build build;
 
-    MainResponse() {
+    public MainResponse() {
     }
 
     public MainResponse(String nodeName, Version version, ClusterName clusterName, String clusterUuid, Build build) {
@@ -94,63 +94,11 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
         build = Build.readBuild(in);
     }
 
-    @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        builder.field("name", nodeName);
-        builder.field("cluster_name", clusterName.value());
-        builder.field("cluster_uuid", clusterUuid);
-        builder.startObject("version")
-            .field("number", build.getQualifiedVersion())
-            .field("build_flavor", build.flavor().displayName())
-            .field("build_type", build.type().displayName())
-            .field("build_hash", build.shortHash())
-            .field("build_date", build.date())
-            .field("build_snapshot", build.isSnapshot())
-            .field("lucene_version", version.luceneVersion.toString())
-            .field("minimum_wire_compatibility_version", version.minimumCompatibilityVersion().toString())
-            .field("minimum_index_compatibility_version", version.minimumIndexCompatibilityVersion().toString())
-            .endObject();
-        builder.field("tagline", "You Know, for Search");
-        builder.endObject();
-        return builder;
-    }
 
-    private static final ObjectParser<MainResponse, Void> PARSER = new ObjectParser<>(MainResponse.class.getName(), true,
-            MainResponse::new);
 
-    static {
-        PARSER.declareString((response, value) -> response.nodeName = value, new ParseField("name"));
-        PARSER.declareString((response, value) -> response.clusterName = new ClusterName(value), new ParseField("cluster_name"));
-        PARSER.declareString((response, value) -> response.clusterUuid = value, new ParseField("cluster_uuid"));
-        PARSER.declareString((response, value) -> {}, new ParseField("tagline"));
-        PARSER.declareObject((response, value) -> {
-            final String buildFlavor = (String) value.get("build_flavor");
-            final String buildType = (String) value.get("build_type");
-            response.build =
-                    new Build(
-                            /*
-                             * Be lenient when reading on the wire, the enumeration values from other versions might be different than what
-                             * we know.
-                             */
-                            buildFlavor == null ? Build.Flavor.UNKNOWN : Build.Flavor.fromDisplayName(buildFlavor, false),
-                            buildType == null ? Build.Type.UNKNOWN : Build.Type.fromDisplayName(buildType, false),
-                            (String) value.get("build_hash"),
-                            (String) value.get("build_date"),
-                            (boolean) value.get("build_snapshot"),
-                            (String) value.get("number")
-                    );
-            response.version = Version.fromString(
-                ((String) value.get("number"))
-                    .replace("-SNAPSHOT", "")
-                    .replaceFirst("-(alpha\\d+|beta\\d+|rc\\d+)", "")
-            );
-        }, (parser, context) -> parser.map(), new ParseField("version"));
-    }
 
-    public static MainResponse fromXContent(XContentParser parser) {
-        return PARSER.apply(parser, null);
-    }
+
+
 
     @Override
     public boolean equals(Object o) {

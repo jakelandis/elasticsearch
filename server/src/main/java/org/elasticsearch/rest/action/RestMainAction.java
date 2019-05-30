@@ -64,7 +64,7 @@ public class RestMainAction extends BaseRestHandler {
         if (request.hasParam("pretty") == false) {
             builder.prettyPrint().lfAtEnd();
         }
-        response.toXContent(builder, request);
+        //response.toXContent(builder, request);
         return new BytesRestResponse(RestStatus.OK, builder);
     }
 

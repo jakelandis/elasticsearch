@@ -6,7 +6,6 @@ import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.http.Foo;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
@@ -21,11 +20,11 @@ import static org.elasticsearch.rest.RestRequest.Method.GET;
 import static org.elasticsearch.rest.RestRequest.Method.HEAD;
 
 //TODO: write test that ensures that the paths don't overlap between 7 and 8 modules
-@Foo
-public class HttpMain extends BaseRestHandler {
+public class MainRestRequest extends BaseRestHandler  {
 
-    public HttpMain(Settings settings, RestController controller) {
+    public MainRestRequest(Settings settings, RestController controller) {
         super(settings);
+        //TODO: pull this from the request.json (likely via code generation via annontation processing)
         controller.registerHandler(GET, "/v7", this);
         controller.registerHandler(HEAD, "/v7", this);
     }
@@ -50,7 +49,8 @@ public class HttpMain extends BaseRestHandler {
         if (request.hasParam("pretty") == false) {
             builder.prettyPrint().lfAtEnd();
         }
-        response.toXContent(builder, request);
+
+        MainResponseAdaptor.toXContent(response, builder, request);
         return new BytesRestResponse(RestStatus.OK, builder);
     }
 

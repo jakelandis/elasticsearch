@@ -67,35 +67,35 @@ public class RestMainActionTests extends ESTestCase {
         // not assert on them here
     }
 
-    public void testGetResponse() throws Exception {
-        final String nodeName = "node1";
-        final ClusterName clusterName = new ClusterName("cluster1");
-        final String clusterUUID = randomAlphaOfLengthBetween(10, 20);
-        final Version version = Version.CURRENT;
-        final Build build = Build.CURRENT;
-        final boolean prettyPrint = randomBoolean();
-
-        final MainResponse mainResponse = new MainResponse(nodeName, version, clusterName, clusterUUID, build);
-        XContentBuilder builder = JsonXContent.contentBuilder();
-
-        Map<String, String> params = new HashMap<>();
-        if (prettyPrint == false) {
-            params.put("pretty", String.valueOf(prettyPrint));
-        }
-        RestRequest restRequest = new FakeRestRequest.Builder(xContentRegistry()).withParams(params).build();
-
-        BytesRestResponse response = HttpMain.convertMainResponse(mainResponse, restRequest, builder);
-        assertNotNull(response);
-        assertThat(response.status(), equalTo(RestStatus.OK));
-        assertThat(response.content().length(), greaterThan(0));
-
-        XContentBuilder responseBuilder = JsonXContent.contentBuilder();
-        if (prettyPrint) {
-            // do this to mimic what the rest layer does
-            responseBuilder.prettyPrint().lfAtEnd();
-        }
-        mainResponse.toXContent(responseBuilder, ToXContent.EMPTY_PARAMS);
-        BytesReference xcontentBytes = BytesReference.bytes(responseBuilder);
-        assertEquals(xcontentBytes, response.content());
-    }
+//    public void testGetResponse() throws Exception {
+//        final String nodeName = "node1";
+//        final ClusterName clusterName = new ClusterName("cluster1");
+//        final String clusterUUID = randomAlphaOfLengthBetween(10, 20);
+//        final Version version = Version.CURRENT;
+//        final Build build = Build.CURRENT;
+//        final boolean prettyPrint = randomBoolean();
+//
+//        final MainResponse mainResponse = new MainResponse(nodeName, version, clusterName, clusterUUID, build);
+//        XContentBuilder builder = JsonXContent.contentBuilder();
+//
+//        Map<String, String> params = new HashMap<>();
+//        if (prettyPrint == false) {
+//            params.put("pretty", String.valueOf(prettyPrint));
+//        }
+//        RestRequest restRequest = new FakeRestRequest.Builder(xContentRegistry()).withParams(params).build();
+//
+//        BytesRestResponse response = HttpMain.convertMainResponse(mainResponse, restRequest, builder);
+//        assertNotNull(response);
+//        assertThat(response.status(), equalTo(RestStatus.OK));
+//        assertThat(response.content().length(), greaterThan(0));
+//
+//        XContentBuilder responseBuilder = JsonXContent.contentBuilder();
+//        if (prettyPrint) {
+//            // do this to mimic what the rest layer does
+//            responseBuilder.prettyPrint().lfAtEnd();
+//        }
+//        mainResponse.toXContent(responseBuilder, ToXContent.EMPTY_PARAMS);
+//        BytesReference xcontentBytes = BytesReference.bytes(responseBuilder);
+//        assertEquals(xcontentBytes, response.content());
+//    }
 }
