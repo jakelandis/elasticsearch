@@ -54,8 +54,8 @@ public class HttpApiGenerator extends AbstractProcessor {
 
 
                 try (InputStream in = jsonFile.openInputStream()) {
-                  JsonNode root = mapper.readTree(in);
-                  traverse("root", root);
+                    JsonNode root = mapper.readTree(in);
+                    traverse("root", root);
                 }
 
             } catch (IOException e) {
@@ -72,21 +72,13 @@ public class HttpApiGenerator extends AbstractProcessor {
     }
 
     private void traverse(String name, JsonNode node) {
-
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing : " + name);
         if (node.isObject()) {
-            List<Map.Entry<String, JsonNode>> nodes = new ArrayList<>();
-            node.fields().forEachRemaining(f -> nodes.add(f));
-            nodes.forEach(e -> traverse(e.getKey(), e.getValue()));
-
+            node.fields().forEachRemaining(e -> traverse(e.getKey(), e.getValue()));
         } else if (node.isArray()) {
-            List<JsonNode> items = new ArrayList<>();
-            node.elements().forEachRemaining(n -> items.add(n));
-            items.forEach(n -> traverse("", n));
-
+            node.elements().forEachRemaining(n -> traverse("", n));
         } else if (node.isValueNode()) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, node.asText());
-
         } else {
             throw new IllegalStateException("Unknown node type");
         }
