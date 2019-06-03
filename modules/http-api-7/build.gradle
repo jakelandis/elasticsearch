@@ -15,6 +15,5 @@ compileJava {
 }
 
 dependencies {
-    compile project(path: ':modules:http-annotations')
-    annotationProcessor project(path: ':modules:http-code-generator')
+    annotationProcessor project(path: ':http-code-generator')
 }

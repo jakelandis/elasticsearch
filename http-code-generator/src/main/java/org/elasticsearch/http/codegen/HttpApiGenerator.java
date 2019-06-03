@@ -16,7 +16,7 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 public class HttpApiGenerator extends AbstractProcessor {
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting processing here!");
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting processing here!!");
 
         super.init(processingEnv);
     }
@@ -24,7 +24,7 @@ public class HttpApiGenerator extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** In process " + roundEnv.toString());
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** In process !! " + roundEnv.toString());
 
         return true;
     }

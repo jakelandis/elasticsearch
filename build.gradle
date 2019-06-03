@@ -216,6 +216,7 @@ allprojects {
   ext.projectSubstitutions = [
     "org.elasticsearch.gradle:build-tools:${version}": ':build-tools',
     "org.elasticsearch:rest-api-spec:${version}": ':rest-api-spec',
+    "org.elasticsearch:http-code-generator:${version}": ':http-code-generator',
     "org.elasticsearch:elasticsearch:${version}": ':server',
     "org.elasticsearch:elasticsearch-cli:${version}": ':libs:elasticsearch-cli',
     "org.elasticsearch:elasticsearch-core:${version}": ':libs:core',

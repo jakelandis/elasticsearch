@@ -47,6 +47,7 @@ List projects = [
   'distribution:tools:launchers',
   'distribution:tools:plugin-cli',
   'distribution:tools:keystore-cli',
+  'http-code-generator',
   'server',
   'server:cli',
   'test:framework',

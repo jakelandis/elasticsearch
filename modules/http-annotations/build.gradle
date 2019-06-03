@@ -1,5 +1,0 @@
-//TODO: fix the gradle build so it doesn't require a module == esPlugin
-esplugin {
-    description ''
-    classname ''
-}
