@@ -1,6 +1,5 @@
 package org.elasticsearch.http.codegen;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.http.ModeledHttpResponse;
@@ -17,9 +16,6 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static javax.lang.model.SourceVersion.RELEASE_11;
@@ -39,7 +35,6 @@ public class HttpApiGenerator extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-
         for (Element element : roundEnv.getElementsAnnotatedWith(ModeledHttpResponse.class)) {
 
             ModeledHttpResponse annotation = element.getAnnotation(ModeledHttpResponse.class);
@@ -48,17 +43,18 @@ public class HttpApiGenerator extends AbstractProcessor {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing " + element.getSimpleName() + ":" + previous + ":" + element.asType().toString());
             handle(previous);
 
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************");
+
             String current = annotation.current();
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing " + element.getSimpleName() + ":" + current + ":" + element.asType().toString());
             handle(current);
 
         }
 
-
         return true;
     }
 
-    private void handle(String jsonModel){
+    private void handle(String jsonModel) {
 
         try {
             FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", jsonModel);
