@@ -1,0 +1,19 @@
+{
+  "main":{
+    "documentation":{
+      "url":"http://www.elastic.co/guide/",
+      "description":"Returns some basic information about the running cluster"
+    },
+    "url":{
+      "paths":[
+        {
+          "path":"/v7",
+          "methods":[
+            "HEAD", "GET"
+          ]
+        }
+      ]
+    },
+    "params":{}
+  }
+}
