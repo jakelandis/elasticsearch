@@ -33,12 +33,12 @@ subprojects {
             dependencies.all { Dependency dep ->
                 Project depProject = dependencyToProject(dep)
                 if (depProject != null
-                        && false == depProject.path.equals(':libs:core')
+                        && (false == depProject.path.equals(':libs:core') && false  == depProject.path.equals(':libs:x-content'))
                         && false == isEclipse 
                         && depProject.path.startsWith(':libs')) {
                     throw new InvalidUserDataException("projects in :libs "
                             + "may not depend on other projects libs except "
-                            + ":libs:core but "
+                            + ":libs:core or :libs:x-content but "
                             + "${project.path} depends on ${depProject.path}")
                 }
             }

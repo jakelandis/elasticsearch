@@ -1,0 +1,20 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+
+esplugin {
+    description 'Elasticsearch HTTP API v8'
+    classname 'org.elasticsearch.http.api.eight.HttpApiPlugin'
+}
+
+
+dependencies {
+    annotationProcessor project(path: ':libs:http-api')
+    testCompile "junit:junit:${versions.junit}"
+}
+
+//smooch the resources and classes together. this is easier for the annotation processor to read these files.
+sourceSets {
+    main {
+        output.resourcesDir = output.classesDirs.getSingleFile()
+    }
+}

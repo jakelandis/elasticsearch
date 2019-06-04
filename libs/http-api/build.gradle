@@ -1,0 +1,26 @@
+archivesBaseName = 'elasticsearch-http-api'
+
+compileJava {
+    //TODO: Figure the the nightmare that is the correct gradle support for Java based annotations processors
+    //TODO: don't forget IntelliJ and Eclipse support
+    //https://github.com/gradle/gradle/issues/2300
+    //https://github.com/tbroyer/gradle-apt-plugin
+
+    //TODO : figure out why this is needed...  SPI should pick this up ?
+    options.compilerArgs += [
+            "-processor",
+            "org.elasticsearch.http.codegen.HttpApiGenerator"
+    ]
+}
+
+dependencies {
+    annotationProcessor project(path: ':http-code-generator')
+    compile project(path: ':libs:x-content')
+    testCompile "junit:junit:${versions.junit}"
+}
+
+sourceSets {
+    main {
+        output.resourcesDir = output.classesDirs.getSingleFile()
+    }
+}

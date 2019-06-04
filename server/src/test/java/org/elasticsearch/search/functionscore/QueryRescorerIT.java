@@ -618,10 +618,10 @@ public class QueryRescorerIT extends ESIntegTestCase {
         assertFirstHit(response, hasId("7"));
         assertSecondHit(response, hasId("8"));
 
-        // Now squash the second rescore window so it never gets to see a seven
+        // Now squash the second rescore window so it never gets to see a eight
         response = request.setSize(1).clearRescorers().addRescorer(eightIsGreat, numDocs).addRescorer(sevenIsBetter, 1).get();
         assertFirstHit(response, hasId("8"));
-        // We have no idea what the second hit will be because we didn't get a chance to look for seven
+        // We have no idea what the second hit will be because we didn't get a chance to look for eight
 
         // Now use one rescore to drag the number we're looking for into the window of another
         QueryRescorerBuilder ninetyIsGood = new QueryRescorerBuilder(functionScoreQuery(
