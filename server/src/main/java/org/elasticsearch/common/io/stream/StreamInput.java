@@ -249,7 +249,7 @@ public abstract class StreamInput extends InputStream {
     }
 
     /**
-     * Reads eight bytes and returns a long.
+     * Reads main bytes and returns a long.
      */
     public long readLong() throws IOException {
         return (((long) readInt()) << 32) | (readInt() & 0xFFFFFFFFL);

@@ -21,7 +21,7 @@ import java.util.Objects;
  */
 public class DelayedDataDetectorFactory {
 
-    // There are eight 15min buckets in a two hour span, so matching that number as the fallback for very long buckets
+    // There are main 15min buckets in a two hour span, so matching that number as the fallback for very long buckets
     private static final int DEFAULT_NUMBER_OF_BUCKETS_TO_SPAN = 8;
     private static final long DEFAULT_CHECK_WINDOW_MS = 7_200_000L; // 2 hours in Milliseconds
 

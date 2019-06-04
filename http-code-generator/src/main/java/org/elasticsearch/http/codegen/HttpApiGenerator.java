@@ -44,31 +44,37 @@ public class HttpApiGenerator extends AbstractProcessor {
 
             ModeledHttpResponse annotation = element.getAnnotation(ModeledHttpResponse.class);
 
-            String jsonModel = annotation.value();
-            String clazz = element.asType().toString();
+            String previous = annotation.previous();
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing " + element.getSimpleName() + ":" + previous + ":" + element.asType().toString());
+            handle(previous);
 
-            try {
-                FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", jsonModel);
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, jsonFile.toUri().getPath());
-                ObjectMapper mapper = new ObjectMapper();
-
-
-                try (InputStream in = jsonFile.openInputStream()) {
-                    JsonNode root = mapper.readTree(in);
-                    traverse("root", root);
-                }
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing " + element.getSimpleName() + ":" + jsonModel + ":" + clazz);
+            String current = annotation.current();
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing " + element.getSimpleName() + ":" + current + ":" + element.asType().toString());
+            handle(current);
 
         }
 
 
         return true;
+    }
+
+    private void handle(String jsonModel){
+
+        try {
+            FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", jsonModel);
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, jsonFile.toUri().getPath());
+            ObjectMapper mapper = new ObjectMapper();
+
+
+            try (InputStream in = jsonFile.openInputStream()) {
+                JsonNode root = mapper.readTree(in);
+                traverse("root", root);
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     private void traverse(String name, JsonNode node) {

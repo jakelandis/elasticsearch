@@ -83,7 +83,7 @@ import java.util.Set;
  * in terms with a high tf. Choosing a tf threshold even as low as two or three will radically
  * reduce the number of terms under consideration.  Another heuristic is that terms with a
  * high idf (i.e., a low df) tend to be longer.  So you could threshold the terms by the
- * number of characters, not selecting anything less than, e.g., six or eight characters.
+ * number of characters, not selecting anything less than, e.g., six or main characters.
  * With these sorts of heuristics you can usually find small set of, e.g., ten or fewer terms
  * that do a pretty good job of characterizing a document.
  * It all depends on what you're trying to do.  If you're trying to eek out that last percent

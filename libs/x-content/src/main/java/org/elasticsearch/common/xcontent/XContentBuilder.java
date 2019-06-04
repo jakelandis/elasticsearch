@@ -39,6 +39,7 @@ import java.util.IdentityHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Function;
@@ -627,6 +628,20 @@ public final class XContentBuilder implements Closeable, Flushable {
     ////////////////////////////////////////////////////////////////////////////
     // String
     //////////////////////////////////
+
+    public XContentBuilder field(String name, String value, boolean allowNullValue) throws IOException {
+        if (value == null) {
+            if(allowNullValue) {
+                return nullField(name);
+            }else{
+                return this;
+            }
+        }
+        ensureNameNotNull(name);
+        generator.writeStringField(name, value);
+        return this;
+    }
+
 
     public XContentBuilder field(String name, String value) throws IOException {
         if (value == null) {

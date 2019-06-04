@@ -1,4 +1,4 @@
-package org.elasticsearch.http.api.eight;
+package org.elasticsearch.http.api.main;
 
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
@@ -8,7 +8,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import java.io.IOException;
 
 //Generated !! - well not yet ;)
-final public class GeneratedMainResponseModel implements ToXContentObject {
+final public class GeneratedMainResponseModel8 implements ToXContentObject {
 
     final public String name;
     final public String cluster_name;
@@ -16,8 +16,8 @@ final public class GeneratedMainResponseModel implements ToXContentObject {
     final public Version version;
     private final String tagline = "You Know, for Search";
 
-    public static final ConstructingObjectParser<GeneratedMainResponseModel, Void> PARSER = new ConstructingObjectParser<>(GeneratedMainResponseModel.class.getName(),
-        a -> new GeneratedMainResponseModel(
+    public static final ConstructingObjectParser<GeneratedMainResponseModel8, Void> PARSER = new ConstructingObjectParser<>(GeneratedMainResponseModel8.class.getName(),
+        a -> new GeneratedMainResponseModel8(
             (String) a[0],
             (String) a[1],
             (String) a[2],
@@ -32,7 +32,7 @@ final public class GeneratedMainResponseModel implements ToXContentObject {
         PARSER.declareObject(ConstructingObjectParser.constructorArg(), Version.PARSER, new ParseField("version"));
     }
 
-    public GeneratedMainResponseModel(String name, String cluster_name, String cluster_uuid, Version version) {
+    public GeneratedMainResponseModel8(String name, String cluster_name, String cluster_uuid, Version version) {
         this.name = name;
         this.cluster_name = cluster_name;
         this.cluster_uuid = cluster_uuid;

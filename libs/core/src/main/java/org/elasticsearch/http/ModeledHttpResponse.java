@@ -9,5 +9,6 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.SOURCE )
 public @interface ModeledHttpResponse {
 
-    String value();
+    String current();
+    String previous();
 }

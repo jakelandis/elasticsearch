@@ -1,0 +1,11 @@
+esplugin {
+    description 'Elasticsearch HTTP Server Request Responses'
+    classname 'org.elasticsearch.http.HttpRequestResponsePlugin'
+}
+
+
+dependencies {
+    annotationProcessor project(path: ':libs:http-api')
+    testCompile "junit:junit:${versions.junit}"
+}
+

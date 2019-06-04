@@ -278,7 +278,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
         return queryProvider == null ? null : parseQuery(namedXContentRegistry, new ArrayList<>());
     }
 
-    // TODO Remove in v8.0.0
+    // TODO Remove in main8.0.0
     // We only need this NamedXContentRegistry object if getParsedQuery() == null and getParsingException() == null
     // This situation only occurs in past versions that contained the lazy parsing support but not the providers (6.6.x)
     // We will still need `NamedXContentRegistry` for getting deprecations, but that is a special situation
@@ -326,7 +326,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
         return aggProvider == null ? null : parseAggregations(namedXContentRegistry, new ArrayList<>());
     }
 
-    // TODO refactor in v8.0.0
+    // TODO refactor in main8.0.0
     // We only need this NamedXContentRegistry object if getParsedQuery() == null and getParsingException() == null
     // This situation only occurs in past versions that contained the lazy parsing support but not the providers (6.6.x)
     // We will still need `NamedXContentRegistry` for getting deprecations, but that is a special situation

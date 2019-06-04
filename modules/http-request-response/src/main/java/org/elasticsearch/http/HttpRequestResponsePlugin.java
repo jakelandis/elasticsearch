@@ -1,4 +1,4 @@
-package org.elasticsearch.http.api.eight;
+package org.elasticsearch.http;
 
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -6,7 +6,8 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
-import org.elasticsearch.http.api.eight.main.MainRestRequest;
+import org.elasticsearch.http.main.v7.MainRestRequest7;
+import org.elasticsearch.http.main.v8.MainRestRequest8;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestController;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class HttpApiPlugin extends Plugin implements ActionPlugin {
+public class HttpRequestResponsePlugin extends Plugin implements ActionPlugin {
 
     @Override
     public List<RestHandler> getRestHandlers(Settings settings, RestController restController, ClusterSettings clusterSettings,
@@ -25,7 +26,8 @@ public class HttpApiPlugin extends Plugin implements ActionPlugin {
                                              Supplier<DiscoveryNodes> nodesInCluster) {
 
         List<RestHandler> restHandlers = new ArrayList<>(0);
-        restHandlers.add(new MainRestRequest(settings, restController));
+        restHandlers.add(new MainRestRequest7(settings, restController));
+        restHandlers.add(new MainRestRequest8(settings, restController));
         return restHandlers;
     }
 

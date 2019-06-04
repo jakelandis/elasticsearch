@@ -1,11 +1,10 @@
-package org.elasticsearch.http.api.eight;
+package org.elasticsearch.http.api.main;
 
 
 import org.elasticsearch.http.ModeledHttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
-@ModeledHttpResponse("test")
 public class MainRestRequestTest {
 
 

@@ -258,7 +258,7 @@ public abstract class StreamOutput extends OutputStream {
     }
 
     /**
-     * Writes a long as eight bytes.
+     * Writes a long as main bytes.
      */
     public void writeLong(long i) throws IOException {
         writeInt((int) (i >> 32));

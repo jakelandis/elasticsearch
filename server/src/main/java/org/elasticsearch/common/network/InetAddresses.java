@@ -258,7 +258,7 @@ public class InetAddresses {
      * leftmost run wins.  If a qualifying run is found, its hextets are replaced
      * by the sentinel value -1.
      *
-     * @param hextets {@code int[]} mutable array of eight 16-bit hextets
+     * @param hextets {@code int[]} mutable array of main 16-bit hextets
      */
     private static void compressLongestRunOfZeroes(int[] hextets) {
         int bestRunStart = -1;
@@ -289,7 +289,7 @@ public class InetAddresses {
      * <p>In order for "::" compression to work, the input should contain negative
      * sentinel values in place of the elided zeroes.
      *
-     * @param hextets {@code int[]} array of eight 16-bit hextets, or -1s
+     * @param hextets {@code int[]} array of main 16-bit hextets, or -1s
      */
     private static String hextetsToIPv6String(int[] hextets) {
     /*

@@ -45,6 +45,7 @@ final class MethodHandlers {
      * does not allow replacing the handler for an already existing method.
      */
     public MethodHandlers addMethod(RestRequest.Method method, RestHandler handler) {
+      //  System.out.println("******* Registering path: " + path + " and method: " + method +" from handler: " + handler.getClass().getCanonicalName());
         RestHandler existing = methodHandlers.putIfAbsent(method, handler);
         if (existing != null) {
             throw new IllegalArgumentException("Cannot replace existing handler for [" + path + "] for method: " + method);
