@@ -80,10 +80,12 @@ public class HttpApiGenerator extends AbstractProcessor {
             try {
 
                 javaFile.writeTo(processingEnv.getFiler());
+                javaFile.writeTo(System.out);
+                strings.clear();
             }catch (IOException e){
                 throw new RuntimeException(e);
             }
-// only handles the super simple case of strings
+// only handles the super simple case of strings..current has object, so no go yet...
 //            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************");
 //
 //            String current = annotation.current();
