@@ -3,13 +3,16 @@ package org.elasticsearch.http.codegen;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.http.ModeledHttpResponse;
 
@@ -73,8 +76,14 @@ public class HttpApiGenerator extends AbstractProcessor {
             String targetSimpleClassName = "Generated" + simpleClazzName + matcher.group(2);
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing: " + element.getSimpleName() + " model: " + previous + " from:" + element.asType().toString() + " to: " + targetSimpleClassName);
             read(previous);
-            createSource(clazzOrigin.replace("." + simpleClazzName, ""), targetSimpleClassName);
-//
+            JavaFile javaFile = createSource(clazzOrigin.replace("." + simpleClazzName, ""), targetSimpleClassName);
+            try {
+
+                javaFile.writeTo(processingEnv.getFiler());
+            }catch (IOException e){
+                throw new RuntimeException(e);
+            }
+// only handles the super simple case of strings
 //            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************");
 //
 //            String current = annotation.current();
@@ -91,7 +100,6 @@ public class HttpApiGenerator extends AbstractProcessor {
     }
 
     private void read(String modelFile) {
-
         try {
             //read model file
             FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", modelFile);
@@ -109,64 +117,81 @@ public class HttpApiGenerator extends AbstractProcessor {
 
     }
 
-    private void createSource(String packageName, String className) {
+    private JavaFile createSource(String packageName, String className) {
 
-        try {
-            //static parser
-            ParameterizedTypeName parameterizedTypes = ParameterizedTypeName.get(
-                ClassName.get(ConstructingObjectParser.class),
-                ClassName.get(packageName, className),
-                ClassName.get(Void.class));
-            FieldSpec parserSpec = FieldSpec.builder(parameterizedTypes,
-                "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
-                .build();
+        ClassName classToGenerate = ClassName.get(packageName, className);
 
-            //constructor
-            MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PUBLIC);
-            strings.forEach(s -> constructorBuilder.addParameter(String.class, s).addStatement("this.$N = $N", s, s));
-            MethodSpec constructor = constructorBuilder.build();
-
-            //fields
-            List<FieldSpec> fields = strings.stream().map(s -> FieldSpec.builder(String.class, s)
-                .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
-                .build()).collect(Collectors.toList());
-
-
-            //toXContent
-            MethodSpec.Builder toXContentBuilder = MethodSpec.methodBuilder("toXContent")
-                .addParameter(XContentBuilder.class, "builder", Modifier.FINAL)
-                .addParameter(ToXContent.Params.class, "params", Modifier.FINAL)
-                .addAnnotation(Override.class);
-            //toXContent contents
-            toXContentBuilder
-                .addStatement("builder.startObject()");
-            strings.forEach(s -> {
-                toXContentBuilder.addStatement("builder.field($S," + s + ")", s);
-            });
-
-            toXContentBuilder
-                .addStatement("builder.endObject()")
-                .addStatement("return builder")
-                .returns(XContentBuilder.class)
-                .build();
-
-            MethodSpec toXContent = toXContentBuilder.build();
-            //class
-            TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
-                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addField(parserSpec)
-                .addMethod(constructor)
-                .addMethod(toXContent);
-            fields.forEach(clazzBuilder::addField);
-            TypeSpec clazz = clazzBuilder.build();
-
-            JavaFile javaFile = JavaFile.builder(packageName, clazz).build();
-            //TODO: actually write file
-            javaFile.writeTo(System.out);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        //lambda for static parser
+        CodeBlock.Builder lambdaBuilder = CodeBlock.builder();
+        lambdaBuilder.add("a -> new $T(", classToGenerate);
+        for (int i = 0; i <= strings.size() - 1; i++) {
+            lambdaBuilder.add("\n(String) a[$L]", i);
+            if (i < strings.size() - 1) {
+                lambdaBuilder.add(",");
+            }
         }
+        CodeBlock lambda = lambdaBuilder.build();
+
+        //static parser
+        ParameterizedTypeName parameterizedTypes = ParameterizedTypeName.get(
+            ClassName.get(ConstructingObjectParser.class),
+            classToGenerate,
+            ClassName.get(Void.class));
+        FieldSpec parserSpec = FieldSpec.builder(parameterizedTypes,
+            "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
+            .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), classToGenerate, lambda)
+            .build();
+
+        //static initializer
+        CodeBlock.Builder staticInitializerBuilder = CodeBlock.builder();
+        strings.forEach(s -> staticInitializerBuilder.add("PARSER.declareString(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, s));
+        CodeBlock staticInitializer = staticInitializerBuilder.build();
+
+        //constructor
+        MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder()
+            .addModifiers(Modifier.PUBLIC);
+        strings.forEach(s -> constructorBuilder.addParameter(String.class, s).addStatement("this.$N = $N", s, s));
+        MethodSpec constructor = constructorBuilder.build();
+
+        //fields
+        List<FieldSpec> fields = strings.stream().map(s -> FieldSpec.builder(String.class, s)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .build()).collect(Collectors.toList());
+
+        //toXContent
+        MethodSpec.Builder toXContentBuilder = MethodSpec.methodBuilder("toXContent")
+            .addModifiers(Modifier.PUBLIC)
+            .addParameter(XContentBuilder.class, "builder", Modifier.FINAL)
+            .addParameter(ToXContent.Params.class, "params", Modifier.FINAL)
+            .addAnnotation(Override.class);
+        //toXContent contents
+        toXContentBuilder
+            .addStatement("builder.startObject()");
+        strings.forEach(s -> {
+            toXContentBuilder.addStatement("builder.field($S," + s + ")", s);
+        });
+
+        toXContentBuilder
+            .addStatement("builder.endObject()")
+            .addStatement("return builder")
+            .returns(XContentBuilder.class)
+            .addException(IOException.class)
+            .build();
+
+        MethodSpec toXContent = toXContentBuilder.build();
+        //class
+        TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addSuperinterface(ToXContentObject.class)
+            .addJavadoc("GENERATED CODE - DO NOT MODIFY")
+            .addStaticBlock(staticInitializer)
+            .addField(parserSpec)
+            .addMethod(constructor)
+            .addMethod(toXContent);
+        fields.forEach(clazzBuilder::addField);
+        TypeSpec clazz = clazzBuilder.build();
+
+        return JavaFile.builder(packageName, clazz).build();
 
     }
 

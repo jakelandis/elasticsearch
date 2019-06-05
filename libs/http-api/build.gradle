@@ -24,3 +24,4 @@ sourceSets {
         output.resourcesDir = output.classesDirs.getSingleFile()
     }
 }
+//todo : build-idea/classes/main/generated as sources root
