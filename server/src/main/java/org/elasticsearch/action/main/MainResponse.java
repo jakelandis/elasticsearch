@@ -95,11 +95,6 @@ public class MainResponse extends ActionResponse {
     }
 
 
-
-
-
-
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
