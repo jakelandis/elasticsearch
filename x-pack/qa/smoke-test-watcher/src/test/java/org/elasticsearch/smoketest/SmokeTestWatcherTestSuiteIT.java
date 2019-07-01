@@ -199,10 +199,16 @@ public class SmokeTestWatcherTestSuiteIT extends ESRestTestCase {
                 Response response = client().performRequest(searchRequest);
                 ObjectPath objectPath = ObjectPath.createFromResponse(response);
                 int totalHits = objectPath.evaluate("hits.total");
+                logger.info("Found [{}] hits in watcher history", totalHits);
                 assertThat(totalHits, is(greaterThanOrEqualTo(1)));
-                String watchid = objectPath.evaluate("hits.hits.0._source.watch_id");
-                assertThat(watchid, is(watchId));
+                String foundWatchId = objectPath.evaluate("hits.hits.0._source.watch_id");
+                logger.info("Watch hit 0 has id [{}] (expecting [{}])", foundWatchId,  watchId);
+                assertThat("watch_id for hit 0 in watcher history", foundWatchId, is(watchId));
                 objectPathReference.set(objectPath);
+            } catch (ResponseException e) {
+                final String err = "Failed to perform search of watcher history";
+                logger.info(err, e);
+                fail(err);
             }
         });
         return objectPathReference.get();
