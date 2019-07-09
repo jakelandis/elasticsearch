@@ -11,7 +11,9 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.LoggerMessageFormat;
+import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -37,21 +39,36 @@ import org.elasticsearch.xpack.watcher.support.Variables;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReportingAttachmentParser implements EmailAttachmentParser<ReportingAttachment> {
 
     public static final String TYPE = "reporting";
 
     // total polling of 10 minutes happens this way by default
-    public static final Setting<TimeValue> INTERVAL_SETTING =
+    static final Setting<TimeValue> INTERVAL_SETTING =
             Setting.timeSetting("xpack.notification.reporting.interval", TimeValue.timeValueSeconds(15), Setting.Property.NodeScope);
-    public static final Setting<Integer> RETRIES_SETTING =
+    static final Setting<Integer> RETRIES_SETTING =
             Setting.intSetting("xpack.notification.reporting.retries", 40, 0, Setting.Property.NodeScope);
+
+    private static final Setting<Boolean> REPORT_WARNING_ENABLED_SETTING =
+        Setting.boolSetting("xpack.notification.reporting.warning.enabled", true, Setting.Property.NodeScope, Setting.Property.Dynamic);
+
+    private static final Setting.AffixSetting<String> REPORT_WARNING_TEXT =
+        Setting.affixKeySetting("xpack.notification.reporting.warning.", "text",
+            key -> Setting.simpleString(key, Setting.Property.NodeScope, Setting.Property.Dynamic));
 
     private static final ObjectParser<Builder, AuthParseContext> PARSER = new ObjectParser<>("reporting_attachment");
     private static final ObjectParser<KibanaReportingPayload, Void> PAYLOAD_PARSER =
             new ObjectParser<>("reporting_attachment_kibana_payload", true, null);
+    //FIXME: come up with correct message
+    private static final Map<String, String> KNOWN_WARNINGS = Map.of("kbn-csv-contains-formulas", "THIS IS GUNNA BLOW UP!");
 
     static {
         PARSER.declareInt(Builder::retries, ReportingAttachment.RETRIES);
@@ -63,19 +80,50 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
         PAYLOAD_PARSER.declareString(KibanaReportingPayload::setPath, new ParseField("path"));
     }
 
+    private static List<Setting<?>> getDynamicSettings() {
+        return Arrays.asList(REPORT_WARNING_ENABLED_SETTING, REPORT_WARNING_TEXT);
+    }
+
+    private static List<Setting<?>> getStaticSettings() {
+        return Arrays.asList(INTERVAL_SETTING, RETRIES_SETTING);
+    }
+
+    public static List<Setting<?>> getSettings() {
+        List<Setting<?>> allSettings = new ArrayList<Setting<?>>(getDynamicSettings());
+        allSettings.addAll(getStaticSettings());
+        return allSettings;
+    }
     private final Logger logger;
     private final TimeValue interval;
     private final int retries;
     private HttpClient httpClient;
     private final TextTemplateEngine templateEngine;
+    private boolean warningEnabled = REPORT_WARNING_ENABLED_SETTING.getDefault(Settings.EMPTY);
+    private final Map<String, String> warningsText = new ConcurrentHashMap<>(1);
 
-    public ReportingAttachmentParser(Settings settings, HttpClient httpClient, TextTemplateEngine templateEngine) {
+    public ReportingAttachmentParser(Settings settings, HttpClient httpClient, TextTemplateEngine templateEngine,
+                                     ClusterSettings clusterSettings) {
         this.interval = INTERVAL_SETTING.get(settings);
         this.retries = RETRIES_SETTING.get(settings);
         this.httpClient = httpClient;
         this.templateEngine = templateEngine;
         this.logger = LogManager.getLogger(getClass());
+        clusterSettings.addSettingsUpdateConsumer(REPORT_WARNING_ENABLED_SETTING, this::setWarningEnabled);
+        clusterSettings.addAffixUpdateConsumer(REPORT_WARNING_TEXT, this::addWarningText, (s, o) -> {});
     }
+
+    private void setWarningEnabled(boolean warningEnabled) {
+        this.warningEnabled = warningEnabled;
+    }
+
+    private void addWarningText(String name, String value){
+        //sanity check, should never happen
+        if(warningsText.size() >= 100){
+            throw new IllegalStateException("Only 100 warning texts may be configured.");
+        }
+        warningsText.put(name, value);
+    }
+
 
     @Override
     public String type() {
@@ -139,8 +187,23 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
                         "method[{}], path[{}], status[{}], body[{}]", context.watch().id(), attachment.id(), request.host(),
                         request.port(), request.method(), request.path(), response.status(), body);
             } else if (response.status() == 200) {
-                return new Attachment.Bytes(attachment.id(), BytesReference.toBytes(response.body()),
-                        response.contentType(), attachment.inline());
+                response.headers().forEach((k,v) -> System.out.println(new Tuple<>(k, String.join(",", v))));
+                Set<String> warnings = new HashSet<>(1);
+                //FIXME: actually test this thing!
+                if (warningEnabled) {
+                    KNOWN_WARNINGS.forEach((k, v) -> {
+                        String[] text = response.header(k);
+                        if (text != null && text.length > 0) {
+                            assert text.length == 1;
+                            if(Boolean.valueOf(text[0])){
+                                String customWarning = warningsText.get(k);
+                                warnings.add(customWarning == null ? v : customWarning);
+                            }
+                        }
+                    });
+                }
+                return new Attachment.Bytes(attachment.id(),attachment.id(), BytesReference.toBytes(response.body()),
+                        response.contentType(), attachment.inline(), warnings);
             } else {
                 String body = response.body() != null ? response.body().utf8ToString() : null;
                 String message = LoggerMessageFormat.format("", "Watch[{}] reporting[{}] Unexpected status code host[{}], port[{}], " +

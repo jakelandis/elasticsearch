@@ -16,9 +16,11 @@ import javax.mail.internet.AddressException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class EmailTemplate implements ToXContentObject {
 
@@ -110,16 +112,37 @@ public class EmailTemplate implements ToXContentObject {
         if (subject != null) {
             builder.subject(engine.render(subject, model));
         }
-        if (textBody != null) {
-            builder.textBody(engine.render(textBody, model));
-        }
+
+        Set<String> warnings = new HashSet<>(1);
         if (attachments != null) {
             for (Attachment attachment : attachments.values()) {
                 builder.attach(attachment);
+                warnings.addAll(attachment.getWarnings());
             }
         }
+
+        String htmlWarnings = "";
+        String textWarnings = "";
+        if(warnings.isEmpty() == false){
+            StringBuilder textWarningBuilder = new StringBuilder();
+            StringBuilder htmlWarningBuilder = new StringBuilder();
+            htmlWarningBuilder.append("<b>");
+            warnings.forEach(w ->
+            {
+                textWarningBuilder.append(w).append("\n");
+                htmlWarningBuilder.append(w).append("<br>");
+            });
+            textWarningBuilder.append("\n");
+            htmlWarningBuilder.append("<br>");
+            htmlWarnings = htmlWarningBuilder.toString();
+            textWarnings = textWarningBuilder.toString();
+        }
+        if (textBody != null) {
+            builder.textBody(textWarnings + engine.render(textBody, model));
+        }
+
         if (htmlBody != null) {
-            String renderedHtml = engine.render(htmlBody, model);
+            String renderedHtml = htmlWarnings + engine.render(htmlBody, model);
             renderedHtml = htmlSanitizer.sanitize(renderedHtml);
             builder.htmlBody(renderedHtml);
         }
