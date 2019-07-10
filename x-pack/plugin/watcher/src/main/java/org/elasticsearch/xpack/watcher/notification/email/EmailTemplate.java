@@ -126,7 +126,6 @@ public class EmailTemplate implements ToXContentObject {
         if(warnings.isEmpty() == false){
             StringBuilder textWarningBuilder = new StringBuilder();
             StringBuilder htmlWarningBuilder = new StringBuilder();
-            htmlWarningBuilder.append("<b>");
             warnings.forEach(w ->
             {
                 textWarningBuilder.append(w).append("\n");
