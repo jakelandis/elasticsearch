@@ -60,10 +60,10 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
     static final Setting<Integer> RETRIES_SETTING =
             Setting.intSetting("xpack.notification.reporting.retries", 40, 0, Setting.Property.NodeScope);
 
-    private static final Setting<Boolean> REPORT_WARNING_ENABLED_SETTING =
+    static final Setting<Boolean> REPORT_WARNING_ENABLED_SETTING =
         Setting.boolSetting("xpack.notification.reporting.warning.enabled", true, Setting.Property.NodeScope, Setting.Property.Dynamic);
 
-    private static final Setting.AffixSetting<String> REPORT_WARNING_TEXT =
+    static final Setting.AffixSetting<String> REPORT_WARNING_TEXT =
         Setting.affixKeySetting("xpack.notification.reporting.warning.", "text",
             key -> Setting.simpleString(key, Setting.Property.NodeScope, Setting.Property.Dynamic));
 
@@ -71,7 +71,7 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
     private static final ObjectParser<KibanaReportingPayload, Void> PAYLOAD_PARSER =
             new ObjectParser<>("reporting_attachment_kibana_payload", true, null);
 
-    private static final Map<String, String> WARNINGS = Map.of("kbn-csv-contains-formulas", "Warning: The attachment [{}] contains " +
+    static final Map<String, String> WARNINGS = Map.of("kbn-csv-contains-formulas", "Warning: The attachment [{}] contains " +
         "characters which spreadsheet applications may interpret as formulas. Please ensure that the attachment is safe prior to opening.");
 
     static {
@@ -116,15 +116,15 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
         clusterSettings.addAffixUpdateConsumer(REPORT_WARNING_TEXT, this::addWarningText, this::warningValidator);
     }
 
-    private void setWarningEnabled(boolean warningEnabled) {
+    void setWarningEnabled(boolean warningEnabled) {
         this.warningEnabled = warningEnabled;
     }
 
-    private void addWarningText(String name, String value) {
+    void addWarningText(String name, String value) {
         customWarnings.put(name, value);
     }
 
-    private void warningValidator(String name, String value) {
+    void warningValidator(String name, String value) {
         if (WARNINGS.keySet().contains(name) == false) {
             throw new IllegalArgumentException(new ParameterizedMessage(
                 "Warning [{}] is not supported. Only the following warnings are supported [{}]",
