@@ -12,7 +12,6 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.LoggerMessageFormat;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
@@ -44,11 +43,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class ReportingAttachmentParser implements EmailAttachmentParser<ReportingAttachment> {
 
@@ -71,7 +69,7 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
     private static final ObjectParser<KibanaReportingPayload, Void> PAYLOAD_PARSER =
             new ObjectParser<>("reporting_attachment_kibana_payload", true, null);
 
-    static final Map<String, String> WARNINGS = Map.of("kbn-csv-contains-formulas", "Warning: The attachment [{}] contains " +
+    static final Map<String, String> WARNINGS = Map.of("kbn-csv-contains-formulas", "Warning: The attachment [%s] contains " +
         "characters which spreadsheet applications may interpret as formulas. Please ensure that the attachment is safe prior to opening.");
 
     static {
@@ -200,10 +198,10 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
                         String[] text = response.header(warningKey);
                         if (text != null && text.length > 0) {
                             if (Boolean.valueOf(text[0])) {
-                                String warning = new ParameterizedMessage(defaultWarning, attachment.id()).getFormattedMessage();
+                                String warning = String.format(Locale.ROOT, defaultWarning, attachment.id());
                                 String customWarning = customWarnings.get(warningKey);
                                 if (Strings.isNullOrEmpty(customWarning) == false) {
-                                    warning = new ParameterizedMessage(customWarning, attachment.id()).getFormattedMessage();
+                                    warning = String.format(Locale.ROOT, customWarning, attachment.id());
                                 }
                                 warnings.add(warning);
                             }

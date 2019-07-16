@@ -6,7 +6,6 @@
 package org.elasticsearch.xpack.watcher.notification.email.attachment;
 
 import com.fasterxml.jackson.core.io.JsonEOFException;
-import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Strings;
@@ -43,6 +42,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -437,7 +437,7 @@ public class ReportingAttachmentParserTests extends ESTestCase {
         assertThat(attachment.getWarnings(), hasSize(WARNINGS.keySet().size()));
         //parameterize the messages
         assertEquals(attachment.getWarnings(), WARNINGS.values().stream().
-            map(s -> new ParameterizedMessage(s, reportId).getFormattedMessage()).collect(Collectors.toSet()));
+            map(s -> String.format(Locale.ROOT, s, reportId)).collect(Collectors.toSet()));
 
         Attachment.Bytes bytesAttachment = (Attachment.Bytes) attachment;
         assertThat(new String(bytesAttachment.bytes(), StandardCharsets.UTF_8), is(content));
@@ -489,7 +489,7 @@ public class ReportingAttachmentParserTests extends ESTestCase {
         WARNINGS.keySet().forEach((k) ->
         {
             //add a parameter
-            final String warning = randomAlphaOfLength(20) + " {}";
+            final String warning = randomAlphaOfLength(20) + " %s";
             customWarnings.put(k, warning);
             reportingAttachmentParser.addWarningText(k, warning);
             headers.put(k, new String[]{"true"});
@@ -506,8 +506,7 @@ public class ReportingAttachmentParserTests extends ESTestCase {
         assertThat(attachment.getWarnings(), hasSize(WARNINGS.keySet().size()));
         //parameterize the messages
         assertEquals(attachment.getWarnings(), customWarnings.values().stream().
-            map(s -> new ParameterizedMessage(s, reportId).getFormattedMessage()).collect(Collectors.toSet()));
-
+            map(s -> String.format(Locale.ROOT, s, reportId)).collect(Collectors.toSet()));
         //ensure the reportId is parameterized in
         attachment.getWarnings().forEach(s -> {
             assertThat(s, containsString(reportId));

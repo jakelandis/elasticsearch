@@ -6,6 +6,7 @@
 package org.elasticsearch.xpack.watcher.notification.email;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -128,8 +129,10 @@ public class EmailTemplate implements ToXContentObject {
             StringBuilder htmlWarningBuilder = new StringBuilder();
             warnings.forEach(w ->
             {
-                textWarningBuilder.append(w).append("\n");
-                htmlWarningBuilder.append(w).append("<br>");
+                if(Strings.isNullOrEmpty(w) == false) {
+                    textWarningBuilder.append(w).append("\n");
+                    htmlWarningBuilder.append(w).append("<br>");
+                }
             });
             textWarningBuilder.append("\n");
             htmlWarningBuilder.append("<br>");
