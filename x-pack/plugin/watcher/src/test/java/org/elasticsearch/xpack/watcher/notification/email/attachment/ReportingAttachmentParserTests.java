@@ -418,7 +418,6 @@ public class ReportingAttachmentParserTests extends ESTestCase {
     }
 
     public void testDefaultWarnings() throws Exception {
-        // returns interval HTTP code for five times, then return expected data
         String content = randomAlphaOfLength(200);
         String path = "/ovb/api/reporting/jobs/download/iu5zfzvk15oa8990bfas9wy2";
         String randomContentType = randomAlphaOfLength(20);
@@ -445,7 +444,6 @@ public class ReportingAttachmentParserTests extends ESTestCase {
     }
 
     public void testCustomWarningsNoParams() throws Exception {
-        // returns interval HTTP code for five times, then return expected data
         String content = randomAlphaOfLength(200);
         String path = "/ovb/api/reporting/jobs/download/iu5zfzvk15oa8990bfas9wy2";
         String randomContentType = randomAlphaOfLength(20);
@@ -478,7 +476,6 @@ public class ReportingAttachmentParserTests extends ESTestCase {
     }
 
     public void testCustomWarningsWithParams() throws Exception {
-        // returns interval HTTP code for five times, then return expected data
         String content = randomAlphaOfLength(200);
         String path = "/ovb/api/reporting/jobs/download/iu5zfzvk15oa8990bfas9wy2";
         String randomContentType = randomAlphaOfLength(20);
@@ -517,7 +514,6 @@ public class ReportingAttachmentParserTests extends ESTestCase {
     }
 
     public void testWarningsSuppress() throws Exception {
-        // returns interval HTTP code for five times, then return expected data
         String content = randomAlphaOfLength(200);
         String path = "/ovb/api/reporting/jobs/download/iu5zfzvk15oa8990bfas9wy2";
         String randomContentType = randomAlphaOfLength(20);
