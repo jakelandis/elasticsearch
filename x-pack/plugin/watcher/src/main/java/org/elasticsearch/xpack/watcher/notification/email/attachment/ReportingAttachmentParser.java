@@ -7,6 +7,7 @@ package org.elasticsearch.xpack.watcher.notification.email.attachment;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
@@ -45,7 +46,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class ReportingAttachmentParser implements EmailAttachmentParser<ReportingAttachment> {
 
@@ -67,8 +70,9 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
     private static final ObjectParser<Builder, AuthParseContext> PARSER = new ObjectParser<>("reporting_attachment");
     private static final ObjectParser<KibanaReportingPayload, Void> PAYLOAD_PARSER =
             new ObjectParser<>("reporting_attachment_kibana_payload", true, null);
-    //FIXME: come up with correct message
-    private static final Map<String, String> KNOWN_WARNINGS = Map.of("kbn-csv-contains-formulas", "THIS IS GUNNA BLOW UP!");
+
+    private static final Map<String, String> WARNINGS = Map.of("kbn-csv-contains-formulas", "Warning: The attachment [{}] contains " +
+        "characters which spreadsheet applications may interpret as formulas. Please ensure that the attachment is safe prior to opening.");
 
     static {
         PARSER.declareInt(Builder::retries, ReportingAttachment.RETRIES);
@@ -99,7 +103,7 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
     private HttpClient httpClient;
     private final TextTemplateEngine templateEngine;
     private boolean warningEnabled = REPORT_WARNING_ENABLED_SETTING.getDefault(Settings.EMPTY);
-    private final Map<String, String> warningsText = new ConcurrentHashMap<>(1);
+    private final Map<String, String> customWarnings = new ConcurrentHashMap<>(1);
 
     public ReportingAttachmentParser(Settings settings, HttpClient httpClient, TextTemplateEngine templateEngine,
                                      ClusterSettings clusterSettings) {
@@ -109,21 +113,24 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
         this.templateEngine = templateEngine;
         this.logger = LogManager.getLogger(getClass());
         clusterSettings.addSettingsUpdateConsumer(REPORT_WARNING_ENABLED_SETTING, this::setWarningEnabled);
-        clusterSettings.addAffixUpdateConsumer(REPORT_WARNING_TEXT, this::addWarningText, (s, o) -> {});
+        clusterSettings.addAffixUpdateConsumer(REPORT_WARNING_TEXT, this::addWarningText, this::warningValidator);
     }
 
     private void setWarningEnabled(boolean warningEnabled) {
         this.warningEnabled = warningEnabled;
     }
 
-    private void addWarningText(String name, String value){
-        //sanity check, should never happen
-        if(warningsText.size() >= 100){
-            throw new IllegalStateException("Only 100 warning texts may be configured.");
-        }
-        warningsText.put(name, value);
+    private void addWarningText(String name, String value) {
+        customWarnings.put(name, value);
     }
 
+    private void warningValidator(String name, String value) {
+        if (WARNINGS.keySet().contains(name) == false) {
+            throw new IllegalArgumentException(new ParameterizedMessage(
+                "Warning [{}] is not supported. Only the following warnings are supported [{}]",
+                name, String.join(", ", WARNINGS.keySet())).getFormattedMessage());
+        }
+    }
 
     @Override
     public String type() {
@@ -187,17 +194,18 @@ public class ReportingAttachmentParser implements EmailAttachmentParser<Reportin
                         "method[{}], path[{}], status[{}], body[{}]", context.watch().id(), attachment.id(), request.host(),
                         request.port(), request.method(), request.path(), response.status(), body);
             } else if (response.status() == 200) {
-                response.headers().forEach((k,v) -> System.out.println(new Tuple<>(k, String.join(",", v))));
                 Set<String> warnings = new HashSet<>(1);
-                //FIXME: actually test this thing!
                 if (warningEnabled) {
-                    KNOWN_WARNINGS.forEach((k, v) -> {
-                        String[] text = response.header(k);
+                    WARNINGS.forEach((warningKey, defaultWarning) -> {
+                        String[] text = response.header(warningKey);
                         if (text != null && text.length > 0) {
-                            assert text.length == 1;
-                            if(Boolean.valueOf(text[0])){
-                                String customWarning = warningsText.get(k);
-                                warnings.add(customWarning == null ? v : customWarning);
+                            if (Boolean.valueOf(text[0])) {
+                                String warning = new ParameterizedMessage(defaultWarning, attachment.id()).getFormattedMessage();
+                                String customWarning = customWarnings.get(warningKey);
+                                if (Strings.isNullOrEmpty(customWarning) == false) {
+                                    warning = new ParameterizedMessage(customWarning, attachment.id()).getFormattedMessage();
+                                }
+                                warnings.add(warning);
                             }
                         }
                     });
