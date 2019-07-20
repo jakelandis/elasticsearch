@@ -31,7 +31,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,8 +45,6 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 @SupportedAnnotationTypes("org.elasticsearch.http.ModeledHttpResponse")
 public class HttpApiGenerator extends AbstractProcessor {
 
-
-    List<String> strings = new ArrayList<>();
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -58,31 +58,36 @@ public class HttpApiGenerator extends AbstractProcessor {
 
         for (Element element : roundEnv.getElementsAnnotatedWith(ModeledHttpResponse.class)) {
 
-            ModeledHttpResponse annotation = element.getAnnotation(ModeledHttpResponse.class);
-
-
-            //TODO: is it safe to use toString here? will generics get in the way ?
-            String clazzOrigin = element.asType().toString();
-
-
-            //prepend Generated, and append version number
-            String simpleClazzName = Arrays.stream(clazzOrigin.split("\\.")).reduce((f, s) -> s).get();
-
-            Pattern pattern = Pattern.compile("(.*)v(\\d+)(.*)");
-
-            String previous = annotation.previous();
-            Matcher matcher = pattern.matcher(previous);
-            matcher.find();
-            String targetSimpleClassName = "Generated" + simpleClazzName + matcher.group(2);
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing: " + element.getSimpleName() + " model: " + previous + " from:" + element.asType().toString() + " to: " + targetSimpleClassName);
-            read(previous);
-            JavaFile javaFile = createSource(clazzOrigin.replace("." + simpleClazzName, ""), targetSimpleClassName);
             try {
+                ModeledHttpResponse annotation = element.getAnnotation(ModeledHttpResponse.class);
 
-                javaFile.writeTo(processingEnv.getFiler());
-                javaFile.writeTo(System.out);
-                strings.clear();
-            }catch (IOException e){
+
+                //TODO: is it safe to use toString here? will generics get in the way ?
+                String clazzOrigin = element.asType().toString();
+
+
+                //prepend Generated, and append version number
+                String simpleClazzName = Arrays.stream(clazzOrigin.split("\\.")).reduce((f, s) -> s).get();
+
+                Pattern pattern = Pattern.compile("(.*)v(\\d+)(.*)");
+
+                String previous = annotation.previous();
+                Matcher matcher = pattern.matcher(previous);
+                matcher.find();
+                String className = "Generated" + simpleClazzName + matcher.group(2);
+                String packagaeName = clazzOrigin.replace("." + simpleClazzName, "");
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing: " + element.getSimpleName() + " model: " + previous + " from:" + element.asType().toString() + " to: " + className);
+                //read model file
+                FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", previous);
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Reading: " + jsonFile.toUri().getPath());
+                try (InputStream in = jsonFile.openInputStream()) {
+                    JavaFile javaFile = generateSource(in, packagaeName, className);
+                    //write source
+                    javaFile.writeTo(processingEnv.getFiler());
+                    javaFile.writeTo(System.out);
+
+                }
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 // only handles the super simple case of strings..current has object, so no go yet...
@@ -101,25 +106,16 @@ public class HttpApiGenerator extends AbstractProcessor {
         return true;
     }
 
-    private void read(String modelFile) {
-        try {
-            //read model file
-            FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", modelFile);
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Reading: " + jsonFile.toUri().getPath());
-            ObjectMapper mapper = new ObjectMapper();
-
-            try (InputStream in = jsonFile.openInputStream()) {
-                JsonNode root = mapper.readTree(in);
-                traverse("root", root);
-            }
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+    synchronized JavaFile generateSource(InputStream model, String packageName, String className) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> strings = new ArrayList<>();
+        JsonNode root = mapper.readTree(model);
+        traverse("root", root, strings);
+        return createSource(packageName, className, strings);
     }
 
-    private JavaFile createSource(String packageName, String className) {
+
+    private JavaFile createSource(String packageName, String className, List<String> strings) {
 
         ClassName classToGenerate = ClassName.get(packageName, className);
 
@@ -197,15 +193,16 @@ public class HttpApiGenerator extends AbstractProcessor {
 
     }
 
-    private void traverse(String name, JsonNode node) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing : " + name);
+
+    private void traverse(String name, JsonNode node, List<String> strings) {
+//        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing : " + name);
         if (node.isObject()) {
-            node.fields().forEachRemaining(e -> traverse(e.getKey(), e.getValue()));
+            node.fields().forEachRemaining(e -> traverse(e.getKey(), e.getValue(), strings));
         } else if (node.isArray()) {
-            node.elements().forEachRemaining(n -> traverse("", n));
+            node.elements().forEachRemaining(n -> traverse("", n, strings));
         } else if (node.isValueNode()) {
             String value = node.asText();
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, value);
+            //          processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, value);
             if ("string".equals(value)) {
                 strings.add(name);
             }
