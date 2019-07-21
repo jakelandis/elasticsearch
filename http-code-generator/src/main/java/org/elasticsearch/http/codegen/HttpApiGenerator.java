@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -75,13 +76,13 @@ public class HttpApiGenerator extends AbstractProcessor {
                 Matcher matcher = pattern.matcher(previous);
                 matcher.find();
                 String className = "Generated" + simpleClazzName + matcher.group(2);
-                String packagaeName = clazzOrigin.replace("." + simpleClazzName, "");
+                String packageName = clazzOrigin.replace("." + simpleClazzName, "");
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing: " + element.getSimpleName() + " model: " + previous + " from:" + element.asType().toString() + " to: " + className);
                 //read model file
                 FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", previous);
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Reading: " + jsonFile.toUri().getPath());
                 try (InputStream in = jsonFile.openInputStream()) {
-                    JavaFile javaFile = generateSource(in, packagaeName, className);
+                    JavaFile javaFile = createSource(in, packageName, className);
                     //write source
                     javaFile.writeTo(processingEnv.getFiler());
                     javaFile.writeTo(System.out);
@@ -106,109 +107,174 @@ public class HttpApiGenerator extends AbstractProcessor {
         return true;
     }
 
-    synchronized JavaFile generateSource(InputStream model, String packageName, String className) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        List<String> strings = new ArrayList<>();
-        JsonNode root = mapper.readTree(model);
-        traverse("root", root, strings);
-        return createSource(packageName, className, strings);
-    }
 
-
-    private JavaFile createSource(String packageName, String className, List<String> strings) {
-
+    public JavaFile createSource(InputStream model, String packageName, String className) throws IOException {
         ClassName classToGenerate = ClassName.get(packageName, className);
-
-        //lambda for static parser
-        CodeBlock.Builder lambdaBuilder = CodeBlock.builder();
-        lambdaBuilder.add("a -> new $T(", classToGenerate);
-        for (int i = 0; i <= strings.size() - 1; i++) {
-            lambdaBuilder.add("\n(String) a[$L]", i);
-            if (i < strings.size() - 1) {
-                lambdaBuilder.add(",");
-            }
-        }
-        CodeBlock lambda = lambdaBuilder.build();
-
-        //static parser
-        ParameterizedTypeName parameterizedTypes = ParameterizedTypeName.get(
-            ClassName.get(ConstructingObjectParser.class),
-            classToGenerate,
-            ClassName.get(Void.class));
-        FieldSpec parserSpec = FieldSpec.builder(parameterizedTypes,
-            "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
-            .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), classToGenerate, lambda)
-            .build();
-
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(model);
         //static initializer
         CodeBlock.Builder staticInitializerBuilder = CodeBlock.builder();
-        strings.forEach(s -> staticInitializerBuilder.add("PARSER.declareString(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, s));
-        CodeBlock staticInitializer = staticInitializerBuilder.build();
+
 
         //constructor
-        MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC);
-        strings.forEach(s -> constructorBuilder.addParameter(String.class, s).addStatement("this.$N = $N", s, s));
-        MethodSpec constructor = constructorBuilder.build();
-
-        //fields
-        List<FieldSpec> fields = strings.stream().map(s -> FieldSpec.builder(String.class, s)
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .build()).collect(Collectors.toList());
-
-        //toXContent
+        MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder();
+        //toXContent method
         MethodSpec.Builder toXContentBuilder = MethodSpec.methodBuilder("toXContent")
             .addModifiers(Modifier.PUBLIC)
             .addParameter(XContentBuilder.class, "builder", Modifier.FINAL)
             .addParameter(ToXContent.Params.class, "params", Modifier.FINAL)
             .addAnnotation(Override.class);
-        //toXContent contents
-        toXContentBuilder
-            .addStatement("builder.startObject()");
-        strings.forEach(s -> {
-            toXContentBuilder.addStatement("builder.field($S," + s + ")", s);
-        });
+        toXContentBuilder.addStatement("builder.startObject()");
+        //fields to be added
+        List<FieldSpec> fields = new ArrayList<>();
+        List<CodeBlock> lambdas = new ArrayList<>();
 
-        toXContentBuilder
+        traverse("", "", root, staticInitializerBuilder, lambdas, constructorBuilder, toXContentBuilder, fields, new AtomicInteger(0));
+
+        //ConstructingObjectParser<ClassToGenerate, Void>
+        ParameterizedTypeName typedConstructingObjectParser = ParameterizedTypeName.get(ClassName.get(ConstructingObjectParser.class), classToGenerate, ClassName.get(Void.class));
+
+        //lambda builder for the static parser
+        CodeBlock.Builder lambdaBuilder = CodeBlock.builder();
+        lambdaBuilder.add("a -> new $T(", classToGenerate);
+        int i = 0;
+        for(CodeBlock lambda : lambdas){
+            lambdaBuilder.add("\n").add(lambda);
+            if(++i != lambdas.size()){
+                lambdaBuilder.add(",");
+            }
+        }
+
+        FieldSpec parserSpec = FieldSpec.builder(typedConstructingObjectParser,
+            "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
+            .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), classToGenerate, lambdaBuilder.build())
+            .build();
+
+        MethodSpec toContentMethod = toXContentBuilder
             .addStatement("builder.endObject()")
             .addStatement("return builder")
             .returns(XContentBuilder.class)
             .addException(IOException.class)
             .build();
 
-        MethodSpec toXContent = toXContentBuilder.build();
         //class
         TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addSuperinterface(ToXContentObject.class)
-            .addJavadoc("GENERATED CODE - DO NOT MODIFY")
-            .addStaticBlock(staticInitializer)
+            .addJavadoc("GENERATED CODE - DO NOT MODIFY") //todo add date and by what
+            .addStaticBlock(staticInitializerBuilder.build())
             .addField(parserSpec)
-            .addMethod(constructor)
-            .addMethod(toXContent);
+            .addMethod(constructorBuilder.build())
+            .addMethod(toContentMethod);
         fields.forEach(clazzBuilder::addField);
         TypeSpec clazz = clazzBuilder.build();
-
         return JavaFile.builder(packageName, clazz).build();
-
     }
 
-
-    private void traverse(String name, JsonNode node, List<String> strings) {
-//        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing : " + name);
+    private void traverse(String name, String parentName, JsonNode node, CodeBlock.Builder staticInitializerBuilder,  List<CodeBlock> lamdas, MethodSpec.Builder constructorBuilder, MethodSpec.Builder toXContentBuilder, List<FieldSpec> fields, AtomicInteger parserPosition) {
         if (node.isObject()) {
-            node.fields().forEachRemaining(e -> traverse(e.getKey(), e.getValue(), strings));
+            node.fields().forEachRemaining(e -> traverse(e.getKey(), name, e.getValue(), staticInitializerBuilder,  lamdas, constructorBuilder, toXContentBuilder, fields, parserPosition));
         } else if (node.isArray()) {
-            node.elements().forEachRemaining(n -> traverse("", n, strings));
+            //node.elements().forEachRemaining(n -> traverse("", n, staticInitializerBuilder,  lamdas, constructorBuilder, toXContentBuilder, fields, parserPosition));
         } else if (node.isValueNode()) {
-            String value = node.asText();
-            //          processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, value);
-            if ("string".equals(value)) {
-                strings.add(name);
+
+            if ("type".equalsIgnoreCase(name)) {
+                String value = node.textValue();
+                // Add a String type
+                if("string".equalsIgnoreCase(value)){
+                    lamdas.add(CodeBlock.builder().add("(String) a[$L]", parserPosition.incrementAndGet()).build());
+                    staticInitializerBuilder.add("PARSER.declareString(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, parentName);
+                    constructorBuilder.addParameter(String.class, parentName).addStatement("this.$N = $N", parentName, parentName);
+                    fields.add(FieldSpec.builder(String.class, parentName).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
+                    toXContentBuilder.addStatement("builder.field($S," + parentName + ")", parentName);
+                }
+
+
             }
 
+
         } else {
-            throw new IllegalStateException("Unknown node type");
+            throw new IllegalStateException("Unknown node type, likely invalid JSON");
         }
     }
+
+//    private JavaFile createSource(String packageName, String className, List<String> strings) {
+//
+//        ClassName classToGenerate = ClassName.get(packageName, className);
+//
+//        //lambda for static parser
+//        CodeBlock.Builder lambdaBuilder = CodeBlock.builder();
+//        lambdaBuilder.add("a -> new $T(", classToGenerate);
+//        for (int i = 0; i <= strings.size() - 1; i++) {
+//            lambdaBuilder.add("\n(String) a[$L]", i);
+//            if (i < strings.size() - 1) {
+//                lambdaBuilder.add(",");
+//            }
+//        }
+//        CodeBlock lambda = lambdaBuilder.build();
+//
+//        //static parser
+//        ParameterizedTypeName parameterizedTypes = ParameterizedTypeName.get(
+//            ClassName.get(ConstructingObjectParser.class),
+//            classToGenerate,
+//            ClassName.get(Void.class));
+//        FieldSpec parserSpec = FieldSpec.builder(parameterizedTypes,
+//            "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
+//            .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), classToGenerate, lambda)
+//            .build();
+//
+//        //static initializer
+//        CodeBlock.Builder staticInitializerBuilder = CodeBlock.builder();
+//        strings.forEach(s -> staticInitializerBuilder.add("PARSER.declareString(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, s));
+//        CodeBlock staticInitializer = staticInitializerBuilder.build();
+//
+//        //constructor
+//        MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder()
+//            .addModifiers(Modifier.PUBLIC);
+//        strings.forEach(s -> constructorBuilder.addParameter(String.class, s).addStatement("this.$N = $N", s, s));
+//        MethodSpec constructor = constructorBuilder.build();
+//
+//        //fields
+//        List<FieldSpec> fields = strings.stream().map(s -> FieldSpec.builder(String.class, s)
+//            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+//            .build()).collect(Collectors.toList());
+//
+//        //toXContent
+//        MethodSpec.Builder toXContentBuilder = MethodSpec.methodBuilder("toXContent")
+//            .addModifiers(Modifier.PUBLIC)
+//            .addParameter(XContentBuilder.class, "builder", Modifier.FINAL)
+//            .addParameter(ToXContent.Params.class, "params", Modifier.FINAL)
+//            .addAnnotation(Override.class);
+//        //toXContent contents
+//        toXContentBuilder
+//            .addStatement("builder.startObject()");
+//        strings.forEach(s -> {
+//            toXContentBuilder.addStatement("builder.field($S," + s + ")", s);
+//        });
+//
+//        toXContentBuilder
+//            .addStatement("builder.endObject()")
+//            .addStatement("return builder")
+//            .returns(XContentBuilder.class)
+//            .addException(IOException.class)
+//            .build();
+//
+//        MethodSpec toXContent = toXContentBuilder.build();
+//        //class
+//        TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
+//            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+//            .addSuperinterface(ToXContentObject.class)
+//            .addJavadoc("GENERATED CODE - DO NOT MODIFY")
+//            .addStaticBlock(staticInitializer)
+//            .addField(parserSpec)
+//            .addMethod(constructor)
+//            .addMethod(toXContent);
+//        fields.forEach(clazzBuilder::addField);
+//        TypeSpec clazz = clazzBuilder.build();
+//
+//        return JavaFile.builder(packageName, clazz).build();
+//
+//    }
+
+
 }

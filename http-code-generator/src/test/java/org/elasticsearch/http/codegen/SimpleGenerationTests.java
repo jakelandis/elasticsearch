@@ -23,7 +23,7 @@ public class SimpleGenerationTests extends ESTestCase {
 
         print(model);
         HttpApiGenerator generator = new HttpApiGenerator();
-        JavaFile generateSource = generator.generateSource(new ByteArrayInputStream(model), "co.elastic", "foo");
+        JavaFile generateSource = generator.createSource(new ByteArrayInputStream(model), "co.elastic", "Foo");
 
         generateSource.writeTo(tempDir.getRoot());
         byte[] generatedFile = toByteArray(new FileInputStream(Files.find(tempDir.getRoot().toPath(), Integer.MAX_VALUE, (p, f) -> f.isRegularFile()).findFirst().orElseThrow().toFile()));
