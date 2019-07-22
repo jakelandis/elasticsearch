@@ -2,6 +2,7 @@ package org.elasticsearch.http.codegen;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -10,6 +11,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.ToXContentObject;
@@ -31,15 +33,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static javax.lang.model.SourceVersion.RELEASE_11;
 
@@ -47,6 +48,8 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 @SupportedAnnotationTypes("org.elasticsearch.http.ModeledHttpResponse")
 public class HttpApiGenerator extends AbstractProcessor {
 
+
+    private static final String ROOT_OBJECT_NAME = "__ROOT__";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -110,78 +113,30 @@ public class HttpApiGenerator extends AbstractProcessor {
 
 
     public JavaFile createSource(InputStream model, String packageName, String className) throws IOException {
-        ClassName classToGenerate = ClassName.get(packageName, className);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(model);
-        //static initializer
-        CodeBlock.Builder staticInitializerBuilder = CodeBlock.builder();
-        //constructor
-        MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder();
-        //toXContent method
-        MethodSpec.Builder toXContentBuilder = MethodSpec.methodBuilder("toXContent")
-            .addModifiers(Modifier.PUBLIC)
-            .addParameter(XContentBuilder.class, "builder", Modifier.FINAL)
-            .addParameter(ToXContent.Params.class, "params", Modifier.FINAL)
-            .addAnnotation(Override.class);
-        toXContentBuilder.addStatement("builder.startObject()");
-        //fields to be added
-        List<FieldSpec> fields = new ArrayList<>();
-        List<CodeBlock> lambdas = new ArrayList<>();
-
-        traverse("", "", root, staticInitializerBuilder, lambdas, constructorBuilder, toXContentBuilder, fields, new AtomicInteger(0));
-
-        //ConstructingObjectParser<ClassToGenerate, Void>
-        ParameterizedTypeName typedConstructingObjectParser = ParameterizedTypeName.get(ClassName.get(ConstructingObjectParser.class), classToGenerate, ClassName.get(Void.class));
-
-        //lambda builder for the static parser
-        CodeBlock.Builder lambdaBuilder = CodeBlock.builder();
-        lambdaBuilder.add("a -> new $T(", classToGenerate);
-        int i = 0;
-        for (CodeBlock lambda : lambdas) {
-            lambdaBuilder.add("\n").add(lambda);
-            if (++i != lambdas.size()) {
-                lambdaBuilder.add(",");
-            }
-        }
-
-        FieldSpec parserSpec = FieldSpec.builder(typedConstructingObjectParser,
-            "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
-            .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), classToGenerate, lambdaBuilder.build())
-            .build();
-
-        MethodSpec toContentMethod = toXContentBuilder
-            .addStatement("builder.endObject()")
-            .addStatement("return builder")
-            .returns(XContentBuilder.class)
-            .addException(IOException.class)
-            .build();
-
-        //class
-        TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addSuperinterface(ToXContentObject.class)
-            .addJavadoc("GENERATED CODE - DO NOT MODIFY") //todo add date and by what
-            .addStaticBlock(staticInitializerBuilder.build())
-            .addField(parserSpec)
-            .addMethod(constructorBuilder.build())
-            .addMethod(toContentMethod);
-        fields.forEach(clazzBuilder::addField);
-        TypeSpec clazz = clazzBuilder.build();
-        return JavaFile.builder(packageName, clazz).build();
+        ToXContentClassBuilder xContentClassBuilder = ToXContentClassBuilder.newToXContentClassBuilder();
+        traverse(root, ROOT_OBJECT_NAME, ROOT_OBJECT_NAME, xContentClassBuilder);
+        return xContentClassBuilder.build(packageName, className);
     }
 
-    private void traverse(String name, String parentName, JsonNode node, CodeBlock.Builder staticInitializerBuilder, List<CodeBlock> lamdas, MethodSpec.Builder constructorBuilder, MethodSpec.Builder toXContentBuilder, List<FieldSpec> fields, AtomicInteger parserPosition) {
+
+    private void traverse(JsonNode node, String keyName, String parentKeyName, ToXContentClassBuilder xContentClassBuilder) {
         if (node.isObject()) {
-            node.fields().forEachRemaining(e -> traverse(e.getKey(), name, e.getValue(), staticInitializerBuilder, lamdas, constructorBuilder, toXContentBuilder, fields, parserPosition));
+            System.out.println("* Processing node: " + node);
+
+            node.fields().forEachRemaining(e -> traverse(e.getValue(), e.getKey(), keyName,  xContentClassBuilder));
+
         } else if (node.isArray()) {
-            //node.elements().forEachRemaining(n -> traverse("", n, staticInitializerBuilder,  lamdas, constructorBuilder, toXContentBuilder, fields, parserPosition));
+            //node.elements().forEachRemaining(n -> traverse("", n, staticInitializerBuilder,  lambdas, constructorBuilder, toXContentMethodBuilder, fields, parserPosition));
         } else if (node.isValueNode()) {
-            if ("type".equalsIgnoreCase(name)) {
+            if ("type".equalsIgnoreCase(keyName)) {
                 String value = node.textValue();
                 Class<?> clazz = null;
                 String cast = "";
                 String parserMethodName = "";
-                boolean skip = false;
+                boolean isObject = false;
+                boolean isRootObject = false;
 
                 switch (value.toLowerCase(Locale.ROOT)) {
                     case "string":
@@ -207,28 +162,41 @@ public class HttpApiGenerator extends AbstractProcessor {
                     case "null":
                         throw new IllegalStateException("`null` type is not supported for code generation");
                     case "object":
-                        skip = true;
+                        //nested object
+                        isObject = true;
+                        if (ROOT_OBJECT_NAME.equals(parentKeyName)) {
+                            isRootObject = true;
+                        } else {
+//                            String innerClassName = parentKeyName.substring(0, 1).toUpperCase(Locale.ROOT) + parentKeyName.substring(1).toLowerCase(Locale.ROOT);
+//                            cast = "(" + innerClassName + ") ";
+
+
+                        }
                         break;
                     default:
                         throw new IllegalStateException("Unknown type found [{" + value + "}]");
                 }
 
                 //generate the code blocks
-                if (skip == false) {
-                    lamdas.add(CodeBlock.builder().add(cast + " a[$L]", parserPosition.incrementAndGet()).build());
-                    staticInitializerBuilder.add("PARSER." + parserMethodName + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, parentName);
-                    constructorBuilder.addParameter(clazz, parentName).addStatement("this.$N = $N", parentName, parentName);
-                    fields.add(FieldSpec.builder(clazz, parentName).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
-                    toXContentBuilder.addStatement("builder.field($S," + parentName + ")", parentName);
+//                if (isObject && isRootObject == false) {
+//                    lambdas.add(CodeBlock.builder().add(cast + " a[$L]", parserPosition.incrementAndGet()).build());
+//                }
+                if (isObject == false) {
+                    xContentClassBuilder.lambdas.add(CodeBlock.builder().add(cast + " a[$L]", xContentClassBuilder.parserPosition.incrementAndGet()).build());
+                    xContentClassBuilder.staticInitializerBuilder.add("PARSER." + parserMethodName + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, parentKeyName);
+                    xContentClassBuilder.constructorBuilder.addParameter(clazz, parentKeyName).addStatement("this.$N = $N", parentKeyName, parentKeyName);
+                    xContentClassBuilder.fields.add(FieldSpec.builder(clazz, parentKeyName).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
+                    xContentClassBuilder.toXContentMethodBuilder.addStatement("builder.field($S," + parentKeyName + ")", parentKeyName);
+
                 }
+            }else{
+
             }
 
         } else {
             throw new IllegalStateException("Unknown node type, likely invalid JSON");
         }
     }
-
-
 
 
 }

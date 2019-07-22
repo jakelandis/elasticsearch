@@ -10,6 +10,12 @@
     },
     "cluster_uuid": {
       "type": "string"
+    },
+    "version": {
+      "type" : "object",
+      "build_flavor": {
+        "type" : "string"
+      }
     }
   }
 }
