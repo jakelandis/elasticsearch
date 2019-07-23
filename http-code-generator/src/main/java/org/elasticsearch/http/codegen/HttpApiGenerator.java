@@ -2,20 +2,10 @@ package org.elasticsearch.http.codegen;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeSpec;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.http.ModeledHttpResponse;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -31,13 +21,13 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -115,30 +105,38 @@ public class HttpApiGenerator extends AbstractProcessor {
     public JavaFile createSource(InputStream model, String packageName, String className) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(model);
-        ToXContentClassBuilder xContentClassBuilder = ToXContentClassBuilder.newToXContentClassBuilder();
-        traverse(root, ROOT_OBJECT_NAME, ROOT_OBJECT_NAME, xContentClassBuilder);
-        return xContentClassBuilder.build(packageName, className);
+        LinkedList<ToXContentClassBuilder> xContentClassBuilders = new LinkedList<>();
+        traverse(root, ROOT_OBJECT_NAME, "", xContentClassBuilders, new AtomicInteger(0));
+        return xContentClassBuilders.getFirst().build(packageName, className);
+//        return xContentClassBuilders.getLast().build(packageName, className);
     }
 
-
-    private void traverse(JsonNode node, String keyName, String parentKeyName, ToXContentClassBuilder xContentClassBuilder) {
+    private void traverse(JsonNode node, String currentKey, String parentKey, LinkedList<ToXContentClassBuilder> xContentClassBuilders, AtomicInteger depth) {
         if (node.isObject()) {
-            System.out.println("* Processing node: " + node);
+            depth.getAndIncrement();
+            Iterator<Map.Entry<String, JsonNode>> it = node.fields();
+            while (it.hasNext()) {
+                Map.Entry<String, JsonNode> e = it.next();
+                traverse(e.getValue(), e.getKey(), currentKey, xContentClassBuilders, depth);
+            }
+            depth.decrementAndGet();
 
-            node.fields().forEachRemaining(e -> traverse(e.getValue(), e.getKey(), keyName,  xContentClassBuilder));
-
-        } else if (node.isArray()) {
-            //node.elements().forEachRemaining(n -> traverse("", n, staticInitializerBuilder,  lambdas, constructorBuilder, toXContentMethodBuilder, fields, parserPosition));
         } else if (node.isValueNode()) {
-            if ("type".equalsIgnoreCase(keyName)) {
-                String value = node.textValue();
+            if ("type".equalsIgnoreCase(currentKey) && "object".equalsIgnoreCase(node.textValue())) {
+
+                System.out.println("* Start processing object " + parentKey + " at depth " + depth.get());
+                //create new builder objects
+                xContentClassBuilders.add(ToXContentClassBuilder.newToXContentClassBuilder());
+
+            } else if ("type".equalsIgnoreCase(currentKey)) {
+                String type = node.textValue();
+                System.out.println("|_Start processing nota object " + parentKey);
                 Class<?> clazz = null;
                 String cast = "";
                 String parserMethodName = "";
-                boolean isObject = false;
-                boolean isRootObject = false;
 
-                switch (value.toLowerCase(Locale.ROOT)) {
+
+                switch (type.toLowerCase(Locale.ROOT)) {
                     case "string":
                         clazz = String.class;
                         cast = "(String) ";
@@ -161,42 +159,24 @@ public class HttpApiGenerator extends AbstractProcessor {
                         break;
                     case "null":
                         throw new IllegalStateException("`null` type is not supported for code generation");
-                    case "object":
-                        //nested object
-                        isObject = true;
-                        if (ROOT_OBJECT_NAME.equals(parentKeyName)) {
-                            isRootObject = true;
-                        } else {
-//                            String innerClassName = parentKeyName.substring(0, 1).toUpperCase(Locale.ROOT) + parentKeyName.substring(1).toLowerCase(Locale.ROOT);
-//                            cast = "(" + innerClassName + ") ";
 
-
-                        }
-                        break;
                     default:
-                        throw new IllegalStateException("Unknown type found [{" + value + "}]");
+                        throw new IllegalStateException("Unknown type found [{" + type + "}]");
                 }
-
-                //generate the code blocks
-//                if (isObject && isRootObject == false) {
-//                    lambdas.add(CodeBlock.builder().add(cast + " a[$L]", parserPosition.incrementAndGet()).build());
-//                }
-                if (isObject == false) {
-                    xContentClassBuilder.lambdas.add(CodeBlock.builder().add(cast + " a[$L]", xContentClassBuilder.parserPosition.incrementAndGet()).build());
-                    xContentClassBuilder.staticInitializerBuilder.add("PARSER." + parserMethodName + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, parentKeyName);
-                    xContentClassBuilder.constructorBuilder.addParameter(clazz, parentKeyName).addStatement("this.$N = $N", parentKeyName, parentKeyName);
-                    xContentClassBuilder.fields.add(FieldSpec.builder(clazz, parentKeyName).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
-                    xContentClassBuilder.toXContentMethodBuilder.addStatement("builder.field($S," + parentKeyName + ")", parentKeyName);
-
-                }
-            }else{
+                ToXContentClassBuilder xContentClassBuilder = xContentClassBuilders.peekLast();
+                xContentClassBuilder.lambdas.add(CodeBlock.builder().add(cast + " a[$L]", xContentClassBuilder.parserPosition.incrementAndGet()).build());
+                xContentClassBuilder.staticInitializerBuilder.add("PARSER." + parserMethodName + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, parentKey);
+                xContentClassBuilder.constructorBuilder.addParameter(clazz, parentKey).addStatement("this.$N = $N", parentKey, parentKey);
+                xContentClassBuilder.fields.add(FieldSpec.builder(clazz, parentKey).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
+                xContentClassBuilder.toXContentMethodBuilder.addStatement("builder.field($S," + parentKey + ")", parentKey);
 
             }
 
-        } else {
-            throw new IllegalStateException("Unknown node type, likely invalid JSON");
         }
     }
 
 
 }
+
+
+

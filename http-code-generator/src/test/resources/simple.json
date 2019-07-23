@@ -15,7 +15,20 @@
       "type" : "object",
       "build_flavor": {
         "type" : "string"
+      },
+      "inner-version": {
+        "type" : "object",
+        "inner": {
+          "type" : "string"
+        }
+      }
+    },
+    "symbling": {
+      "type" : "object",
+      "sister": {
+        "type" : "string"
       }
     }
-  }
+  },
+  "foo" : "bar"
 }
