@@ -32,6 +32,9 @@
       "properties": {
         "sister": {
           "type": "string"
+        },
+        "brother": {
+          "type": "boolean"
         }
       }
     },
