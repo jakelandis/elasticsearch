@@ -2,7 +2,10 @@ package org.elasticsearch.http.codegen;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.http.ModeledHttpResponse;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -11,6 +14,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
@@ -21,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -99,45 +104,77 @@ public class HttpApiGenerator extends AbstractProcessor {
     public JavaFile createSource(InputStream model, String packageName, String className) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(model);
-        LinkedList<ToXContentClassBuilder> xContentClassBuilders = new LinkedList<>();
-        List<ObjectModel> objectModels = new ArrayList<>();
-        traverse(root, ROOT_OBJECT_NAME, ROOT_OBJECT_NAME, objectModels);
-        System.out.println();
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$");
-        objectModels.forEach(m -> {
-            System.out.println("******" + m.name + " (parent: " + m.parent + ")");
-            m.fields.forEach(f -> {
-                System.out.println(f.name + ":" + f.type);
-            });
-        });
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$");
+        ToXContentClassBuilder xContentClassBuilder = ToXContentClassBuilder.newToXContentClassBuilder();
+        traverse(root, ROOT_OBJECT_NAME, xContentClassBuilder);
 
-        return xContentClassBuilders.getFirst().build(packageName, className);
-//        return xContentClassBuilders.getLast().build(packageName, className);
+
+        return xContentClassBuilder.build(packageName, className);
     }
 
 
-    private void traverse(JsonNode node, String key, String objectParent, List<ObjectModel> objectModels) {
+    private void traverse(JsonNode node, String key, ToXContentClassBuilder xContentClassBuilder) {
 
         JsonNode typeNode = node.get("type");
-        ObjectModel objectModel = new ObjectModel(key, objectParent);
-        objectModels.add(objectModel);
+
         if ("object".equals(typeNode.asText())) {
-            List<Map.Entry<String, JsonNode>> nested = new ArrayList<>();
             JsonNode propertiesNode = node.get("properties");
             propertiesNode.fields().forEachRemaining(f -> {
                 JsonNode nestedTypeNode = f.getValue().get("type");
                 if ("object".equals(nestedTypeNode.asText()) == false) {
-                    objectModel.fields.add(new ObjectModel.Field(f.getKey(), nestedTypeNode.asText()));
+                    String type = nestedTypeNode.asText();
+                    System.out.println(key + " : " + f.getKey() + ":" + type);
+                    addPrimative(f.getKey() , type, xContentClassBuilder);
 
                 } else {
-                    nested.add(f);
+                    traverse(f.getValue(), f.getKey(), xContentClassBuilder);
                 }
             });
-            nested.forEach(e -> traverse(e.getValue(), e.getKey(), key, objectModels));
         }
-        // node.fields().forEachRemaining(e -> traverse(e.getValue(), e.getKey()));
-        //    }
+    }
+
+    private void addPrimative(String key, String type, ToXContentClassBuilder xContentClassBuilder) {
+
+        Class<?> clazz = null;
+        String cast = "";
+        String parserMethodName = "";
+
+        switch (type.toLowerCase(Locale.ROOT)) {
+            case "string":
+                clazz = String.class;
+                cast = "(String) ";
+                parserMethodName = "declareString";
+                break;
+            case "integer":
+                clazz = Long.class; //In JSON spec integer = non-fractional
+                cast = "(Long) ";
+                parserMethodName = "declareLong";
+                break;
+            case "number":
+                clazz = Double.class; //In JSON spec number = fractional
+                cast = "(Double) ";
+                parserMethodName = "declareDouble";
+                break;
+            case "boolean":
+                clazz = Boolean.class;
+                cast = "(Boolean) ";
+                parserMethodName = "declareBoolean";
+                break;
+            case "null":
+                throw new IllegalStateException("`null` type is not supported for code generation");
+
+            default:
+                throw new IllegalStateException("Unknown type found [{" + type + "}]");
+        }
+
+        xContentClassBuilder.lambdas.add(CodeBlock.builder().add(cast + " a[$L]", xContentClassBuilder.parserPosition.incrementAndGet()).build());
+        xContentClassBuilder.staticInitializerBuilder.add("PARSER." + parserMethodName + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, key);
+        xContentClassBuilder.constructorBuilder.addParameter(clazz, key).addStatement("this.$N = $N", key, key);
+        xContentClassBuilder.fields.add(FieldSpec.builder(clazz, key).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
+        xContentClassBuilder.toXContentMethodBuilder.addStatement("builder.field($S," + key + ")", key);
+    }
+
+    // node.fields().forEachRemaining(e -> traverse(e.getValue(), e.getKey()));
+    //    }
 //        } else if (node.isValueNode()) {
 //            if ("type".equalsIgnoreCase(currentKey) && "object".equalsIgnoreCase(node.textValue())) {
 //
@@ -189,8 +226,6 @@ public class HttpApiGenerator extends AbstractProcessor {
 //
 //            }
 //
-//        }
-    }
 
 
 }

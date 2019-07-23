@@ -17,7 +17,7 @@
         "build_flavor": {
           "type": "string"
         },
-        "inner-version": {
+        "inner_version": {
           "type": "object",
           "properties": {
             "inner": {
