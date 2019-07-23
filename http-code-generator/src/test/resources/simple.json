@@ -12,23 +12,31 @@
       "type": "string"
     },
     "version": {
-      "type" : "object",
-      "build_flavor": {
-        "type" : "string"
-      },
-      "inner-version": {
-        "type" : "object",
-        "inner": {
-          "type" : "string"
+      "type":"object",
+      "properties" :{
+        "build_flavor": {
+          "type": "string"
+        },
+        "inner-version": {
+          "type": "object",
+          "properties": {
+            "inner": {
+              "type": "string"
+            }
+          }
         }
       }
     },
     "symbling": {
-      "type" : "object",
-      "sister": {
-        "type" : "string"
+      "type": "object",
+      "properties": {
+        "sister": {
+          "type": "string"
+        }
       }
+    },
+    "foo": {
+      "type": "string"
     }
-  },
-  "foo" : "bar"
+  }
 }
