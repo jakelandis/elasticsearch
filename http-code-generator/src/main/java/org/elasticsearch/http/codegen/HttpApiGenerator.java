@@ -122,7 +122,7 @@ public class HttpApiGenerator extends AbstractProcessor {
                 JsonNode nestedTypeNode = f.getValue().get("type");
                 if ("object".equals(nestedTypeNode.asText()) == false) {
                     String type = nestedTypeNode.asText();
-                    System.out.println(key + " : " + f.getKey() + ":" + type);
+                    System.out.println("parent: " + key + " entry: " + f.getKey() + " type:" + type);
                     addPrimative(f.getKey() , type, xContentClassBuilder);
 
                 } else {
@@ -173,59 +173,6 @@ public class HttpApiGenerator extends AbstractProcessor {
         xContentClassBuilder.toXContentMethodBuilder.addStatement("builder.field($S," + key + ")", key);
     }
 
-    // node.fields().forEachRemaining(e -> traverse(e.getValue(), e.getKey()));
-    //    }
-//        } else if (node.isValueNode()) {
-//            if ("type".equalsIgnoreCase(currentKey) && "object".equalsIgnoreCase(node.textValue())) {
-//
-//                System.out.println("* Start processing object " + parentKey + " at depth " + depth.get());
-//                //create new builder objects
-//                xContentClassBuilders.add(ToXContentClassBuilder.newToXContentClassBuilder());
-//
-//            } else if ("type".equalsIgnoreCase(currentKey)) {
-//                String type = node.textValue();
-//                System.out.println("|_Start processing nota object " + parentKey);
-//                Class<?> clazz = null;
-//                String cast = "";
-//                String parserMethodName = "";
-//
-//
-//                switch (type.toLowerCase(Locale.ROOT)) {
-//                    case "string":
-//                        clazz = String.class;
-//                        cast = "(String) ";
-//                        parserMethodName = "declareString";
-//                        break;
-//                    case "integer":
-//                        clazz = Long.class; //In JSON spec integer = non-fractional
-//                        cast = "(Long) ";
-//                        parserMethodName = "declareLong";
-//                        break;
-//                    case "number":
-//                        clazz = Double.class; //In JSON spec number = fractional
-//                        cast = "(Double) ";
-//                        parserMethodName = "declareDouble";
-//                        break;
-//                    case "boolean":
-//                        clazz = Boolean.class;
-//                        cast = "(Boolean) ";
-//                        parserMethodName = "declareBoolean";
-//                        break;
-//                    case "null":
-//                        throw new IllegalStateException("`null` type is not supported for code generation");
-//
-//                    default:
-//                        throw new IllegalStateException("Unknown type found [{" + type + "}]");
-//                }
-//                ToXContentClassBuilder xContentClassBuilder = xContentClassBuilders.peekLast();
-//                xContentClassBuilder.lambdas.add(CodeBlock.builder().add(cast + " a[$L]", xContentClassBuilder.parserPosition.incrementAndGet()).build());
-//                xContentClassBuilder.staticInitializerBuilder.add("PARSER." + parserMethodName + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, parentKey);
-//                xContentClassBuilder.constructorBuilder.addParameter(clazz, parentKey).addStatement("this.$N = $N", parentKey, parentKey);
-//                xContentClassBuilder.fields.add(FieldSpec.builder(clazz, parentKey).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
-//                xContentClassBuilder.toXContentMethodBuilder.addStatement("builder.field($S," + parentKey + ")", parentKey);
-//
-//            }
-//
 
 
 }
