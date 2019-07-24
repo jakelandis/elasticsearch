@@ -39,7 +39,7 @@
       }
     },
     "foo": {
-      "type": "string"
+      "type": "integer"
     }
   }
 }

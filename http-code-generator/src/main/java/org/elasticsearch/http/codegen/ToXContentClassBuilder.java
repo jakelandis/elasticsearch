@@ -7,6 +7,7 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.ToXContentObject;
@@ -26,15 +27,7 @@ public class ToXContentClassBuilder {
     final MethodSpec.Builder toXContentMethodBuilder;
     final List<FieldSpec> fields;
     final AtomicInteger parserPosition;
-
-    public ToXContentClassBuilder(CodeBlock.Builder staticInitializerBuilder, List<CodeBlock> lambdas, MethodSpec.Builder constructorBuilder, MethodSpec.Builder toXContentMethodBuilder, List<FieldSpec> fields, AtomicInteger parserPosition) {
-        this.staticInitializerBuilder = staticInitializerBuilder;
-        this.lambdas = lambdas;
-        this.constructorBuilder = constructorBuilder;
-        this.toXContentMethodBuilder = toXContentMethodBuilder;
-        this.fields = fields;
-        this.parserPosition = parserPosition;
-    }
+    final List<Tuple<ClassName, ToXContentClassBuilder>> children;
 
     static ToXContentClassBuilder newToXContentClassBuilder() {
         //static initializer
@@ -54,48 +47,96 @@ public class ToXContentClassBuilder {
         return new ToXContentClassBuilder(staticInitializerBuilder, lambdas, constructorBuilder, toXContentMethodBuilder, fields, new AtomicInteger(0));
     }
 
-    JavaFile build(String packageName, String className) {
+    private ToXContentClassBuilder(CodeBlock.Builder staticInitializerBuilder, List<CodeBlock> lambdas, MethodSpec.Builder constructorBuilder, MethodSpec.Builder toXContentMethodBuilder, List<FieldSpec> fields, AtomicInteger parserPosition) {
+        this.staticInitializerBuilder = staticInitializerBuilder;
+        this.lambdas = lambdas;
+        this.constructorBuilder = constructorBuilder;
+        this.toXContentMethodBuilder = toXContentMethodBuilder;
+        this.fields = fields;
+        this.parserPosition = parserPosition;
+        this.children = new ArrayList<>();
+    }
 
-        ClassName classToGenerate = ClassName.get(packageName, className);
+    static JavaFile build(String packageName, String targetClassName, ToXContentClassBuilder builder) {
+        ClassName className = ClassName.get(packageName, targetClassName);
+
+        // .. new ConstructingObjectParser<> ..
+        FieldSpec parserField = createConstructingObjectParser(builder, className);
+
+        //public XContentBuilder toXContent
+        MethodSpec toContentMethod = createToXContent(builder);
+
+        //inner classes
+        List<TypeSpec> innerClasses = new ArrayList<>();
+        addChildren(builder, innerClasses);
+
+        //outer class
+        TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addSuperinterface(ToXContentObject.class)
+            .addJavadoc("GENERATED CODE - DO NOT MODIFY") //todo add date and by what
+            .addStaticBlock(builder.staticInitializerBuilder.build())
+            .addField(parserField)
+            .addMethod(builder.constructorBuilder.build())
+            .addMethod(toContentMethod)
+            .addTypes(innerClasses);
+        builder.fields.forEach(clazzBuilder::addField);
+        TypeSpec clazz = clazzBuilder.build();
+        return JavaFile.builder(packageName, clazz).build();
+    }
+
+    static FieldSpec createConstructingObjectParser(ToXContentClassBuilder builder, ClassName className) {
 
         //ConstructingObjectParser<ClassToGenerate, Void>
-        ParameterizedTypeName typedConstructingObjectParser = ParameterizedTypeName.get(ClassName.get(ConstructingObjectParser.class), classToGenerate, ClassName.get(Void.class));
+        ParameterizedTypeName typedConstructingObjectParser = ParameterizedTypeName.get(ClassName.get(ConstructingObjectParser.class), className, ClassName.get(Void.class));
 
         //lambda builder for the static parser
         CodeBlock.Builder lambdaBuilder = CodeBlock.builder();
-        lambdaBuilder.add("a -> new $T(", classToGenerate);
+        lambdaBuilder.add("a -> new $T(", className);
         int i = 0;
-        for (CodeBlock lambda : lambdas) {
+        for (CodeBlock lambda : builder.lambdas) {
             lambdaBuilder.add("\n").add(lambda);
-            if (++i != lambdas.size()) {
+            if (++i != builder.lambdas.size()) {
                 lambdaBuilder.add(",");
             }
         }
 
-        FieldSpec parserSpec = FieldSpec.builder(typedConstructingObjectParser,
+        return FieldSpec.builder(typedConstructingObjectParser,
             "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
-            .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), classToGenerate, lambdaBuilder.build())
+            .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), className, lambdaBuilder.build())
             .build();
+    }
 
-        MethodSpec toContentMethod = toXContentMethodBuilder
+    static MethodSpec createToXContent(ToXContentClassBuilder builder) {
+        return builder.toXContentMethodBuilder
             .addStatement("builder.endObject()")
             .addStatement("return builder")
             .returns(XContentBuilder.class)
             .addException(IOException.class)
             .build();
-
-        //class
-        TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addSuperinterface(ToXContentObject.class)
-            .addJavadoc("GENERATED CODE - DO NOT MODIFY") //todo add date and by what
-            .addStaticBlock(staticInitializerBuilder.build())
-            .addField(parserSpec)
-            .addMethod(constructorBuilder.build())
-            .addMethod(toContentMethod);
-        fields.forEach(clazzBuilder::addField);
-        TypeSpec clazz = clazzBuilder.build();
-        return JavaFile.builder(packageName, clazz).build();
     }
 
+    static TypeSpec createInnerClass(ToXContentClassBuilder builder, ClassName className, FieldSpec parserField, MethodSpec toContentMethod){
+        TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
+            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+            .addSuperinterface(ToXContentObject.class)
+            .addStaticBlock(builder.staticInitializerBuilder.build())
+            .addField(parserField)
+            .addMethod(builder.constructorBuilder.build())
+            .addMethod(toContentMethod);
+        builder.fields.forEach(clazzBuilder::addField);
+        return clazzBuilder.build();
+    }
+
+    static void addChildren(ToXContentClassBuilder builder, List<TypeSpec> innerClasses){
+        List<Tuple<ClassName, ToXContentClassBuilder>> children = builder.children;
+        for( Tuple<ClassName, ToXContentClassBuilder> child : children){
+            FieldSpec parserField = createConstructingObjectParser(child.v2(), child.v1());
+            MethodSpec toContentMethod = createToXContent(child.v2());
+            innerClasses.add(createInnerClass(child.v2(), child.v1(), parserField, toContentMethod));
+            if(child.v2().children.size() > 0){
+                addChildren(child.v2(), innerClasses);
+            }
+        }
+    }
 }

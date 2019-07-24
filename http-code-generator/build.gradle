@@ -33,6 +33,7 @@ assemble.enabled = false
 
 dependencies {
     compile ('com.squareup:javapoet:1.11.1')
+    compile ('com.google.guava:guava:20.0')
     compile project(path: ':libs:core')
     compile project(path: ':libs:x-content')
     testCompile project(path: ':test:framework')
