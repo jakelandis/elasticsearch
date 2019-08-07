@@ -26,7 +26,7 @@ public class HttpRequestResponsePlugin extends Plugin implements ActionPlugin {
                                              Supplier<DiscoveryNodes> nodesInCluster) {
 
         List<RestHandler> restHandlers = new ArrayList<>(0);
-        restHandlers.add(new MainRestRequest7(settings, restController));
+        //restHandlers.add(new MainRestRequest7(settings, restController));
         restHandlers.add(new MainRestRequest8(settings, restController));
         return restHandlers;
     }

@@ -15,27 +15,27 @@ import java.io.IOException;
 import static org.elasticsearch.rest.RestRequest.Method.GET;
 import static org.elasticsearch.rest.RestRequest.Method.HEAD;
 
-public class MainRestRequest7 extends MainRestRequest {
+public class MainRestRequest7 {//extends MainRestRequest {
 
     public MainRestRequest7(Settings settings, RestController controller) {
-        super(settings);
-        controller.registerHandler(GET, "/v7", this);
-        controller.registerHandler(HEAD, "/v7", this);
-        if (Version.CURRENT.major == 7) {
-            controller.registerHandler(GET, "/", this);
-            controller.registerHandler(HEAD, "/", this);
-        }
+//        super(settings);
+//        controller.registerHandler(GET, "/v7", this);
+//        controller.registerHandler(HEAD, "/v7", this);
+//        if (Version.CURRENT.major == 7) {
+//            controller.registerHandler(GET, "/", this);
+//            controller.registerHandler(HEAD, "/", this);
+//        }
     }
 
 
-    protected BytesRestResponse convertMainResponse(MainResponse response, RestRequest request, XContentBuilder builder) throws IOException {
-        // Default to pretty printing, but allow ?pretty=false to disable
-        if (request.hasParam("pretty") == false) {
-            builder.prettyPrint().lfAtEnd();
-        }
-
-        MainResponseAdaptor7.toXContent(response, builder, request);
-        return new BytesRestResponse(RestStatus.OK, builder);
-    }
+//    protected BytesRestResponse convertMainResponse(MainResponse response, RestRequest request, XContentBuilder builder) throws IOException {
+//        // Default to pretty printing, but allow ?pretty=false to disable
+//        if (request.hasParam("pretty") == false) {
+//            builder.prettyPrint().lfAtEnd();
+//        }
+//
+//        MainResponseAdaptor7.toXContent(response, builder, request);
+//        return new BytesRestResponse(RestStatus.OK, builder);
+//    }
 
 }
