@@ -22,8 +22,17 @@
           "properties": {
             "inner": {
               "type": "string"
+            },
+            "inner_inner_version2": {
+              "type": "object",
+              "properties": {
+                "inner2": {
+                  "type": "string"
+                }
+              }
             }
           }
+
         }
       }
     },
