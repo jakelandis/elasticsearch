@@ -117,7 +117,7 @@ public class ToXContentClassBuilder {
             .build();
     }
 
-    static TypeSpec.Builder createInnerClass(ToXContentClassBuilder builder, ClassName className, FieldSpec parserField, MethodSpec toContentMethod) {
+    static TypeSpec.Builder createInnerClassBuilder(ToXContentClassBuilder builder, ClassName className, FieldSpec parserField, MethodSpec toContentMethod) {
         TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addSuperinterface(ToXContentObject.class)
@@ -130,11 +130,10 @@ public class ToXContentClassBuilder {
     }
 
     static void createChildClass(Tuple<ClassName, ToXContentClassBuilder> child, TypeSpec.Builder parent) {
-        TypeSpec.Builder childBuilder = createInnerClass(child.v2(), child.v1(), createConstructingObjectParser(child.v2(), child.v1()), createToXContent(child.v2()));
+        TypeSpec.Builder childBuilder = createInnerClassBuilder(child.v2(), child.v1(), createConstructingObjectParser(child.v2(), child.v1()), createToXContent(child.v2()));
         for (Tuple<ClassName, ToXContentClassBuilder> grandChild : child.v2().children) {
             createChildClass(grandChild, childBuilder);
         }
         parent.addType(childBuilder.build());
-
     }
 }

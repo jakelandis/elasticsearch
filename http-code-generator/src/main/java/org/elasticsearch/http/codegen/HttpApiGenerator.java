@@ -3,10 +3,14 @@ package org.elasticsearch.http.codegen;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.http.ModeledHttpResponse;
@@ -38,6 +42,10 @@ public class HttpApiGenerator extends AbstractProcessor {
 
 
     private static final String ROOT_OBJECT_NAME = "__ROOT__";
+
+    private static Set VALID_OBJECT_KEYS = Set.of("description", "type", "properties", "$schema");
+    private static Set VALID_ARRAY_KEYS = Set.of("description", "type", "items");
+    //TODO more validation
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -113,29 +121,65 @@ public class HttpApiGenerator extends AbstractProcessor {
     private void traverse(JsonNode node, String key, ToXContentClassBuilder builder) {
         JsonNode typeNode = node.get("type");
         if ("object".equals(typeNode.asText())) {
+            validateObject(node);
             JsonNode propertiesNode = node.get("properties");
             propertiesNode.fields().forEachRemaining(f -> {
                 JsonNode nestedTypeNode = f.getValue().get("type");
-                if ("object".equals(nestedTypeNode.asText()) == false) {
+                if ("array".equals(nestedTypeNode.asText())) {
+                    validateArray(f.getValue());
+                    //todo: handle an array of objects
+                    addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder);
+                } else if ("object".equals(nestedTypeNode.asText())) {
+                    validateObject(f.getValue());
+                    traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder));
+                } else {
+                    //todo validate primitive type name with regex
                     String type = nestedTypeNode.asText();
                     addPrimitive(f.getKey(), type, builder);
-                } else {
-                    traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder));
                 }
             });
         }
     }
 
+
+    private void validateObject(JsonNode node) {
+        assert node.isObject();
+        node.deepCopy().fieldNames().forEachRemaining(name -> {
+            if (VALID_OBJECT_KEYS.contains(name) == false) {
+                throw new IllegalStateException("Found unsupported key name [" + name + "] in object " + node.toString());
+            }
+        });
+    }
+
+    private void validateArray(JsonNode node) {
+        assert node.isObject(); //we are validating the node object that contains the "type" : "array"
+        node.deepCopy().fieldNames().forEachRemaining(name -> {
+            if (VALID_ARRAY_KEYS.contains(name) == false) {
+                throw new IllegalStateException("Found unsupported key name [" + name + "] in object " + node.toString());
+            }
+        });
+    }
+
     private ToXContentClassBuilder addObject(String key, ToXContentClassBuilder builder) {
         ClassName className = ClassName.get("", CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, key));
-        addCode(className, key, builder, true);
+        addCode(className, key, builder, true, false);
         ToXContentClassBuilder child = ToXContentClassBuilder.newToXContentClassBuilder();
         builder.children.add(new Tuple<>(className, child));
         return child;
     }
 
-    private void addPrimitive(String field, String type, ToXContentClassBuilder builder) {
+    private void addArray(String field, String type, ToXContentClassBuilder builder) {
+        ClassName genericType = "object".equals(type) ? ClassName.get(Object.class) : getClassName(type);
 
+        addCode(genericType, field, builder, false, true);
+
+    }
+
+    private void addPrimitive(String field, String type, ToXContentClassBuilder builder) {
+        addCode(getClassName(type), field, builder, false, false);
+    }
+
+    private ClassName getClassName(String type) {
         ClassName className = null;
 
         switch (type.toLowerCase(Locale.ROOT)) {
@@ -157,19 +201,34 @@ public class HttpApiGenerator extends AbstractProcessor {
             default:
                 throw new IllegalStateException("Unknown type found [{" + type + "}]");
         }
+        return className;
 
-        addCode(className, field, builder, false);
     }
 
-    private void addCode(ClassName className, String field, ToXContentClassBuilder builder, boolean isObject) {
-        builder.lambdas.add(CodeBlock.builder().add("(" + className.simpleName() + ") a[$L]", builder.parserPosition.incrementAndGet()).build());
+    private void addCode(ClassName className, String field, ToXContentClassBuilder builder, boolean isObject, boolean isArray) {
+        // ConstructingObjectParser arguments
+        if (isArray) {
+            builder.lambdas.add(CodeBlock.builder().add("(List<" + className.simpleName() + ">) a[$L]", builder.parserPosition.incrementAndGet()).build());
+        } else {
+            builder.lambdas.add(CodeBlock.builder().add("(" + className.simpleName() + ") a[$L]", builder.parserPosition.incrementAndGet()).build());
+
+        }
+        // PARSER.declare
         if (isObject) {
             builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.constructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
+        } else if (isArray) {
+            builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "Array(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, field);
         } else {
             builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, field);
         }
-        builder.constructorBuilder.addParameter(className, field).addStatement("this.$N = $N", field, field);
-        builder.fields.add(FieldSpec.builder(className, field).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
+
+        TypeName typeName = className;
+        if (isArray) {
+            typeName = ParameterizedTypeName.get(ClassName.get("java.util", "List"), className);
+        }
+
+        builder.constructorBuilder.addParameter(typeName, field).addStatement("this.$N = $N", field, field);
+        builder.fields.add(FieldSpec.builder(typeName, field).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
         builder.toXContentMethodBuilder.addStatement("builder.field($S," + field + ")", field);
     }
 

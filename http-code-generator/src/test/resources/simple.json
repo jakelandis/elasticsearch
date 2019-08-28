@@ -12,8 +12,8 @@
       "type": "string"
     },
     "version": {
-      "type":"object",
-      "properties" :{
+      "type": "object",
+      "properties": {
         "build_flavor": {
           "type": "string"
         },
@@ -32,7 +32,6 @@
               }
             }
           }
-
         }
       }
     },
@@ -49,6 +48,14 @@
     },
     "foo": {
       "type": "integer"
+    },
+    "tags": {
+      "description": "Tags for the product",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+
     }
   }
 }
