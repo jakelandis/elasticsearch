@@ -55,7 +55,28 @@
       "items": {
         "type": "string"
       }
-
+    },
+    "vegetables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/veggie",
+        "description" : "bar"
+      }
+    }
+  },
+  "definitions": {
+    "veggie": {
+      "type": "object",
+      "properties": {
+        "veggieName": {
+          "type": "string",
+          "description": "The name of the vegetable."
+        },
+        "veggieLike": {
+          "type": "boolean",
+          "description": "Do I like this vegetable?"
+        }
+      }
     }
   }
 }

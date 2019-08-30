@@ -3,8 +3,6 @@ package org.elasticsearch.http.codegen;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -33,18 +31,22 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static javax.lang.model.SourceVersion.RELEASE_11;
 
 @SupportedSourceVersion(RELEASE_11)
 @SupportedAnnotationTypes("org.elasticsearch.http.ModeledHttpResponse")
-public class HttpApiGenerator extends AbstractProcessor {
+public class HttpApiGenerator<a> extends AbstractProcessor {
 
 
     private static final String ROOT_OBJECT_NAME = "__ROOT__";
 
-    private static Set VALID_OBJECT_KEYS = Set.of("description", "type", "properties", "$schema");
+    private static Set<String> VALID_OBJECT_KEYS = Set.of("description", "type", "properties");
+    private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$id", "$schema", "definitions")).collect(Collectors.toSet());
     private static Set VALID_ARRAY_KEYS = Set.of("description", "type", "items");
+    private static Set VALID_ARRAY_ITEMS_KEYS = Set.of("description", "type", "$ref");
     //TODO more validation
 
     @Override
@@ -112,28 +114,54 @@ public class HttpApiGenerator extends AbstractProcessor {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(model);
         ToXContentClassBuilder builder = ToXContentClassBuilder.newToXContentClassBuilder();
+        JsonNode definitionNode = root.get("definitions");
+        if (definitionNode != null) {
+            traverseDefinitions(definitionNode, builder);
+        }
         traverse(root, ROOT_OBJECT_NAME, builder);
 
         return ToXContentClassBuilder.build(packageName, className, builder);
     }
 
+    private void traverseDefinitions(JsonNode definitionNode, ToXContentClassBuilder builder) {
+        //todo: support in file definitions
+
+        definitionNode.fields().forEachRemaining(f -> {
+            validateObject(f.getValue(), false);
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, false));
+        });
+
+    }
 
     private void traverse(JsonNode node, String key, ToXContentClassBuilder builder) {
         JsonNode typeNode = node.get("type");
         if ("object".equals(typeNode.asText())) {
-            validateObject(node);
+            validateObject(node, ROOT_OBJECT_NAME.equals(key));
             JsonNode propertiesNode = node.get("properties");
             propertiesNode.fields().forEachRemaining(f -> {
                 JsonNode nestedTypeNode = f.getValue().get("type");
                 if ("array".equals(nestedTypeNode.asText())) {
                     validateArray(f.getValue());
+
+                    //primitive array
+                    if (f.getValue().get("items").get("type") != null) {
+                        addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder);
+                    } else { //an array of objects
+                        //add the code for the array references without traversing
+                        //f.getValue().get("items").get("$ref").asText();
+//                        assert reference.contains("#");
+//                        String[] tokens = reference.split("#");
+//                        assert tokens.length == 2;
+//                        String file = tokens[0];
+//                        String jsonPath = tokens[1];
+//                        String referencedObjectName = jsonPath.substring(jsonPath.lastIndexOf("/") + 1);
+                    }
                     //todo: handle an array of objects
-                    addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder);
                 } else if ("object".equals(nestedTypeNode.asText())) {
-                    validateObject(f.getValue());
-                    traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder));
+                    validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
+                    traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, true));
                 } else {
-                    //todo validate primitive type name with regex
+                    //todo validate primitive key name with regex
                     String type = nestedTypeNode.asText();
                     addPrimitive(f.getKey(), type, builder);
                 }
@@ -142,10 +170,14 @@ public class HttpApiGenerator extends AbstractProcessor {
     }
 
 
-    private void validateObject(JsonNode node) {
+    private void validateObject(JsonNode node, boolean isRoot) {
         assert node.isObject();
         node.deepCopy().fieldNames().forEachRemaining(name -> {
-            if (VALID_OBJECT_KEYS.contains(name) == false) {
+            Set validObjectKeys = VALID_OBJECT_KEYS;
+            if (isRoot) {
+                validObjectKeys = VALID_ROOT_OBJECT_KEYS;
+            }
+            if (validObjectKeys.contains(name) == false) {
                 throw new IllegalStateException("Found unsupported key name [" + name + "] in object " + node.toString());
             }
         });
@@ -154,15 +186,27 @@ public class HttpApiGenerator extends AbstractProcessor {
     private void validateArray(JsonNode node) {
         assert node.isObject(); //we are validating the node object that contains the "type" : "array"
         node.deepCopy().fieldNames().forEachRemaining(name -> {
+
             if (VALID_ARRAY_KEYS.contains(name) == false) {
                 throw new IllegalStateException("Found unsupported key name [" + name + "] in object " + node.toString());
             }
+            if ((node.get("items").get("type") == null && node.get("items").get("$ref") == null)) {
+                throw new IllegalStateException("Could not find primitive type or object $ref for array [" + node.toString() + "]");
+            }
+            node.get("items").fieldNames().forEachRemaining(i -> {
+                if (VALID_ARRAY_ITEMS_KEYS.contains(i) == false) {
+                    throw new IllegalStateException("Found unsupported array item name [" + i + "] in object " + node.toString());
+                }
+            });
         });
     }
 
-    private ToXContentClassBuilder addObject(String key, ToXContentClassBuilder builder) {
+    private ToXContentClassBuilder addObject(String key, ToXContentClassBuilder builder, boolean addToInitialization) {
         ClassName className = ClassName.get("", CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, key));
-        addCode(className, key, builder, true, false);
+        //don't add reference classes to the initialization blocks
+        if(addToInitialization) {
+            addInitializationCode(className, key, builder, true, false);
+        }
         ToXContentClassBuilder child = ToXContentClassBuilder.newToXContentClassBuilder();
         builder.children.add(new Tuple<>(className, child));
         return child;
@@ -170,13 +214,11 @@ public class HttpApiGenerator extends AbstractProcessor {
 
     private void addArray(String field, String type, ToXContentClassBuilder builder) {
         ClassName genericType = "object".equals(type) ? ClassName.get(Object.class) : getClassName(type);
-
-        addCode(genericType, field, builder, false, true);
-
+        addInitializationCode(genericType, field, builder, false, true);
     }
 
     private void addPrimitive(String field, String type, ToXContentClassBuilder builder) {
-        addCode(getClassName(type), field, builder, false, false);
+        addInitializationCode(getClassName(type), field, builder, false, false);
     }
 
     private ClassName getClassName(String type) {
@@ -205,7 +247,8 @@ public class HttpApiGenerator extends AbstractProcessor {
 
     }
 
-    private void addCode(ClassName className, String field, ToXContentClassBuilder builder, boolean isObject, boolean isArray) {
+    //Adds the Constructor and static initialization code to the ToXContentClassBuilder.
+    private void addInitializationCode(ClassName className, String field, ToXContentClassBuilder builder, boolean isObject, boolean isArray) {
         // ConstructingObjectParser arguments
         if (isArray) {
             builder.lambdas.add(CodeBlock.builder().add("(List<" + className.simpleName() + ">) a[$L]", builder.parserPosition.incrementAndGet()).build());
