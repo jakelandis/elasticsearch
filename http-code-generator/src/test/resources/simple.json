@@ -56,13 +56,6 @@
         "type": "string"
       }
     },
-    "vegetables": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/veggie",
-        "description": "bar"
-      }
-    },
     "fruits": {
       "$ref": "#/definitions/veggie"
     }

@@ -170,12 +170,12 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
 
                         validatePrimitive(f.getValue());
                         String type = nestedTypeNode.asText();
-                        addPrimitive(f.getKey(), type, builder);
+                        addPrimitive(f.getKey(), type, builder, false);
                     }
                 } else if (primitiveReference != null) {
                     //handle primitive type
                     String reference = getRefName(primitiveReference.asText());
-                    addPrimitive(f.getKey(), reference, builder);
+                    addPrimitive(f.getKey(), reference, builder, true);
 
                 } else {
                     throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
@@ -238,50 +238,36 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
 
     }
 
-    private ToXContentClassBuilder addObject(String key, ToXContentClassBuilder builder, boolean addToInitialization) {
-        ClassName className = ClassName.get("", CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, key));
+    private ToXContentClassBuilder addObject(String type, ToXContentClassBuilder builder, boolean addToInitialization) {
+
         //don't add reference classes to the initialization blocks
         if (addToInitialization) {
-            addInitializationCode(className, key, builder, true, false);
+            addInitializationCode(getClassName(type), type, builder, true, false);
         }
         ToXContentClassBuilder child = ToXContentClassBuilder.newToXContentClassBuilder();
-        builder.children.add(new Tuple<>(className, child));
+        builder.children.add(new Tuple<>(getClassName(type), child));
         return child;
     }
 
     private void addArray(String field, String type, ToXContentClassBuilder builder) {
-        ClassName genericType = "object".equals(type) ? ClassName.get(Object.class) : getClassName(type);
-        addInitializationCode(genericType, field, builder, false, true);
+        addInitializationCode(getClassName(type), field, builder, false, true);
     }
 
-    private void addPrimitive(String field, String type, ToXContentClassBuilder builder) {
-        addInitializationCode(getClassName(type), field, builder, false, false);
+    private void addPrimitive(String field, String type, ToXContentClassBuilder builder, boolean objectReference) {
+        addInitializationCode(getClassName(type), field, builder, objectReference, false);
     }
 
     private ClassName getClassName(String type) {
-        ClassName className = null;
-
-        switch (type.toLowerCase(Locale.ROOT)) {
-            case "string":
-                className = ClassName.get(String.class);
-                break;
+        String _type = type;
+        switch (type) {
             case "integer":
-                className = ClassName.get(Long.class); //In JSON spec "integer" = non-fractional
+                _type = "long"; //In JSON spec "integer" = non-fractional
                 break;
             case "number":
-                className = ClassName.get(Double.class); //In JSON spec "number" = fractional
+                _type = "double";  //In JSON spec "number" = fractional
                 break;
-            case "boolean":
-                className = ClassName.get(Boolean.class);
-                break;
-            case "null":
-                throw new IllegalStateException("`null` type is not supported for code generation");
-
-            default:
-                throw new IllegalStateException("Unknown type found [{" + type + "}]");
         }
-        return className;
-
+        return ClassName.get("", CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, _type));
     }
 
     //Adds the Constructor and static initialization code to the ToXContentClassBuilder.
