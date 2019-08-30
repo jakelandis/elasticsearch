@@ -44,6 +44,7 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
     private static final String ROOT_OBJECT_NAME = "__ROOT__";
 
     private static Set<String> VALID_OBJECT_KEYS = Set.of("description", "type", "properties");
+    private static Set<String> VALID_PRIMITIVE_KEYS = Set.of("description", "type", "$ref");
     private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$id", "$schema", "definitions")).collect(Collectors.toSet());
     private static Set VALID_ARRAY_KEYS = Set.of("description", "type", "items");
     private static Set VALID_ARRAY_ITEMS_KEYS = Set.of("description", "type", "$ref");
@@ -139,36 +140,59 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
             validateObject(node, ROOT_OBJECT_NAME.equals(key));
             JsonNode propertiesNode = node.get("properties");
             propertiesNode.fields().forEachRemaining(f -> {
-                JsonNode nestedTypeNode = f.getValue().get("type");
-                if ("array".equals(nestedTypeNode.asText())) {
-                    validateArray(f.getValue());
 
-                    //primitive array
-                    if (f.getValue().get("items").get("type") != null) {
-                        addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder);
-                    } else { //an array of objects
-                        //add the code for the array references without traversing
-                        //f.getValue().get("items").get("$ref").asText();
+                //primitive reference
+                JsonNode primitiveReference = f.getValue().get("$ref");
+                //not a reference
+                JsonNode nestedTypeNode = f.getValue().get("type");
+                if (nestedTypeNode != null) {
+                    if ("array".equals(nestedTypeNode.asText())) {
+                        validateArray(f.getValue());
+
+                        //primitive array
+                        if (f.getValue().get("items").get("type") != null) {
+                            addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder);
+                        } else { //an array of objects
+                            //add the code for the array references without traversing
+                            //f.getValue().get("items").get("$ref").asText();
 //                        assert reference.contains("#");
 //                        String[] tokens = reference.split("#");
 //                        assert tokens.length == 2;
 //                        String file = tokens[0];
 //                        String jsonPath = tokens[1];
 //                        String referencedObjectName = jsonPath.substring(jsonPath.lastIndexOf("/") + 1);
+                        }
+                        //todo: handle an array of objects
+                    } else if ("object".equals(nestedTypeNode.asText())) {
+                        validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
+                        traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, true));
+                    } else {
+
+                        validatePrimitive(f.getValue());
+                        String type = nestedTypeNode.asText();
+                        addPrimitive(f.getKey(), type, builder);
                     }
-                    //todo: handle an array of objects
-                } else if ("object".equals(nestedTypeNode.asText())) {
-                    validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
-                    traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, true));
+                } else if (primitiveReference != null) {
+                    //handle primitive type
+                    String reference = getRefName(primitiveReference.asText());
+                    addPrimitive(f.getKey(), reference, builder);
+
                 } else {
-                    //todo validate primitive key name with regex
-                    String type = nestedTypeNode.asText();
-                    addPrimitive(f.getKey(), type, builder);
+                    throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
+
                 }
             });
         }
     }
 
+    private void validatePrimitive(JsonNode node) {
+        assert node.isObject(); //we are validating the node object that contains the "type" : "array" or "$ref" :
+        node.deepCopy().fieldNames().forEachRemaining(name -> {
+            if (VALID_PRIMITIVE_KEYS.contains(name) == false) {
+                throw new IllegalStateException("Found unsupported key name [" + name + "] in object " + node.toString());
+            }
+        });
+    }
 
     private void validateObject(JsonNode node, boolean isRoot) {
         assert node.isObject();
@@ -184,15 +208,15 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
     }
 
     private void validateArray(JsonNode node) {
-        assert node.isObject(); //we are validating the node object that contains the "type" : "array"
+        assert node.isObject(); //we are validating the node object that contains the "type" : "array" or "$ref" :
         node.deepCopy().fieldNames().forEachRemaining(name -> {
-
             if (VALID_ARRAY_KEYS.contains(name) == false) {
                 throw new IllegalStateException("Found unsupported key name [" + name + "] in object " + node.toString());
             }
             if ((node.get("items").get("type") == null && node.get("items").get("$ref") == null)) {
                 throw new IllegalStateException("Could not find primitive type or object $ref for array [" + node.toString() + "]");
             }
+            //TODO: validate correctness of $ref value by parsing value and ensure that the stupid xpath like thinggy is well shaped.
             node.get("items").fieldNames().forEachRemaining(i -> {
                 if (VALID_ARRAY_ITEMS_KEYS.contains(i) == false) {
                     throw new IllegalStateException("Found unsupported array item name [" + i + "] in object " + node.toString());
@@ -201,10 +225,23 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
         });
     }
 
+    private String getRefName(String reference) {
+        String[] tokens = tokenReference(reference);
+        return tokens[1].substring(tokens[1].lastIndexOf("/") + 1);
+    }
+
+    private String[] tokenReference(String reference) {
+        assert reference.contains("#");
+        String[] tokens = reference.split("#");
+        assert tokens.length == 2;
+        return tokens;
+
+    }
+
     private ToXContentClassBuilder addObject(String key, ToXContentClassBuilder builder, boolean addToInitialization) {
         ClassName className = ClassName.get("", CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, key));
         //don't add reference classes to the initialization blocks
-        if(addToInitialization) {
+        if (addToInitialization) {
             addInitializationCode(className, key, builder, true, false);
         }
         ToXContentClassBuilder child = ToXContentClassBuilder.newToXContentClassBuilder();

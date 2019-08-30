@@ -60,8 +60,11 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/veggie",
-        "description" : "bar"
+        "description": "bar"
       }
+    },
+    "fruits": {
+      "$ref": "#/definitions/veggie"
     }
   },
   "definitions": {
