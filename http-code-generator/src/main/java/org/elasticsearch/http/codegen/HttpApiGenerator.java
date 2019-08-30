@@ -151,16 +151,10 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
 
                         //primitive array
                         if (f.getValue().get("items").get("type") != null) {
-                            addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder);
-                        } else { //an array of objects
-                            //add the code for the array references without traversing
-                            //f.getValue().get("items").get("$ref").asText();
-//                        assert reference.contains("#");
-//                        String[] tokens = reference.split("#");
-//                        assert tokens.length == 2;
-//                        String file = tokens[0];
-//                        String jsonPath = tokens[1];
-//                        String referencedObjectName = jsonPath.substring(jsonPath.lastIndexOf("/") + 1);
+                            addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder, false);
+                        } else { //an array of object references
+                            String reference = getRefName(f.getValue().get("items").get("$ref").asText());
+                            addArray(f.getKey(), reference, builder, true);
                         }
                         //todo: handle an array of objects
                     } else if ("object".equals(nestedTypeNode.asText())) {
@@ -249,8 +243,8 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
         return child;
     }
 
-    private void addArray(String field, String type, ToXContentClassBuilder builder) {
-        addInitializationCode(getClassName(type), field, builder, false, true);
+    private void addArray(String field, String type, ToXContentClassBuilder builder, boolean objectReference) {
+        addInitializationCode(getClassName(type), field, builder, objectReference, true);
     }
 
     private void addPrimitive(String field, String type, ToXContentClassBuilder builder, boolean objectReference) {
@@ -280,8 +274,10 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
 
         }
         // PARSER.declare
-        if (isObject) {
+        if (isObject && isArray == false) {
             builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.constructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
+        } else if (isObject & isArray) {
+            builder.staticInitializerBuilder.add("PARSER.declareObjectArray(ConstructingObjectParser.constructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
         } else if (isArray) {
             builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "Array(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, field);
         } else {
