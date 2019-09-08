@@ -34,7 +34,7 @@ public class XContentClassBuilder {
         //static initializer
         CodeBlock.Builder staticInitializerBuilder = CodeBlock.builder();
         //constructor
-        MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder();
+        MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
         //toXContent method
         MethodSpec.Builder toXContentMethodBuilder = MethodSpec.methodBuilder("toXContent")
             .addModifiers(Modifier.PUBLIC)

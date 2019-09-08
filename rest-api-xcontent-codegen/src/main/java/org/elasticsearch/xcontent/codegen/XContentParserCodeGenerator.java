@@ -77,6 +77,8 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
                 try (InputStream in = Files.newInputStream(jsonPath);
                      Writer writer = processingEnv.getFiler().createSourceFile(generateClassName.reflectionName()).openWriter()) {
                     JavaFile javaFile = generateClass(in, generateClassName, schemaPath);
+                   // javaFile.writeTo(System.out);
+                    ///gradlew :rest-api-xcontent-parsers:compileJava --stacktrace
                     javaFile.writeTo(writer);
                 }
             } catch (Exception e) {
