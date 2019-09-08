@@ -1,5 +1,6 @@
 package org.elasticsearch.xcontent.codegen;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Rule;
@@ -24,11 +25,11 @@ public class SimpleGenerationTests extends ESTestCase {
     public TemporaryFolder tempDir = new TemporaryFolder();
 
     public void testFoo() throws IOException {
-        byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("simple.json")));
+        byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("nested_schema.json")));
 
         print(model);
         XContentParserCodeGenerator generator = new XContentParserCodeGenerator();
-        JavaFile generateSource = generator.createSource(new ByteArrayInputStream(model), "co.elastic", "Foo");
+        JavaFile generateSource = generator.generateClass(new ByteArrayInputStream(model), ClassName.bestGuess("co.elastic.Foo"), "foo.bar.baz.body");
 
         generateSource.writeTo(tempDir.getRoot());
         File generatedFile = Files.find(tempDir.getRoot().toPath(), Integer.MAX_VALUE, (p, f) -> f.isRegularFile()).findFirst().orElseThrow().toFile();

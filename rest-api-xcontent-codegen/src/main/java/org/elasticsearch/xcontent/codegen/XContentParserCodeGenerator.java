@@ -12,7 +12,6 @@ import com.squareup.javapoet.TypeName;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.GeneratedXContentParser;
-//import org.elasticsearch.http.ModeledHttpResponse;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -24,28 +23,27 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
-import javax.tools.FileObject;
-import javax.tools.StandardLocation;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static javax.lang.model.SourceVersion.RELEASE_11;
 
+//import org.elasticsearch.http.ModeledHttpResponse;
+
 @SupportedSourceVersion(RELEASE_11)
 @SupportedAnnotationTypes("org.elasticsearch.common.xcontent.GeneratedXContentParser")
 @SupportedOptions("api.root")
-public class XContentParserCodeGenerator<a> extends AbstractProcessor {
+public class XContentParserCodeGenerator extends AbstractProcessor {
 
-    private static final String ROOT_OBJECT_NAME = "__ROOT__";
+    static final String ROOT_OBJECT_NAME = "__ROOT__";
 
     private static Set<String> VALID_OBJECT_KEYS = Set.of("description", "type", "properties");
     private static Set<String> VALID_PRIMITIVE_KEYS = Set.of("description", "type", "$ref");
@@ -63,62 +61,58 @@ public class XContentParserCodeGenerator<a> extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************");
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************3");
         //TODO: handle the v7 generations
         for (Element element : roundEnv.getElementsAnnotatedWith(GeneratedXContentParser.class)) {
-//
             try {
                 GeneratedXContentParser annotation = element.getAnnotation(GeneratedXContentParser.class);
                 ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
-                ClassName generateClassName = ClassName.get(originalClassName.packageName(), "Generated" + originalClassName.simpleName());
+                ClassName generateClassName = ClassName.get(originalClassName.packageName() + ".generated", "Generated" + originalClassName.simpleName());
                 Path apiRootPath = new File(processingEnv.getOptions().get("api.root")).toPath();
                 Path jsonPath = apiRootPath.resolve(annotation.file());
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating " + generateClassName + " from " + originalClassName + " from " + jsonPath.toAbsolutePath().toString());
+                String schemaPath = annotation.schemaPath();
 
-      //          FileObject jsonFile = processingEnv.getFiler().getResource(StandardLocation.SOURCE_PATH, "" /* v7 */, jsonPath.getFileName().toString());
-//                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Reading: " + jsonFile.toUri().getPath());
-                //ensure not null here...
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating " + generateClassName + " from " + originalClassName + " from " + jsonPath.toAbsolutePath().toString() + " schemaPath=" + schemaPath);
 
-                try (InputStream in = Files.newInputStream(jsonPath)) {
-                    JavaFile javaFile = createSource(in, generateClassName);
-                    //write source
-                    javaFile.writeTo(processingEnv.getFiler());
-                    javaFile.writeTo(System.out);
-
+                try (InputStream in = Files.newInputStream(jsonPath);
+                     Writer writer = processingEnv.getFiler().createSourceFile(generateClassName.reflectionName()).openWriter()) {
+                    JavaFile javaFile = generateClass(in, generateClassName, schemaPath);
+                    javaFile.writeTo(writer);
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-//// only handles the super simple case of strings..current has object, so no go yet...
-////            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************");
-////
-////            String current = annotation.current();
-////            matcher = pattern.matcher(current);
-////            matcher.find();
-////            targetClassName = baseTargetClassName + matcher.group(2);
-////            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing: " + element.getSimpleName() + " model: " + previous + " from:" + element.asType().toString() + " to: " + targetClassName);
-////            read(current);
-//
-//
         }
-
         return true;
     }
 
 
-    public JavaFile createSource(InputStream json, ClassName className) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(json);
+    public JavaFile generateClass(InputStream json, ClassName className, String jsonPathToSchemaObject) throws IOException {
+
+        JsonNode schemaObject = findSchemaObject(json, jsonPathToSchemaObject);
         XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
-        JsonNode definitionNode = root.get("definitions");
+        JsonNode definitionNode = schemaObject.get("definitions");
         if (definitionNode != null) {
             traverseDefinitions(definitionNode, builder);
         }
-        traverse(root, ROOT_OBJECT_NAME, builder);
+        traverse(schemaObject, ROOT_OBJECT_NAME, builder);
 
         return XContentClassBuilder.build(className.packageName(), className.simpleName(), builder);
     }
 
+    private JsonNode findSchemaObject(InputStream json, String jsonPathToSchemaObject) throws IOException {
+        //tODO: better validation
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode schemaObject = mapper.readTree(json);
+        if(ROOT_OBJECT_NAME.equals(jsonPathToSchemaObject)){
+            return schemaObject;
+        }
+        String[] paths = jsonPathToSchemaObject.split("\\.");
+        for(String path : paths){
+            schemaObject = schemaObject.get(path);
+        }
+        return schemaObject;
+    }
     private void traverseDefinitions(JsonNode definitionNode, XContentClassBuilder builder) {
         //todo: support in file definitions
 

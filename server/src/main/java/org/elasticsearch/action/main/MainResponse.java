@@ -42,6 +42,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
     private String clusterUuid;
     private Build build;
 
+
     MainResponse() {}
 
     MainResponse(StreamInput in) throws IOException {

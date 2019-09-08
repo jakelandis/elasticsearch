@@ -2,7 +2,7 @@ package org.elasticsearch.xcontent.annotations.response;
 
 import org.elasticsearch.common.xcontent.GeneratedXContentParser;
 
-//@GeneratedXContentParser(file="info.json")
-@GeneratedXContentParser(file="testme.json")
+//TODO: extend toXContent interface and ensure generated XContent implements this
+@GeneratedXContentParser(file="info.json")
 public interface XContentInfoResponseParser {
 }

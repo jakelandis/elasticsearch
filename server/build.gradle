@@ -74,6 +74,8 @@ if (!isEclipse && !isIdea) {
 
 dependencies {
 
+  compile project(path: ':rest-api-xcontent-parsers')
+
   compile project(':libs:elasticsearch-core')
   compile project(':libs:elasticsearch-secure-sm')
   compile project(':libs:elasticsearch-x-content')

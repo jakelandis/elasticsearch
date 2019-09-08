@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for mark interfaces to generate an XContent parser. File must be JSON and path must point to a valid JSON schema object.
+ * Annotation for marker interfaces to generate an XContent parser. File must be JSON and path must point to a valid JSON schema object.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
