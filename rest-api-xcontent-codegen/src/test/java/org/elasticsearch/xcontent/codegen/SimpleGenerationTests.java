@@ -14,9 +14,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.Set;
 
 //needs to be run with `-Dtests.security.manager=false` (or fix the security manager config :) )
 public class SimpleGenerationTests extends ESTestCase {
@@ -24,19 +28,23 @@ public class SimpleGenerationTests extends ESTestCase {
     @Rule
     public TemporaryFolder tempDir = new TemporaryFolder();
 
-    public void testFoo() throws IOException {
-        byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("nested_schema.json")));
+    public void testFoo() throws IOException, URISyntaxException {
+        byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("ilm/policy.json")));
 
         print(model);
         XContentParserCodeGenerator generator = new XContentParserCodeGenerator();
-        JavaFile generateSource = generator.generateClass(new ByteArrayInputStream(model), ClassName.bestGuess("co.elastic.Foo"), "foo.bar.baz.body");
+        Set<JavaFile> sourceFiles = new HashSet<>();
+        generator.generateClasses(new ByteArrayInputStream(model), ClassName.bestGuess("co.elastic.Foo"), XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
 
-        generateSource.writeTo(tempDir.getRoot());
-        File generatedFile = Files.find(tempDir.getRoot().toPath(), Integer.MAX_VALUE, (p, f) -> f.isRegularFile()).findFirst().orElseThrow().toFile();
+        for (JavaFile sourceFile : sourceFiles) {
+            sourceFile.writeTo(tempDir.getRoot());
+            File generatedFile = new File(tempDir.getRoot(), sourceFile.packageName.replaceAll("\\.", "/") + "/" + sourceFile.typeSpec.name + ".java");//Files.find(tempDir.getRoot().toPath(), Integer.MAX_VALUE, (p, f) -> f.isRegularFile()).findFirst().orElseThrow().toFile();
 
-        print(generatedFile);
-        System.out.println(generatedFile.getAbsolutePath());
-        assertTrue(compile(generatedFile));
+            print(generatedFile);
+            System.out.println(generatedFile.getAbsolutePath());
+            assertTrue(compile(generatedFile));
+        }
+
     }
 
     private boolean compile(File generatedFile) {

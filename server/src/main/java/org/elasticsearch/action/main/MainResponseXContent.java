@@ -42,23 +42,23 @@ public class MainResponseXContent {
 
 
     //The buisness logic from plain POJO's to Response Object
-    private static MainResponse fromParser(GeneratedXContentInfoResponseParser model) {
+    private static MainResponse fromParser(GeneratedXContentInfoResponseParser parser) {
         return new MainResponse(
-            model.name,
-            Version.fromString(model.version.number),
-            new ClusterName(model.cluster_name),
-            model.cluster_uuid,
+            parser.name,
+            Version.fromString(parser.version.number),
+            new ClusterName(parser.cluster_name),
+            parser.cluster_uuid,
             new Build(
                 /*
                  * Be lenient when reading on the wire, the enumeration values from other versions might be different than what
                  * we know.
                  */
-                model.version.build_flavor == null ? Build.Flavor.UNKNOWN : Build.Flavor.fromDisplayName(model.version.build_flavor, false),
-                model.version.build_type == null ? Build.Type.UNKNOWN : Build.Type.fromDisplayName(model.version.build_type, false),
-                model.version.build_hash,
-                model.version.build_date,
-                model.version.build_snapshot,
-                model.version.number
+                parser.version.build_flavor == null ? Build.Flavor.UNKNOWN : Build.Flavor.fromDisplayName(parser.version.build_flavor, false),
+                parser.version.build_type == null ? Build.Type.UNKNOWN : Build.Type.fromDisplayName(parser.version.build_type, false),
+                parser.version.build_hash,
+                parser.version.build_date,
+                parser.version.build_snapshot,
+                parser.version.number
             )
         );
     }

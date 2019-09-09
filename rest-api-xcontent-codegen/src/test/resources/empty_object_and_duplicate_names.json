@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "delete": {
+      "type": "object",
+      "properties": {
+        "min_age": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "object",
+          "properties": {
+            "delete": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ package org.elasticsearch.xcontent.codegen;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Strings;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -29,7 +30,9 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,10 +79,14 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
 
                 try (InputStream in = Files.newInputStream(jsonPath);
                      Writer writer = processingEnv.getFiler().createSourceFile(generateClassName.reflectionName()).openWriter()) {
-                    JavaFile javaFile = generateClass(in, generateClassName, schemaPath);
-                   // javaFile.writeTo(System.out);
+                    HashSet<JavaFile> sourceFiles = new HashSet<>();
+                    generateClasses(in, generateClassName, schemaPath, sourceFiles, apiRootPath);
+                    // javaFile.writeTo(System.out);
                     ///gradlew :rest-api-xcontent-parsers:compileJava --stacktrace
-                    javaFile.writeTo(writer);
+                    for (JavaFile sourceFile : sourceFiles) {
+                        sourceFile.writeTo(writer);
+                    }
+
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -89,83 +96,99 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     }
 
 
-    public JavaFile generateClass(InputStream json, ClassName className, String jsonPathToSchemaObject) throws IOException {
-
+    public void generateClasses(InputStream json, ClassName className, String jsonPathToSchemaObject, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
         JsonNode schemaObject = findSchemaObject(json, jsonPathToSchemaObject);
         XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
+        //handle any inline definitions that will end up as inner classes
         JsonNode definitionNode = schemaObject.get("definitions");
         if (definitionNode != null) {
             traverseDefinitions(definitionNode, builder);
         }
-        traverse(schemaObject, ROOT_OBJECT_NAME, builder);
+        Set<String> externalReferences = new HashSet<>();
+        traverse(schemaObject, ROOT_OBJECT_NAME, builder, externalReferences);
+        for (String externalRef : externalReferences) {
 
-        return XContentClassBuilder.build(className.packageName(), className.simpleName(), builder);
+           Path externalReference = apiRootPath.resolve(Paths.get(getExternalReference(externalRef)));
+           try( InputStream in = Files.newInputStream(externalReference)){
+               System.out.println();
+
+               generateClasses(in, getClassName(getRefName(externalRef)), ROOT_OBJECT_NAME, sourceFiles, apiRootPath);
+           }
+
+
+        }
+        sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
     }
 
     private JsonNode findSchemaObject(InputStream json, String jsonPathToSchemaObject) throws IOException {
-        //tODO: better validation
+        //TODO: better validation
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode schemaObject = mapper.readTree(json);
-        if(ROOT_OBJECT_NAME.equals(jsonPathToSchemaObject)){
-            return schemaObject;
+        JsonNode node = mapper.readTree(json);
+        if (ROOT_OBJECT_NAME.equals(jsonPathToSchemaObject)) {
+            return node;
         }
         String[] paths = jsonPathToSchemaObject.split("\\.");
-        for(String path : paths){
-            schemaObject = schemaObject.get(path);
+        for (String path : paths) {
+            node = node.get(path);
         }
-        return schemaObject;
+        return node;
     }
-    private void traverseDefinitions(JsonNode definitionNode, XContentClassBuilder builder) {
-        //todo: support in file definitions
 
+    private void traverseDefinitions(JsonNode definitionNode, XContentClassBuilder builder) {
         definitionNode.fields().forEachRemaining(f -> {
             validateObject(f.getValue(), false);
-            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, false));
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, false), Collections.emptySet()); //todo: support external references from inside internal definitions
         });
-
     }
 
-    private void traverse(JsonNode node, String key, XContentClassBuilder builder) {
+    private void traverse(JsonNode node, String key, XContentClassBuilder builder, Set<String> externalReferences) {
         JsonNode typeNode = node.get("type");
         if ("object".equals(typeNode.asText())) {
             validateObject(node, ROOT_OBJECT_NAME.equals(key));
             JsonNode propertiesNode = node.get("properties");
-            propertiesNode.fields().forEachRemaining(f -> {
-
-                //primitive reference
-                JsonNode primitiveReference = f.getValue().get("$ref");
-                //not a reference
-                JsonNode nestedTypeNode = f.getValue().get("type");
-                if (nestedTypeNode != null) {
-                    if ("array".equals(nestedTypeNode.asText())) {
-                        validateArray(f.getValue());
-
-                        //primitive array
-                        if (f.getValue().get("items").get("type") != null) {
-                            addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder, false);
-                        } else { //an array of object references
-                            String reference = getRefName(f.getValue().get("items").get("$ref").asText());
-                            addArray(f.getKey(), reference, builder, true);
+            if (propertiesNode != null) { //support for empty objects
+                propertiesNode.fields().forEachRemaining(f -> {
+                    //reference to another object
+                    JsonNode reference = f.getValue().get("$ref");
+                    //not a reference
+                    JsonNode nestedTypeNode = f.getValue().get("type");
+                    if (nestedTypeNode != null) {
+                        if ("array".equals(nestedTypeNode.asText())) {
+                            validateArray(f.getValue());
+                            //primitive array
+                            if (f.getValue().get("items").get("type") != null) {
+                                addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder, false);
+                            } else { //an array of object references
+                                reference = f.getValue().get("items").get("$ref");
+                                String refText = reference.asText();
+                                if (Strings.isNullOrEmpty(getExternalReference(refText)) == false) {
+                                    externalReferences.add(refText);
+                                } else {
+                                    addArray(f.getKey(), getRefName(refText), builder, true);
+                                }
+                            }
+                        } else if ("object".equals(nestedTypeNode.asText())) {
+                            validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
+                            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, true), externalReferences);
+                        } else {
+                            validatePrimitive(f.getValue());
+                            String type = nestedTypeNode.asText();
+                            addPrimitive(f.getKey(), type, builder, false);
                         }
-                    } else if ("object".equals(nestedTypeNode.asText())) {
-                        validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
-                        traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, true));
+                    } else if (reference != null) {
+                        String refText = reference.asText();
+                        if (Strings.isNullOrEmpty(getExternalReference(refText)) == false) {
+                            externalReferences.add(refText);
+                        } else {
+                            addPrimitive(f.getKey(), getRefName(refText), builder, true);
+                        }
+
                     } else {
+                        throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
 
-                        validatePrimitive(f.getValue());
-                        String type = nestedTypeNode.asText();
-                        addPrimitive(f.getKey(), type, builder, false);
                     }
-                } else if (primitiveReference != null) {
-                    //handle primitive type
-                    String reference = getRefName(primitiveReference.asText());
-                    addPrimitive(f.getKey(), reference, builder, true);
-
-                } else {
-                    throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
-
-                }
-            });
+                });
+            }
         }
     }
 
@@ -210,16 +233,20 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     }
 
     private String getRefName(String reference) {
-        String[] tokens = tokenReference(reference);
+        String[] tokens = tokenizeReference(reference);
         return tokens[1].substring(tokens[1].lastIndexOf("/") + 1);
     }
 
-    private String[] tokenReference(String reference) {
+    private String getExternalReference(String reference) {
+        String[] tokens = tokenizeReference(reference);
+        return tokens[0];
+    }
+
+    private String[] tokenizeReference(String reference) {
         assert reference.contains("#");
         String[] tokens = reference.split("#");
         assert tokens.length == 2;
         return tokens;
-
     }
 
     private XContentClassBuilder addObject(String type, XContentClassBuilder builder, boolean addToInitialization) {
@@ -251,6 +278,7 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
                 _type = "double";  //In JSON spec "number" = fractional
                 break;
         }
+
         return ClassName.get("", CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, _type));
     }
 

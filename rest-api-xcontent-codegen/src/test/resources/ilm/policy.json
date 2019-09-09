@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "policy": {
+      "type": "object",
+      "properties": {
+        "phases": {
+          "type": "object",
+          "properties": {
+            "hot": {
+              "$ref": "ilm/phases/phases.json#/hot"
+            },
+            "veggie" : {
+              "$ref" : "core/core.json#/veggie"
+            }
+          }
+        }
+      }
+    }
+  }
+}
