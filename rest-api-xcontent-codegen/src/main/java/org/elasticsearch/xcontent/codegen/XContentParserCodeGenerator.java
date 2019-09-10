@@ -93,30 +93,6 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     }
 
 
-    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
-        try (InputStream in = Files.newInputStream(jsonPath)) {
-            JsonNode schemaObject = findObjectToParse(in, jPath);
-            XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
-
-            Set<String> externalReferences = new HashSet<>();
-            //handle any inline definitions that will end up as inner classes
-            JsonNode definitionNode = schemaObject.get("definitions");
-            if (definitionNode != null) {
-                traverseInlineDefinitions(definitionNode, builder, externalReferences);
-            }
-
-            traverse(schemaObject, ROOT_OBJECT_NAME, builder, externalReferences);
-            for (String externalRef : externalReferences) {
-                Path externalRefPath = apiRootPath.resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
-                Tuple<String, String> packageAndClass = parseExternalReference(externalRef);
-                generateClasses(getClassName(packageAndClass), externalRefPath, externalRef.split("#")[1], sourceFiles, apiRootPath);
-            }
-
-            sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
-        }
-    }
-
-
     private JsonNode findObjectToParse(InputStream json, String jPath) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(json);
@@ -137,10 +113,36 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         return node;
     }
 
+    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
+        try (InputStream in = Files.newInputStream(jsonPath)) {
+            JsonNode objectToParse = findObjectToParse(in, jPath);
+            XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
+
+            Set<String> externalReferences = new HashSet<>();
+            //handle any inline definitions that will end up as inner classes
+            JsonNode definitionNode = objectToParse.get("definitions");
+            if (definitionNode != null) {
+                traverseInlineDefinitions(definitionNode, builder, externalReferences);
+            }
+
+            traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences);
+
+            for (String externalRef : externalReferences) {
+                Path externalRefPath = apiRootPath.resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
+                Tuple<String, String> packageAndClass = parseExternalReference(externalRef);
+                //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
+                generateClasses(getClassName(packageAndClass), externalRefPath, externalRef.split("#")[1], sourceFiles, apiRootPath);
+            }
+
+            sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
+        }
+    }
+
     private void traverseInlineDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences) {
         definitionNode.fields().forEachRemaining(f -> {
             validateObject(f.getValue(), false);
             addField(f.getKey(), getClassName("", f.getKey()), builder, true);
+            //TODO: support references that are not objects
             traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, false), externalReferences);
         });
     }

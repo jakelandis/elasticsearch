@@ -6,25 +6,16 @@
       "type": "object",
       "properties": {
         "hot": {
-          "type": "object",
-          "properties": {
-            "actions": {
-              "type": "object",
-              "properties": {
-                "rollover": {
-                  "type": "object",
-                  "properties": {
-                    "max_age": {
-                      "type": "string"
-                    },
-                    "max_size": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
+          "$ref": "ilm/phases/hot.json#/definitions/hot"
+        },
+        "warm": {
+          "$ref": "ilm/phases/warm.json#/definitions/warm"
+        },
+        "cold": {
+          "$ref": "ilm/phases/cold.json#/definitions/cold"
+        },
+        "delete": {
+          "$ref": "ilm/phases/delete.json#/definitions/delete"
         }
       }
     }
