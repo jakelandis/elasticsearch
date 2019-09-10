@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Objects;
@@ -29,19 +30,21 @@ public class SimpleGenerationTests extends ESTestCase {
     public TemporaryFolder tempDir = new TemporaryFolder();
 
     public void testFoo() throws IOException, URISyntaxException {
-        byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("ilm/policy.json")));
+        String modelJson = "ilm/policy.json";
+        byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(modelJson)));
+        Path jsonPath = Paths.get(ClassLoader.getSystemResource(modelJson).toURI());
 
         print(model);
         XContentParserCodeGenerator generator = new XContentParserCodeGenerator();
         Set<JavaFile> sourceFiles = new HashSet<>();
-        generator.generateClasses(new ByteArrayInputStream(model), ClassName.bestGuess("co.elastic.Foo"), XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
+        generator.generateClasses(generator.getClassName("", jsonPath.getFileName().toString().split("\\.")[0]), jsonPath, XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
 
         for (JavaFile sourceFile : sourceFiles) {
             sourceFile.writeTo(tempDir.getRoot());
             File generatedFile = new File(tempDir.getRoot(), sourceFile.packageName.replaceAll("\\.", "/") + "/" + sourceFile.typeSpec.name + ".java");//Files.find(tempDir.getRoot().toPath(), Integer.MAX_VALUE, (p, f) -> f.isRegularFile()).findFirst().orElseThrow().toFile();
+            System.out.println(generatedFile.getAbsolutePath());
 
             print(generatedFile);
-            System.out.println(generatedFile.getAbsolutePath());
             assertTrue(compile(generatedFile));
         }
 

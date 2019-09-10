@@ -18,6 +18,7 @@ import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class XContentClassBuilder {
@@ -58,7 +59,7 @@ public class XContentClassBuilder {
         this.children = new ArrayList<>();
     }
 
-    static JavaFile build(String packageName, String targetClassName, XContentClassBuilder builder) {
+    static JavaFile build(String packageName, String targetClassName,  XContentClassBuilder builder) {
         ClassName className = ClassName.get(packageName, targetClassName);
 
         // .. new ConstructingObjectParser<> ..
@@ -70,6 +71,7 @@ public class XContentClassBuilder {
 
         //outer class
         TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
+
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addSuperinterface(ToXContentObject.class)
             .addJavadoc("GENERATED CODE - DO NOT MODIFY") //todo add date and by what

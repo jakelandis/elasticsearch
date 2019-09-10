@@ -3,7 +3,6 @@ package org.elasticsearch.xcontent.codegen;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Strings;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -31,7 +30,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,23 +69,22 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
             try {
                 GeneratedXContentParser annotation = element.getAnnotation(GeneratedXContentParser.class);
                 ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
-                ClassName generateClassName = ClassName.get(originalClassName.packageName() + ".generated", "Generated" + originalClassName.simpleName());
+
                 Path apiRootPath = new File(processingEnv.getOptions().get("api.root")).toPath();
                 Path jsonPath = apiRootPath.resolve(annotation.file());
                 String schemaPath = annotation.schemaPath();
 
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating " + generateClassName + " from " + originalClassName + " from " + jsonPath.toAbsolutePath().toString() + " schemaPath=" + schemaPath);
-
-                try (InputStream in = Files.newInputStream(jsonPath);
-                     Writer writer = processingEnv.getFiler().createSourceFile(generateClassName.reflectionName()).openWriter()) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString() + " schemaPath=" + schemaPath);
+                //ClassName className = jsonPath.getFileName().toString().split("\\.")[0];
+                ClassName className = ClassName.bestGuess("com.example.Foo"); //fixme
+                try (Writer writer = processingEnv.getFiler().createSourceFile(className.reflectionName()).openWriter()) {
                     HashSet<JavaFile> sourceFiles = new HashSet<>();
-                    generateClasses(in, generateClassName, schemaPath, sourceFiles, apiRootPath);
+                    generateClasses(className, jsonPath, schemaPath, sourceFiles, apiRootPath);
                     // javaFile.writeTo(System.out);
                     ///gradlew :rest-api-xcontent-parsers:compileJava --stacktrace
                     for (JavaFile sourceFile : sourceFiles) {
                         sourceFile.writeTo(writer);
                     }
-
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -96,30 +94,35 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     }
 
 
-    public void generateClasses(InputStream json, ClassName className, String jsonPathToSchemaObject, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
-        JsonNode schemaObject = findSchemaObject(json, jsonPathToSchemaObject);
-        XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
-        //handle any inline definitions that will end up as inner classes
-        JsonNode definitionNode = schemaObject.get("definitions");
-        if (definitionNode != null) {
-            traverseDefinitions(definitionNode, builder);
+    public void generateClasses(ClassName className, Path jsonPath, String jsonPathToSchemaObject, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
+        try (InputStream in = Files.newInputStream(jsonPath)) {
+            JsonNode schemaObject = findSchemaObject(in, jsonPathToSchemaObject);
+            XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
+
+            Set<String> externalReferences = new HashSet<>();
+            //handle any inline definitions that will end up as inner classes
+            JsonNode definitionNode = schemaObject.get("definitions");
+            if (definitionNode != null) {
+                traverseDefinitions(definitionNode, builder, externalReferences);
+            }
+
+            traverse(schemaObject, ROOT_OBJECT_NAME, builder, externalReferences);
+            for (String externalRef : externalReferences) {
+                Path externalRefPath = apiRootPath.resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
+                Tuple<String, String> packageAndClass = parseExternalReference(externalRef);
+                generateClasses(getClassName(packageAndClass), externalRefPath, ROOT_OBJECT_NAME, sourceFiles, apiRootPath);
+            }
+
+            Set<ClassName> imports = externalReferences.stream().map(this::parseExternalReference).map(t -> ClassName.get(t.v1(), t.v2())).collect(Collectors.toSet());
+
+
+            sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
         }
-        Set<String> externalReferences = new HashSet<>();
-        traverse(schemaObject, ROOT_OBJECT_NAME, builder, externalReferences);
-        for (String externalRef : externalReferences) {
-
-           Path externalReference = apiRootPath.resolve(Paths.get(getExternalReference(externalRef)));
-           try( InputStream in = Files.newInputStream(externalReference)){
-               System.out.println();
-
-               generateClasses(in, getClassName(getRefName(externalRef)), ROOT_OBJECT_NAME, sourceFiles, apiRootPath);
-           }
-
-
-        }
-        sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
     }
 
+
+
+//
     private JsonNode findSchemaObject(InputStream json, String jsonPathToSchemaObject) throws IOException {
         //TODO: better validation
         ObjectMapper mapper = new ObjectMapper();
@@ -134,10 +137,11 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         return node;
     }
 
-    private void traverseDefinitions(JsonNode definitionNode, XContentClassBuilder builder) {
+    private void traverseDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences) {
         definitionNode.fields().forEachRemaining(f -> {
             validateObject(f.getValue(), false);
-            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, false), Collections.emptySet()); //todo: support external references from inside internal definitions
+            addField(f.getKey(), getClassName("", f.getKey()), builder, true);
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, false), externalReferences);
         });
     }
 
@@ -157,35 +161,34 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
                             validateArray(f.getValue());
                             //primitive array
                             if (f.getValue().get("items").get("type") != null) {
-                                addArray(f.getKey(), f.getValue().get("items").get("type").asText(), builder, false);
+                                addArray(f.getKey(), getClassName("", f.getValue().get("items").get("type").asText()) , builder, false);
                             } else { //an array of object references
                                 reference = f.getValue().get("items").get("$ref");
                                 String refText = reference.asText();
-                                if (Strings.isNullOrEmpty(getExternalReference(refText)) == false) {
+                                if (isExternalReference(refText)) {
                                     externalReferences.add(refText);
                                 } else {
-                                    addArray(f.getKey(), getRefName(refText), builder, true);
+                                    addArray(f.getKey(), getClassName(parseInlineReference(refText)), builder, true);
                                 }
                             }
                         } else if ("object".equals(nestedTypeNode.asText())) {
                             validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
-                            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, true), externalReferences);
+                            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("",f.getKey()), builder, true), externalReferences);
                         } else {
                             validatePrimitive(f.getValue());
                             String type = nestedTypeNode.asText();
-                            addPrimitive(f.getKey(), type, builder, false);
+                            addField(f.getKey(), getClassName("", type), builder, false);
                         }
                     } else if (reference != null) {
                         String refText = reference.asText();
-                        if (Strings.isNullOrEmpty(getExternalReference(refText)) == false) {
+                        if (isExternalReference(refText)) {
                             externalReferences.add(refText);
                         } else {
-                            addPrimitive(f.getKey(), getRefName(refText), builder, true);
+                            addField(f.getKey(), getClassName(parseInlineReference(refText)), builder, true);
                         }
 
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
-
                     }
                 });
             }
@@ -232,54 +235,75 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         });
     }
 
-    private String getRefName(String reference) {
-        String[] tokens = tokenizeReference(reference);
-        return tokens[1].substring(tokens[1].lastIndexOf("/") + 1);
+    private boolean isExternalReference(String reference) {
+        return reference.contains(".json") && reference.contains("#");
     }
 
-    private String getExternalReference(String reference) {
-        String[] tokens = tokenizeReference(reference);
-        return tokens[0];
-    }
-
-    private String[] tokenizeReference(String reference) {
-        assert reference.contains("#");
-        String[] tokens = reference.split("#");
+    // "$ref": "ilm/phases/phases.json#/hot"
+    // package = ilm.phases
+    // class = phases
+    private Tuple<String, String> parseExternalReference(String externalReference) {
+        assert isExternalReference(externalReference);
+        String[] tokens = externalReference.split("#");
         assert tokens.length == 2;
-        return tokens;
+        String[] parts = tokens[0].split(".json")[0].split("/");
+        String nameOfClass = parts[parts.length - 1];
+        String packageName = Arrays.stream(parts).limit(parts.length - 1).collect(Collectors.joining("."));
+        return new Tuple<>(packageName, formatClassName(nameOfClass));
     }
 
-    private XContentClassBuilder addObject(String type, XContentClassBuilder builder, boolean addToInitialization) {
+    private Tuple<String, String>  parseInlineReference(String inlineReference) {
+        assert inlineReference.contains("#");
+        String[] tokens = inlineReference.split("#");
+        assert tokens.length == 2;
+        return new Tuple("", tokens[1].substring(tokens[1].lastIndexOf("/") + 1));
+    }
+
+
+
+    private XContentClassBuilder addObject(String field, ClassName className,  XContentClassBuilder builder, boolean addToInitialization) {
 
         //don't add reference classes to the initialization blocks
         if (addToInitialization) {
-            addInitializationCode(getClassName(type), type, builder, true, false);
+            addInitializationCode(className, field, builder, true, false);
         }
         XContentClassBuilder child = XContentClassBuilder.newToXContentClassBuilder();
-        builder.children.add(new Tuple<>(getClassName(type), child));
+        builder.children.add(new Tuple<>(className, child));
         return child;
     }
 
-    private void addArray(String field, String type, XContentClassBuilder builder, boolean objectReference) {
-        addInitializationCode(getClassName(type), field, builder, objectReference, true);
+    private void addArray(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
+        addInitializationCode(className, field, builder, objectReference, true);
     }
 
-    private void addPrimitive(String field, String type, XContentClassBuilder builder, boolean objectReference) {
-        addInitializationCode(getClassName(type), field, builder, objectReference, false);
+    private void addField(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
+        addInitializationCode(className, field, builder, objectReference, false);
     }
 
-    private ClassName getClassName(String type) {
-        String _type = type;
-        switch (type) {
+    private ClassName getClassName(Tuple<String, String> packageAndClassName) {
+        return getClassName(packageAndClassName.v1(), packageAndClassName.v2());
+    }
+
+     ClassName getClassName(String packageName, String className) {
+        String cn = className;
+        String pn = packageName;
+        switch (className) {
             case "integer":
-                _type = "long"; //In JSON spec "integer" = non-fractional
+                cn = "long"; //In JSON spec "integer" = non-fractional
+                pn = "java.lang";
                 break;
             case "number":
-                _type = "double";  //In JSON spec "number" = fractional
+                cn = "double";  //In JSON spec "number" = fractional
+                pn = "java.lang";
                 break;
         }
 
-        return ClassName.get("", CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, _type));
+        return ClassName.get(pn, formatClassName(cn));
+    }
+
+
+    private String formatClassName(String nameOfClass) {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass);
     }
 
     //Adds the Constructor and static initialization code to the XContentClassBuilder.
@@ -288,7 +312,8 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         if (isArray) {
             builder.lambdas.add(CodeBlock.builder().add("(List<" + className.simpleName() + ">) a[$L]", builder.parserPosition.incrementAndGet()).build());
         } else {
-            builder.lambdas.add(CodeBlock.builder().add("(" + className.simpleName() + ") a[$L]", builder.parserPosition.incrementAndGet()).build());
+            System.out.println("***************** " + className.simpleName());
+            builder.lambdas.add(CodeBlock.builder().add("($T) a[$L]", className, builder.parserPosition.incrementAndGet()).build());
 
         }
         // PARSER.declare
