@@ -1,14 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "definitions": {
+  "properties": {
     "phases": {
-      "type": "object",
-      "properties": {
-        "hot": {
-          "$ref": "ilm/phases/phases.json#/hot"
-        }
-      }
+      "$ref": "ilm/phases/phases.json#/"
     }
   }
 }
