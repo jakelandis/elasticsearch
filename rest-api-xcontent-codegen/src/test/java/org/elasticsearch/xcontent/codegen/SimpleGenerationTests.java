@@ -42,7 +42,7 @@ public class SimpleGenerationTests extends ESTestCase {
         print(model);
         XContentParserCodeGenerator generator = new XContentParserCodeGenerator();
         Set<JavaFile> sourceFiles = new HashSet<>();
-        generator.generateClasses(generator.getClassName("", jsonPath.getFileName().toString().split("\\.")[0]), jsonPath, XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
+        generator.generateClasses(generator.getClassName("ilm", jsonPath.getFileName().toString().split("\\.")[0] + "_parser"), jsonPath, XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
 
         List<File> filesToCompile = new ArrayList<>();
         for (JavaFile sourceFile : sourceFiles) {
@@ -51,12 +51,8 @@ public class SimpleGenerationTests extends ESTestCase {
             System.out.println(generatedFile.getAbsolutePath());
 
             print(generatedFile);
-            //TODO: figure out how to create a dependency graph amongst the imports and compile them with the correct classpath
-
             filesToCompile.add(generatedFile);
-
         }
-
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         try(StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
@@ -64,12 +60,7 @@ public class SimpleGenerationTests extends ESTestCase {
             Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(filesToCompile);
             assert(compiler.getTask(null, fileManager, null, null, null, compilationUnits).call());
         }
-
-
-
     }
-
-
 
     private void print(File in) throws IOException {
         print(toByteArray(new FileInputStream(in)));

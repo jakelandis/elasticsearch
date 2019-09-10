@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 
 import static javax.lang.model.SourceVersion.RELEASE_11;
 
-//import org.elasticsearch.http.ModeledHttpResponse;
 
 @SupportedSourceVersion(RELEASE_11)
 @SupportedAnnotationTypes("org.elasticsearch.common.xcontent.GeneratedXContentParser")
@@ -94,9 +93,9 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     }
 
 
-    public void generateClasses(ClassName className, Path jsonPath, String jsonPathToSchemaObject, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
+    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
         try (InputStream in = Files.newInputStream(jsonPath)) {
-            JsonNode schemaObject = findSchemaObject(in, jsonPathToSchemaObject);
+            JsonNode schemaObject = findObjectToParse(in, jPath);
             XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
 
             Set<String> externalReferences = new HashSet<>();
@@ -110,7 +109,7 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
             for (String externalRef : externalReferences) {
                 Path externalRefPath = apiRootPath.resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
                 Tuple<String, String> packageAndClass = parseExternalReference(externalRef);
-                generateClasses(getClassName(packageAndClass), externalRefPath, ROOT_OBJECT_NAME, sourceFiles, apiRootPath);
+                generateClasses(getClassName(packageAndClass), externalRefPath, externalRef.split("#")[1], sourceFiles, apiRootPath);
             }
 
             sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
@@ -118,16 +117,22 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     }
 
 
-    private JsonNode findSchemaObject(InputStream json, String jsonPathToSchemaObject) throws IOException {
-        //TODO: better validation
+    private JsonNode findObjectToParse(InputStream json, String jPath) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(json);
-        if (ROOT_OBJECT_NAME.equals(jsonPathToSchemaObject)) {
+        if (ROOT_OBJECT_NAME.equals(jPath)) {
             return node;
         }
-        String[] paths = jsonPathToSchemaObject.split("\\.");
+        String[] paths = {};
+        if (jPath.contains(".")) {
+            paths = jPath.split("\\.");
+        } else if (jPath.contains("/")) {
+            paths = jPath.split("/");
+        }
         for (String path : paths) {
-            node = node.get(path);
+            if (path.isEmpty() == false) {
+                node = node.get(path);
+            }
         }
         return node;
     }
@@ -185,7 +190,6 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
                         } else {
                             addField(f.getKey(), getClassName(parseInlineReference(refText)), builder, true);
                         }
-
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
                     }
@@ -193,7 +197,6 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
             }
         }
     }
-
 
     private boolean isExternalReference(String reference) {
         return reference.contains(".json") && reference.contains("#");
@@ -219,9 +222,7 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         return new Tuple("", tokens[1].substring(tokens[1].lastIndexOf("/") + 1));
     }
 
-
     private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization) {
-
         //don't add inline reference classes to the initialization blocks
         if (addToInitialization) {
             addInitializationCode(className, field, builder, true, false);
@@ -244,27 +245,33 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     }
 
     ClassName getClassName(String packageName, String className) {
-        String cn = className;
         String pn = packageName;
         switch (className) {
             case "integer":
-                cn = "long"; //In JSON spec "integer" = non-fractional
-                pn = "java.lang";
+                className = "Long"; //In JSON spec "integer" = non-fractional
                 break;
             case "number":
-                cn = "double";  //In JSON spec "number" = fractional
-                pn = "java.lang";
+                className = "Double";  //In JSON spec "number" = fractional
                 break;
+            case "boolean":
+                className = "Boolean";
+                break;
+            case "string":
+                className = "String";
+                break;
+            case "null":
+                throw new UnsupportedOperationException("null type is not supported");
+            default:
+                className = formatClassName(className);
+
         }
 
-        return ClassName.get(pn, formatClassName(cn));
+        return ClassName.get(pn, className);
     }
-
 
     private String formatClassName(String nameOfClass) {
         return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass);
     }
-
 
     //Adds the Constructor and static initialization code to the XContentClassBuilder.
     private void addInitializationCode(ClassName className, String field, XContentClassBuilder builder, boolean isObject, boolean isArray) {
