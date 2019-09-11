@@ -6,7 +6,7 @@
       "type": "object",
       "properties": {
         "phases": {
-          "$ref": "ilm/phases/phases.json#/definitions/phases"
+          "$ref": "org/elasticsearch/xcontent/ilm/phases/phases.json#/definitions/phases"
         }
       }
     }

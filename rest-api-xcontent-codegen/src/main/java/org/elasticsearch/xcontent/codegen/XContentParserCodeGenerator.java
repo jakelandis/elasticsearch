@@ -46,6 +46,7 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
 
     static final String ROOT_OBJECT_NAME = "__ROOT__";
 
+
     private static Set<String> VALID_OBJECT_KEYS = Set.of("description", "type", "properties");
     private static Set<String> VALID_PRIMITIVE_KEYS = Set.of("description", "type", "$ref");
     private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$id", "$schema", "definitions")).collect(Collectors.toSet());

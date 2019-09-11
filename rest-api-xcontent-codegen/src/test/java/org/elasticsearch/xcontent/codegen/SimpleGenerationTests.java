@@ -20,13 +20,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.LinkedTransferQueue;
 
 //needs to be run with `-Dtests.security.manager=false` (or fix the security manager config :) )
 public class SimpleGenerationTests extends ESTestCase {
@@ -35,14 +32,14 @@ public class SimpleGenerationTests extends ESTestCase {
     public TemporaryFolder tempDir = new TemporaryFolder();
 
     public void testFoo() throws IOException, URISyntaxException {
-        String modelJson = "ilm/policy.json";
+        String modelJson = "org/elasticsearch/xcontent/ilm/policy.json";
         byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(modelJson)));
         Path jsonPath = Paths.get(ClassLoader.getSystemResource(modelJson).toURI());
 
         print(model);
         XContentParserCodeGenerator generator = new XContentParserCodeGenerator();
         Set<JavaFile> sourceFiles = new HashSet<>();
-        generator.generateClasses(generator.getClassName("ilm", jsonPath.getFileName().toString().split("\\.")[0] + "_parser"), jsonPath, XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
+        generator.generateClasses(generator.getClassName("org.elasticsearch.xcontent.ilm", jsonPath.getFileName().toString().split("\\.")[0] + "_parser"), jsonPath, XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
 
         List<File> filesToCompile = new ArrayList<>();
         for (JavaFile sourceFile : sourceFiles) {
