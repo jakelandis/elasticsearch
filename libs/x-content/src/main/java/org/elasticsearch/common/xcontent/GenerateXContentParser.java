@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface GeneratedXContentParser {
+public @interface GenerateXContentParser {
     /**
      * The relative name of the file to use to generate the file.
      * Consumers must provide a base path from which to resolve the relative file. This is likely done through a compiler argument to an
@@ -21,5 +21,9 @@ public @interface GeneratedXContentParser {
     /**
      * The dot delimited path from the root object of JSON to find the JSON schema object used to generate the parser,
      */
-    String schemaPath() default "body";
+    String jPath();
+
+    String packageName();
+
+    String className();
 }

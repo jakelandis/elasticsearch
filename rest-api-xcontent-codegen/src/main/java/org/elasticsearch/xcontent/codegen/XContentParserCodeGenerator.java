@@ -11,7 +11,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.xcontent.GeneratedXContentParser;
+import org.elasticsearch.common.xcontent.GenerateXContentParser;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -30,7 +30,6 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,7 +39,7 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 
 
 @SupportedSourceVersion(RELEASE_11)
-@SupportedAnnotationTypes("org.elasticsearch.common.xcontent.GeneratedXContentParser")
+@SupportedAnnotationTypes("org.elasticsearch.common.xcontent.GenerateXContentParser")
 @SupportedOptions("api.root")
 public class XContentParserCodeGenerator extends AbstractProcessor {
 
@@ -65,24 +64,23 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************3");
         //TODO: handle the v7 generations
-        for (Element element : roundEnv.getElementsAnnotatedWith(GeneratedXContentParser.class)) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(GenerateXContentParser.class)) {
             try {
-                GeneratedXContentParser annotation = element.getAnnotation(GeneratedXContentParser.class);
+                GenerateXContentParser annotation = element.getAnnotation(GenerateXContentParser.class);
                 ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
 
                 Path apiRootPath = new File(processingEnv.getOptions().get("api.root")).toPath();
                 Path jsonPath = apiRootPath.resolve(annotation.file());
-                String schemaPath = annotation.schemaPath();
+                String jPath = annotation.jPath();
+                String nameOfClass = annotation.className();
+                String nameOfPackage = annotation.packageName();
 
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString() + " schemaPath=" + schemaPath);
-                //ClassName className = jsonPath.getFileName().toString().split("\\.")[0];
-                ClassName className = ClassName.bestGuess("com.example.Foo"); //fixme
-                try (Writer writer = processingEnv.getFiler().createSourceFile(className.reflectionName()).openWriter()) {
-                    HashSet<JavaFile> sourceFiles = new HashSet<>();
-                    generateClasses(className, jsonPath, schemaPath, sourceFiles, apiRootPath);
-                    // javaFile.writeTo(System.out);
-                    ///gradlew :rest-api-xcontent-parsers:compileJava --stacktrace
-                    for (JavaFile sourceFile : sourceFiles) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString() + " jpath=" + jPath);
+                ClassName className = ClassName.get(nameOfPackage, nameOfClass);
+                HashSet<JavaFile> sourceFiles = new HashSet<>();
+                generateClasses(className, jsonPath, jPath, sourceFiles, apiRootPath);
+                for (JavaFile sourceFile : sourceFiles) {
+                    try (Writer writer = processingEnv.getFiler().createSourceFile(sourceFile.packageName + "." + sourceFile.typeSpec.name).openWriter()) {
                         sourceFile.writeTo(writer);
                     }
                 }
@@ -95,20 +93,26 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
 
 
     private JsonNode findObjectToParse(InputStream json, String jPath) throws IOException {
+        assert jPath != null;
+        assert json != null;
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(json);
+        assert node != null;
+        JsonNode original = node.deepCopy();
         if (ROOT_OBJECT_NAME.equals(jPath)) {
             return node;
         }
-        String[] paths = {};
-        if (jPath.contains(".")) {
-            paths = jPath.split("\\.");
-        } else if (jPath.contains("/")) {
+        String[] paths = {jPath};
+        if (jPath.contains("/")) {
             paths = jPath.split("/");
         }
+
         for (String path : paths) {
             if (path.isEmpty() == false) {
                 node = node.get(path);
+            }
+            if (node == null) {
+                throw new NullPointerException("Could not find the object defined by [" + jPath + "] in object " + original.toString());
             }
         }
         return node;
@@ -123,33 +127,34 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
             //handle any inline definitions that will end up as inner classes
             JsonNode definitionNode = objectToParse.get("definitions");
             if (definitionNode != null) {
-                traverseInlineDefinitions(definitionNode, builder, externalReferences);
+                traverseInlineDefinitions(definitionNode, builder, externalReferences, className.packageName());
             }
 
-            traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences);
+            traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences, className.packageName());
 
             for (String externalRef : externalReferences) {
                 Path externalRefPath = apiRootPath.resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
-                Tuple<String, String> packageAndClass = parseExternalReference(externalRef);
+                String nameOfClass = getClassNameFromReference(externalRef);
                 //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
-                generateClasses(getClassName(packageAndClass), externalRefPath, externalRef.split("#")[1], sourceFiles, apiRootPath);
+                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles, apiRootPath);
             }
 
             sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
         }
     }
 
-    private void traverseInlineDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences) {
+    private void traverseInlineDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage) {
         definitionNode.fields().forEachRemaining(f -> {
             validateObject(f.getValue(), false);
             addField(f.getKey(), getClassName("", f.getKey()), builder, true);
             //TODO: support references that are not objects
-            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, false), externalReferences);
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, false), externalReferences, nameOfPackage);
         });
     }
 
-    private void traverse(JsonNode node, String key, XContentClassBuilder builder, Set<String> externalReferences) {
+    private void traverse(JsonNode node, String key, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage) {
         JsonNode typeNode = node.get("type");
+        validateNotNull(node, typeNode, "type");
         if ("object".equals(typeNode.asText())) {
             validateObject(node, ROOT_OBJECT_NAME.equals(key));
             JsonNode propertiesNode = node.get("properties");
@@ -170,15 +175,14 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
                                 String refText = reference.asText();
                                 if (isExternalReference(refText)) {
                                     externalReferences.add(refText);
-                                    addArray(f.getKey(), getClassName(parseExternalReference(refText)), builder, true);
-                                } else {
-                                    addArray(f.getKey(), getClassName(parseInlineReference(refText)), builder, true);
                                 }
+                                addArray(f.getKey(), getClassName(nameOfPackage, getClassNameFromReference(refText)), builder, true);
+
                             }
                         } else if ("object".equals(nestedTypeNode.asText())) {
                             validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
 
-                            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, true), externalReferences);
+                            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, true), externalReferences, nameOfPackage);
                         } else {
 
                             validatePrimitive(f.getValue());
@@ -189,10 +193,9 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
                         String refText = reference.asText();
                         if (isExternalReference(refText)) {
                             externalReferences.add(refText); //used to generate the external class
-                            addField(f.getKey(), getClassName(parseExternalReference(refText)), builder, true);
-                        } else {
-                            addField(f.getKey(), getClassName(parseInlineReference(refText)), builder, true);
                         }
+                        addField(f.getKey(), getClassName(nameOfPackage, getClassNameFromReference(refText)), builder, true);
+
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
                     }
@@ -205,24 +208,11 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         return reference.contains(".json") && reference.contains("#");
     }
 
-    // "$ref": "ilm/phases/phases.json#/hot"
-    // package = ilm.phases
-    // class = phases
-    private Tuple<String, String> parseExternalReference(String externalReference) {
-        assert isExternalReference(externalReference);
-        String[] tokens = externalReference.split("#");
+    private String getClassNameFromReference(String reference) {
+        assert reference.contains("#");
+        String[] tokens = reference.split("#");
         assert tokens.length == 2;
-        String[] parts = tokens[0].split(".json")[0].split("/");
-        String nameOfClass = parts[parts.length - 1];
-        String packageName = Arrays.stream(parts).limit(parts.length - 1).collect(Collectors.joining("."));
-        return new Tuple<>(packageName, formatClassName(nameOfClass));
-    }
-
-    private Tuple<String, String> parseInlineReference(String inlineReference) {
-        assert inlineReference.contains("#");
-        String[] tokens = inlineReference.split("#");
-        assert tokens.length == 2;
-        return new Tuple("", tokens[1].substring(tokens[1].lastIndexOf("/") + 1));
+        return formatClassName(tokens[1].substring(tokens[1].lastIndexOf("/") + 1));
     }
 
     private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization) {
@@ -243,9 +233,6 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         addInitializationCode(className, field, builder, objectReference, false);
     }
 
-    private ClassName getClassName(Tuple<String, String> packageAndClassName) {
-        return getClassName(packageAndClassName.v1(), packageAndClassName.v2());
-    }
 
     ClassName getClassName(String packageName, String className) {
         String pn = packageName;
@@ -305,6 +292,15 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
         builder.toXContentMethodBuilder.addStatement("builder.field($S," + field + ")", field);
     }
 
+
+    private void validateNotNull(JsonNode parentNode, JsonNode node, String key) {
+        if (parentNode == null) {
+            throw new NullPointerException("Looking for [" + key + "] in a null JsonNode");
+        }
+        if (node == null) {
+            throw new NullPointerException("Could not find key [" + key + "] in object " + parentNode.toString());
+        }
+    }
 
     private void validatePrimitive(JsonNode node) {
         assert node.isObject(); //we are validating the node object that contains the "type" : "array" or "$ref" :

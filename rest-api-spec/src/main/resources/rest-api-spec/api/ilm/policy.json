@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "definitions": {
+    "policy": {
+      "type": "object",
+      "properties": {
+        "phases": {
+          "$ref": "ilm/phases.json#/definitions/phases"
+        }
+      }
+    }
+  }
+}
