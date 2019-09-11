@@ -156,7 +156,6 @@ public class HttpApiGenerator<a> extends AbstractProcessor {
                             String reference = getRefName(f.getValue().get("items").get("$ref").asText());
                             addArray(f.getKey(), reference, builder, true);
                         }
-                        //todo: handle an array of objects
                     } else if ("object".equals(nestedTypeNode.asText())) {
                         validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
                         traverse(f.getValue(), f.getKey(), addObject(f.getKey(), builder, true));
