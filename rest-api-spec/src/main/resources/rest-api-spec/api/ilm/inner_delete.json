@@ -4,12 +4,7 @@
   "description": "required for codegen since otherwise a delete object will attempt be created inside another delete object",
   "definitions": {
     "inner_delete": {
-      "type": "object",
-      "properties": {
-        "delete": {
-          "type": "object"
-        }
-      }
+      "type": "object"
     }
   }
 }

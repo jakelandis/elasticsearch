@@ -111,7 +111,6 @@ public class RestMainAction extends BaseRestHandler {
             mainResponse.getNodeName(), //name
             mainResponse.getClusterName().value(), //cluster_name
             mainResponse.getClusterUuid(), //cluster_uuid
-
             mainResponse.getBuild().getQualifiedVersion(), //number
             mainResponse.getBuild().flavor().displayName(), //build_flavor
             mainResponse.getBuild().type().displayName(), //build_type

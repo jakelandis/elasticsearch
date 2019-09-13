@@ -46,7 +46,7 @@ public class XContentClassBuilder {
         //fields to be added
         List<FieldSpec> fields = new ArrayList<>();
         List<CodeBlock> lambdas = new ArrayList<>();
-        return new XContentClassBuilder(staticInitializerBuilder, lambdas, constructorBuilder, toXContentMethodBuilder, fields, new AtomicInteger(0));
+        return new XContentClassBuilder(staticInitializerBuilder, lambdas, constructorBuilder, toXContentMethodBuilder, fields, new AtomicInteger(-1));
     }
 
     private XContentClassBuilder(CodeBlock.Builder staticInitializerBuilder, List<CodeBlock> lambdas, MethodSpec.Builder constructorBuilder, MethodSpec.Builder toXContentMethodBuilder, List<FieldSpec> fields, AtomicInteger parserPosition) {

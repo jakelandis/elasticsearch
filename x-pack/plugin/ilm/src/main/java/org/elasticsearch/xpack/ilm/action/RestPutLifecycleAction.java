@@ -12,6 +12,8 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xcontent.v8.ilm.IlmPolicyParser;
+import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
 import org.elasticsearch.xpack.core.ilm.action.PutLifecycleAction;
 
 import java.io.IOException;
@@ -31,11 +33,17 @@ public class RestPutLifecycleAction extends BaseRestHandler {
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         String lifecycleName = restRequest.param("name");
         try (XContentParser parser = restRequest.contentParser()) {
+            toRequest(parser, lifecycleName);
             PutLifecycleAction.Request putLifecycleRequest = PutLifecycleAction.Request.parseRequest(lifecycleName, parser);
             putLifecycleRequest.timeout(restRequest.paramAsTime("timeout", putLifecycleRequest.timeout()));
             putLifecycleRequest.masterNodeTimeout(restRequest.paramAsTime("master_timeout", putLifecycleRequest.masterNodeTimeout()));
 
             return channel -> client.execute(PutLifecycleAction.INSTANCE, putLifecycleRequest, new RestToXContentListener<>(channel));
         }
+    }
+
+    void toRequest(XContentParser parser, String name) {
+        IlmPolicyParser p = IlmPolicyParser.PARSER.apply(parser, null);
+        System.out.println(p.policy.phases.hot.actions.rollover.max_age);
     }
 }

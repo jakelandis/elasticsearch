@@ -111,7 +111,7 @@ public final class ConstructingObjectParser<Value, Context> extends AbstractObje
      *        the XContent then parsing will throw an error. We use an array here rather than a {@code Map<String, Object>} to save on
      *        allocations.
      */
-    public ConstructingObjectParser(String name, Function<Object[], Value> builder) {
+    public  ConstructingObjectParser(String name, Function<Object[], Value> builder) {
         this(name, false, builder);
     }
 
