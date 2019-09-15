@@ -23,6 +23,7 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -81,7 +83,10 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
                 for (GenerateXContentModel model : models) {
                     ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
-
+                    if (element.getKind().isInterface() == false) {
+                        throw new IllegalStateException("GenerateXContentModel(s) must be associated with an Interface for [" + originalClassName + "]");
+                    }
+                    Set<ClassName> interfaces = Set.of(originalClassName);
                     Path apiRootPath = new File(processingEnv.getOptions().get("spec.root")).toPath();
                     Path jsonPath = apiRootPath.resolve(model.model());
                     String nameOfClass = model.className();
@@ -90,7 +95,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                     processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString());
                     ClassName className = ClassName.get(nameOfPackage, nameOfClass);
                     HashSet<JavaFile> sourceFiles = new HashSet<>();
-                    generateClasses(className, jsonPath, ROOT_OBJECT_NAME, sourceFiles);
+                    generateClasses(className, jsonPath, ROOT_OBJECT_NAME, sourceFiles, interfaces);
                     for (JavaFile sourceFile : sourceFiles) {
                         try (Writer writer = processingEnv.getFiler().createSourceFile(sourceFile.packageName + "." + sourceFile.typeSpec.name).openWriter()) {
                             sourceFile.writeTo(writer);
@@ -132,10 +137,11 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         return node;
     }
 
-    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles) throws IOException {
+    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles, Set<ClassName> interfaces) throws IOException {
         try (InputStream in = Files.newInputStream(jsonPath)) {
             JsonNode objectToParse = findObjectToParse(in, jPath);
             XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
+            builder.interfaces.addAll(interfaces);
 
             Set<String> externalReferences = new HashSet<>();
             //handle any inline definitions that will end up as inner classes
@@ -147,11 +153,12 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences, className.packageName());
 
             for (String externalRef : externalReferences) {
-                Path externalRefPath = jsonPath.getParent().resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
+                Path externalRefPath = jsonPath.getParent().resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here, and/or clean up the jPath/reference stuff.
                 String nameOfClass = getClassNameFromReference(externalRef);
                 //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
-                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles);
+                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles, Collections.emptySet());
             }
+
 
             sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
         }

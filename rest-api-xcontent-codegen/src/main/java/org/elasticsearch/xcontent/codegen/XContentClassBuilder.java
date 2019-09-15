@@ -17,6 +17,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,6 +31,7 @@ public class XContentClassBuilder {
     final List<FieldSpec> fields;
     final AtomicInteger parserPosition;
     final List<Tuple<ClassName, XContentClassBuilder>> children;
+    final Set<ClassName> interfaces;
 
     static XContentClassBuilder newToXContentClassBuilder() {
         //static initializer
@@ -57,10 +59,12 @@ public class XContentClassBuilder {
         this.fields = fields;
         this.parserPosition = parserPosition;
         this.children = new ArrayList<>();
+        this.interfaces = new HashSet<>();
     }
 
     static JavaFile build(String packageName, String targetClassName,  XContentClassBuilder builder) {
         ClassName className = ClassName.get(packageName, targetClassName);
+        builder.interfaces.add(ClassName.get(ToXContentObject.class));
 
         // .. new ConstructingObjectParser<> ..
         FieldSpec parserField = createConstructingObjectParser(builder, className);
@@ -73,7 +77,7 @@ public class XContentClassBuilder {
         TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
 
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addSuperinterface(ToXContentObject.class)
+            .addSuperinterfaces(builder.interfaces)
             .addJavadoc("GENERATED CODE - DO NOT MODIFY") //todo add date and by what
             .addStaticBlock(builder.staticInitializerBuilder.build())
             .addField(parserField)

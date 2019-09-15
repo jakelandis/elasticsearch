@@ -19,6 +19,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +43,7 @@ public class SimpleGenerationTests extends ESTestCase {
         String packageName = "org.elasticsearch.xcontent.ilm";
         String className = "IlmPutPolicyModelimplm";
 
-        generator.generateClasses(generator.getClassName(packageName, className), jsonPath, ".", sourceFiles);
+        generator.generateClasses(generator.getClassName(packageName, className), jsonPath, ".", sourceFiles, Collections.emptySet());
 
         List<File> filesToCompile = new ArrayList<>();
         for (JavaFile sourceFile : sourceFiles) {
