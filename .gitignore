@@ -46,4 +46,4 @@ eclipse-build
 testfixtures_shared/
 
 # generated source code
-rest-api-xcontent-parsers/src/generated/
+rest-api-xcontent-models/src/generated/
