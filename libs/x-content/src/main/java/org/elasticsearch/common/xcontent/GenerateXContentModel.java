@@ -1,6 +1,7 @@
 package org.elasticsearch.common.xcontent;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -10,21 +11,22 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface GenerateXContentModel {
-    //TODO: change this to a reference of file.json#/path/
+@Repeatable(value = GenerateXContentModels.class)
+public @interface GenerateXContentModel{
     /**
      * The relative name of the file to use to generate the file.
      * Consumers must provide a base path from which to resolve the relative file. This is likely done through a compiler argument to an
      * annotation processor. The file must be a JSON file that contains a JSON schema object.
      */
-    String file();
+    String model();
 
     /**
-     * The dot delimited path from the root object of JSON to find the JSON schema object used to generate the parser,
+     * the package name to generate
      */
-    String jPath();
-
     String packageName();
 
+    /**
+     * The class name to generate
+     */
     String className();
 }

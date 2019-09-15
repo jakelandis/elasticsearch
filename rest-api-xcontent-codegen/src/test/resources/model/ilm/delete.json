@@ -12,7 +12,7 @@
           "type": "object",
           "properties": {
             "delete": {
-              "$ref": "ilm/inner_delete.json#/definitions/inner_delete"
+              "$ref": "inner_delete.json#/definitions/inner_delete"
             }
           }
         }

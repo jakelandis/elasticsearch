@@ -12,6 +12,7 @@ import com.squareup.javapoet.TypeName;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.GenerateXContentModel;
+import org.elasticsearch.common.xcontent.GenerateXContentModels;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -30,7 +31,10 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,11 +43,11 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 
 
 @SupportedSourceVersion(RELEASE_11)
-@SupportedAnnotationTypes("org.elasticsearch.common.xcontent.GenerateXContentModel")
-@SupportedOptions("api.root")
+@SupportedAnnotationTypes({"org.elasticsearch.common.xcontent.GenerateXContentModel", "org.elasticsearch.common.xcontent.GenerateXContentModels"})
+@SupportedOptions("spec.root")
 public class XContentModelCodeGenerator extends AbstractProcessor {
 
-    static final String ROOT_OBJECT_NAME = "__ROOT__";
+    static final String ROOT_OBJECT_NAME = ".";
 
 
     private static Set<String> VALID_OBJECT_KEYS = Set.of("description", "type", "properties");
@@ -55,7 +59,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting processing here" + processingEnv.getOptions().get("api.root"));
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting processing here" + processingEnv.getOptions().get("spec.root"));
 
         super.init(processingEnv);
     }
@@ -63,25 +67,34 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************3");
-        //TODO: handle the v7 generations
-        for (Element element : roundEnv.getElementsAnnotatedWith(GenerateXContentModel.class)) {
+
+        for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(GenerateXContentModel.class, GenerateXContentModels.class))) {
             try {
-                GenerateXContentModel annotation = element.getAnnotation(GenerateXContentModel.class);
-                ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, element.getSimpleName());
+                GenerateXContentModels generateXContentModels = element.getAnnotation(GenerateXContentModels.class);
+                List<GenerateXContentModel> models = new ArrayList<>();
+                if (generateXContentModels != null) {
+                    models.addAll(Arrays.asList(generateXContentModels.value()));
+                } else {
+                    models.add(element.getAnnotation(GenerateXContentModel.class));
+                }
 
-                Path apiRootPath = new File(processingEnv.getOptions().get("api.root")).toPath();
-                Path jsonPath = apiRootPath.resolve(annotation.file());
-                String jPath = annotation.jPath();
-                String nameOfClass = annotation.className();
-                String nameOfPackage = annotation.packageName();
+                for (GenerateXContentModel model : models) {
+                    ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
 
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString() + " jpath=" + jPath);
-                ClassName className = ClassName.get(nameOfPackage, nameOfClass);
-                HashSet<JavaFile> sourceFiles = new HashSet<>();
-                generateClasses(className, jsonPath, jPath, sourceFiles, apiRootPath);
-                for (JavaFile sourceFile : sourceFiles) {
-                    try (Writer writer = processingEnv.getFiler().createSourceFile(sourceFile.packageName + "." + sourceFile.typeSpec.name).openWriter()) {
-                        sourceFile.writeTo(writer);
+                    Path apiRootPath = new File(processingEnv.getOptions().get("spec.root")).toPath();
+                    Path jsonPath = apiRootPath.resolve(model.model());
+                    String nameOfClass = model.className();
+                    String nameOfPackage = model.packageName();
+
+                    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString());
+                    ClassName className = ClassName.get(nameOfPackage, nameOfClass);
+                    HashSet<JavaFile> sourceFiles = new HashSet<>();
+                    generateClasses(className, jsonPath, ROOT_OBJECT_NAME, sourceFiles);
+                    for (JavaFile sourceFile : sourceFiles) {
+                        try (Writer writer = processingEnv.getFiler().createSourceFile(sourceFile.packageName + "." + sourceFile.typeSpec.name).openWriter()) {
+                            sourceFile.writeTo(writer);
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -98,10 +111,11 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(json);
         assert node != null;
-        JsonNode original = node.deepCopy();
         if (ROOT_OBJECT_NAME.equals(jPath)) {
             return node;
         }
+        JsonNode original = node.deepCopy();
+
         String[] paths = {jPath};
         if (jPath.contains("/")) {
             paths = jPath.split("/");
@@ -118,7 +132,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         return node;
     }
 
-    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles, Path apiRootPath) throws IOException {
+    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles) throws IOException {
         try (InputStream in = Files.newInputStream(jsonPath)) {
             JsonNode objectToParse = findObjectToParse(in, jPath);
             XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
@@ -133,10 +147,10 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences, className.packageName());
 
             for (String externalRef : externalReferences) {
-                Path externalRefPath = apiRootPath.resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
+                Path externalRefPath = jsonPath.getParent().resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here?
                 String nameOfClass = getClassNameFromReference(externalRef);
                 //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
-                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles, apiRootPath);
+                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles);
             }
 
             sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));

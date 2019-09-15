@@ -6,7 +6,7 @@
       "type": "object",
       "properties": {
         "phases": {
-          "$ref": "ilm/phases.json#/definitions/phases"
+          "$ref": "phases.json#/definitions/phases"
         }
       }
     }

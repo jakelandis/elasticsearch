@@ -32,24 +32,22 @@ public class SimpleGenerationTests extends ESTestCase {
     public TemporaryFolder tempDir = new TemporaryFolder();
 
     public void testFoo() throws IOException, URISyntaxException {
-        String modelJson = "ilm.put_lifecycle.json";
+        String modelJson = "model/ilm/put_policy.json";
         byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(modelJson)));
         Path jsonPath = Paths.get(ClassLoader.getSystemResource(modelJson).toURI());
 
         print(model);
         XContentModelCodeGenerator generator = new XContentModelCodeGenerator();
         Set<JavaFile> sourceFiles = new HashSet<>();
-        Path apiRootPath = Paths.get(ClassLoader.getSystemResource(".").toURI());
         String packageName = "org.elasticsearch.xcontent.ilm";
-        String className = "IlmModel";
-        String jPath = "ilm.put_lifecycle/body";
-        generator.generateClasses(generator.getClassName(packageName, className), jsonPath, jPath, sourceFiles, apiRootPath);
+        String className = "IlmPutPolicyModelimplm";
+
+        generator.generateClasses(generator.getClassName(packageName, className), jsonPath, ".", sourceFiles);
 
         List<File> filesToCompile = new ArrayList<>();
         for (JavaFile sourceFile : sourceFiles) {
             sourceFile.writeTo(tempDir.getRoot());
             File generatedFile = new File(tempDir.getRoot(), sourceFile.packageName.replaceAll("\\.", "/") + "/" + sourceFile.typeSpec.name + ".java");//Files.find(tempDir.getRoot().toPath(), Integer.MAX_VALUE, (p, f) -> f.isRegularFile()).findFirst().orElseThrow().toFile();
-            System.out.println(generatedFile.getAbsolutePath());
 
             print(generatedFile);
             filesToCompile.add(generatedFile);

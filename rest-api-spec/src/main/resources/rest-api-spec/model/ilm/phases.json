@@ -6,16 +6,16 @@
       "type": "object",
       "properties": {
         "hot": {
-          "$ref": "ilm/hot.json#/definitions/hot"
+          "$ref": "hot.json#/definitions/hot"
         },
         "warm": {
-          "$ref": "ilm/warm.json#/definitions/warm"
+          "$ref": "warm.json#/definitions/warm"
         },
         "cold": {
-          "$ref": "ilm/cold.json#/definitions/cold"
+          "$ref": "cold.json#/definitions/cold"
         },
         "delete": {
-          "$ref": "ilm/delete.json#/definitions/delete"
+          "$ref": "delete.json#/definitions/delete"
         }
       }
     }
