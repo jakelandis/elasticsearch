@@ -32,14 +32,18 @@ public class SimpleGenerationTests extends ESTestCase {
     public TemporaryFolder tempDir = new TemporaryFolder();
 
     public void testFoo() throws IOException, URISyntaxException {
-        String modelJson = "org/elasticsearch/xcontent/ilm/policy.json";
+        String modelJson = "ilm.put_lifecycle.json";
         byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(modelJson)));
         Path jsonPath = Paths.get(ClassLoader.getSystemResource(modelJson).toURI());
 
         print(model);
-        XContentParserCodeGenerator generator = new XContentParserCodeGenerator();
+        XContentModelCodeGenerator generator = new XContentModelCodeGenerator();
         Set<JavaFile> sourceFiles = new HashSet<>();
-        generator.generateClasses(generator.getClassName("org.elasticsearch.xcontent.ilm", jsonPath.getFileName().toString().split("\\.")[0] + "_parser"), jsonPath, XContentParserCodeGenerator.ROOT_OBJECT_NAME, sourceFiles, Paths.get(ClassLoader.getSystemResource(".").toURI()));
+        Path apiRootPath = Paths.get(ClassLoader.getSystemResource(".").toURI());
+        String packageName = "org.elasticsearch.xcontent.ilm";
+        String className = "IlmModel";
+        String jPath = "ilm.put_lifecycle/body";
+        generator.generateClasses(generator.getClassName(packageName, className), jsonPath, jPath, sourceFiles, apiRootPath);
 
         List<File> filesToCompile = new ArrayList<>();
         for (JavaFile sourceFile : sourceFiles) {

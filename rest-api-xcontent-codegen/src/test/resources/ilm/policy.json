@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "properties": {
+  "definitions": {
     "policy": {
       "type": "object",
       "properties": {
         "phases": {
-          "$ref": "org/elasticsearch/xcontent/ilm/phases/phases.json#/definitions/phases"
+          "$ref": "ilm/phases.json#/definitions/phases"
         }
       }
     }

@@ -6,11 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for marker interfaces to generate an XContent parser. File must be JSON and path must point to a valid JSON schema object.
+ * Annotation for marker interfaces to generate an XContent model. File must be JSON and path must point to a valid JSON schema object.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface GenerateXContentParser {
+public @interface GenerateXContentModel {
+    //TODO: change this to a reference of file.json#/path/
     /**
      * The relative name of the file to use to generate the file.
      * Consumers must provide a base path from which to resolve the relative file. This is likely done through a compiler argument to an

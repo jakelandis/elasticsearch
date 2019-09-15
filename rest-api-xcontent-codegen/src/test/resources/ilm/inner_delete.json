@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "description": "required for codegen since otherwise a delete object will attempt be created inside another delete object",
+  "definitions": {
+    "inner_delete": {
+      "type": "object"
+    }
+  }
+}
+

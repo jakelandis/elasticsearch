@@ -11,7 +11,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.xcontent.GenerateXContentParser;
+import org.elasticsearch.common.xcontent.GenerateXContentModel;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -39,9 +39,9 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 
 
 @SupportedSourceVersion(RELEASE_11)
-@SupportedAnnotationTypes("org.elasticsearch.common.xcontent.GenerateXContentParser")
+@SupportedAnnotationTypes("org.elasticsearch.common.xcontent.GenerateXContentModel")
 @SupportedOptions("api.root")
-public class XContentParserCodeGenerator extends AbstractProcessor {
+public class XContentModelCodeGenerator extends AbstractProcessor {
 
     static final String ROOT_OBJECT_NAME = "__ROOT__";
 
@@ -64,9 +64,9 @@ public class XContentParserCodeGenerator extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************3");
         //TODO: handle the v7 generations
-        for (Element element : roundEnv.getElementsAnnotatedWith(GenerateXContentParser.class)) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(GenerateXContentModel.class)) {
             try {
-                GenerateXContentParser annotation = element.getAnnotation(GenerateXContentParser.class);
+                GenerateXContentModel annotation = element.getAnnotation(GenerateXContentModel.class);
                 ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
 
                 Path apiRootPath = new File(processingEnv.getOptions().get("api.root")).toPath();
