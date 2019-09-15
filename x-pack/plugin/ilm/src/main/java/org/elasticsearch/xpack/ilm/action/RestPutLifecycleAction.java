@@ -12,8 +12,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
-import org.elasticsearch.xcontent.v8.ilm.IlmPolicyParser;
-import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
+import org.elasticsearch.xcontent.generated.model.ilm.IlmPutPolicyModelImpl;
 import org.elasticsearch.xpack.core.ilm.action.PutLifecycleAction;
 
 import java.io.IOException;
@@ -42,8 +41,9 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         }
     }
 
+    //TODO: actually use this thing to create the request !
     void toRequest(XContentParser parser, String name) {
-        IlmPolicyParser p = IlmPolicyParser.PARSER.apply(parser, null);
+        IlmPutPolicyModelImpl p = IlmPutPolicyModelImpl.PARSER.apply(parser, null);
         System.out.println(p.policy.phases.hot.actions.rollover.max_age);
     }
 }

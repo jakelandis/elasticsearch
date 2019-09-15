@@ -8,7 +8,7 @@ List projects = [
   'build-tools:reaper',
   'rest-api-spec',
   'rest-api-xcontent-codegen',
-  'rest-api-xcontent-parsers',
+  'rest-api-xcontent-models',
   'docs',
   'client:rest',
   'client:rest-high-level',
