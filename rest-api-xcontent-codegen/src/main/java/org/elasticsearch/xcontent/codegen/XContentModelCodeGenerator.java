@@ -175,9 +175,9 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     private void traverseInlineDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage) {
         definitionNode.fields().forEachRemaining(f -> {
             validateObject(f.getValue(), false);
-            addField(f.getKey(), getClassName("", f.getKey()), builder, true);
+            addField(f.getKey(), getClassName("", formatClassName(f.getKey(), true)), builder, true);
             //TODO: support references that are not objects
-            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, false), externalReferences, nameOfPackage);
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), true)), builder, false), externalReferences, nameOfPackage);
         });
     }
 
