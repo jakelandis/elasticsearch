@@ -26,7 +26,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
- * Models a method or constructor parameter.
+ * GeneratedModels a method or constructor parameter.
  *
  * @author jmourits@google.com (Jerome Mourits)
  * @author jessewilson@google.com (Jesse Wilson)

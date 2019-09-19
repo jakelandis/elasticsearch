@@ -43,7 +43,7 @@ public class SimpleGenerationTests extends ESTestCase {
         String packageName = "org.elasticsearch.xcontent.ilm";
         String className = "IlmPutPolicyModelimplm";
 
-        generator.generateClasses(generator.getClassName(packageName, className), jsonPath, ".", sourceFiles, Collections.emptySet());
+        generator.generateClasses(generator.getClassName(packageName, className), jsonPath, ".", sourceFiles);
 
         List<File> filesToCompile = new ArrayList<>();
         for (JavaFile sourceFile : sourceFiles) {

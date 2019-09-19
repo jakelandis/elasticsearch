@@ -3300,7 +3300,7 @@ device_parsers:
   #########
   # POV
   # @ref: http://www.pointofview-online.com/default2.php
-  # @TODO: Smartphone Models MOB-3515, MOB-5045-B missing
+  # @TODO: Smartphone GeneratedModels MOB-3515, MOB-5045-B missing
   #########
   - regex: '; *(MOB-[^;/]+) Build/'
     device_replacement: '$1'

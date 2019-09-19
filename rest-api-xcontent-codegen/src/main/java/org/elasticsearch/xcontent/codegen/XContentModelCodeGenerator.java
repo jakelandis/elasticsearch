@@ -11,8 +11,8 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.xcontent.GenerateXContentModel;
-import org.elasticsearch.common.xcontent.GenerateXContentModels;
+import org.elasticsearch.common.xcontent.GeneratedModels;
+import org.elasticsearch.common.xcontent.GeneratedModel;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -23,7 +23,6 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +33,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +43,7 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 
 
 @SupportedSourceVersion(RELEASE_11)
-@SupportedAnnotationTypes({"org.elasticsearch.common.xcontent.GenerateXContentModel", "org.elasticsearch.common.xcontent.GenerateXContentModels"})
+@SupportedAnnotationTypes({"org.elasticsearch.common.xcontent.GeneratedModel", "org.elasticsearch.common.xcontent.GeneratedModels"})
 @SupportedOptions("spec.root")
 public class XContentModelCodeGenerator extends AbstractProcessor {
 
@@ -70,32 +68,43 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************3");
 
-        for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(GenerateXContentModel.class, GenerateXContentModels.class))) {
+        for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(GeneratedModel.class, GeneratedModels.class))) {
             try {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, element.getSimpleName());
-                GenerateXContentModels generateXContentModels = element.getAnnotation(GenerateXContentModels.class);
-                List<GenerateXContentModel> models = new ArrayList<>();
+                GeneratedModels generateXContentModels = element.getAnnotation(GeneratedModels.class);
+                List<GeneratedModel> models = new ArrayList<>();
                 if (generateXContentModels != null) {
                     models.addAll(Arrays.asList(generateXContentModels.value()));
                 } else {
-                    models.add(element.getAnnotation(GenerateXContentModel.class));
+                    models.add(element.getAnnotation(GeneratedModel.class));
                 }
 
-                for (GenerateXContentModel model : models) {
+                for (GeneratedModel model : models) {
                     ClassName originalClassName = ClassName.bestGuess(element.asType().toString());
                     if (element.getKind().isInterface() == false) {
-                        throw new IllegalStateException("GenerateXContentModel(s) must be associated with an Interface for [" + originalClassName + "]");
+                        throw new IllegalStateException("GeneratedModel(s) must be associated with an Interface for [" + originalClassName + "]");
                     }
-                    Set<ClassName> interfaces = Set.of(originalClassName);
-                    Path apiRootPath = new File(processingEnv.getOptions().get("spec.root")).toPath();
-                    Path jsonPath = apiRootPath.resolve(model.model());
-                    String nameOfClass = model.className();
-                    String nameOfPackage = model.packageName();
+
+                    String relPathToModel = model.value();
+                    assert relPathToModel.contains(".json");
+
+                    String[] parts = relPathToModel.split("/");
+                    String fileName = parts[parts.length - 1];
+                    assert fileName.contains(".json");
+                    String nameOfClass = formatClassName(fileName.split("\\.")[0], false);
+                    String additionalPackage = parts.length > 1 ? Arrays.stream(parts).limit(parts.length - 1).collect(Collectors.joining(".")) : "";
+
+
+                    Path specRootPath = new File(processingEnv.getOptions().get("spec.root")).toPath();
+                    Path modelRootPath = specRootPath.resolve("model");
+                    Path jsonPath = modelRootPath.resolve(model.value());
+
+                    String nameOfPackage = "org.elasticsearch.xcontent.generated" + (additionalPackage.isEmpty() ? "" : "." + additionalPackage);
 
                     processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString());
                     ClassName className = ClassName.get(nameOfPackage, nameOfClass);
                     HashSet<JavaFile> sourceFiles = new HashSet<>();
-                    generateClasses(className, jsonPath, ROOT_OBJECT_NAME, sourceFiles, interfaces);
+                    generateClasses(className, jsonPath, ROOT_OBJECT_NAME, sourceFiles);
                     for (JavaFile sourceFile : sourceFiles) {
                         try (Writer writer = processingEnv.getFiler().createSourceFile(sourceFile.packageName + "." + sourceFile.typeSpec.name).openWriter()) {
                             sourceFile.writeTo(writer);
@@ -137,11 +146,10 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         return node;
     }
 
-    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles, Set<ClassName> interfaces) throws IOException {
+    public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles) throws IOException {
         try (InputStream in = Files.newInputStream(jsonPath)) {
             JsonNode objectToParse = findObjectToParse(in, jPath);
             XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
-            builder.interfaces.addAll(interfaces);
 
             Set<String> externalReferences = new HashSet<>();
             //handle any inline definitions that will end up as inner classes
@@ -156,7 +164,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                 Path externalRefPath = jsonPath.getParent().resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here, and/or clean up the jPath/reference stuff.
                 String nameOfClass = getClassNameFromReference(externalRef);
                 //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
-                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles, Collections.emptySet());
+                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles);
             }
 
 
@@ -203,7 +211,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                         } else if ("object".equals(nestedTypeNode.asText())) {
                             validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
 
-                            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", f.getKey()), builder, true), externalReferences, nameOfPackage);
+                            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), true)), builder, true), externalReferences, nameOfPackage);
                         } else {
 
                             validatePrimitive(f.getValue());
@@ -233,7 +241,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         assert reference.contains("#");
         String[] tokens = reference.split("#");
         assert tokens.length == 2;
-        return formatClassName(tokens[1].substring(tokens[1].lastIndexOf("/") + 1));
+        return formatClassName(tokens[1].substring(tokens[1].lastIndexOf("/") + 1), false);
     }
 
     private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization) {
@@ -273,15 +281,15 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             case "null":
                 throw new UnsupportedOperationException("null type is not supported");
             default:
-                className = formatClassName(className);
+                className = className;
 
         }
 
         return ClassName.get(pn, className);
     }
 
-    private String formatClassName(String nameOfClass) {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass);
+    private String formatClassName(String nameOfClass, boolean innerClass) {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass) + (innerClass ? "" : "Model");
     }
 
     //Adds the Constructor and static initialization code to the XContentClassBuilder.

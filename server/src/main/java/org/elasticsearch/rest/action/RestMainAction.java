@@ -31,10 +31,8 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.xcontent.AboutModel;
-import org.elasticsearch.xcontent.generated.model.AboutModelImpl;
-import org.elasticsearch.xcontent.generated.model.AboutModelImplV7;
-
+import org.elasticsearch.xcontent.generated.AboutModel;
+import org.elasticsearch.xcontent.generated.AboutV7Model;
 
 import java.io.IOException;
 import java.util.List;
@@ -88,12 +86,12 @@ public class RestMainAction extends BaseRestHandler {
 
     }
 
-    private static AboutModel toParserV7(MainResponse mainResponse) {
-        return new AboutModelImplV7(
+    private static AboutV7Model toParserV7(MainResponse mainResponse) {
+        return new AboutV7Model(
             mainResponse.getNodeName(), //name
             mainResponse.getClusterName().value(), //cluster_name
             mainResponse.getClusterUuid(), //cluster_uuid
-            new AboutModelImplV7.Version(
+            new AboutV7Model.Version(
                 mainResponse.getBuild().getQualifiedVersion(), //number
                 mainResponse.getBuild().flavor().displayName(), //build_flavor
                 mainResponse.getBuild().type().displayName(), //build_type
@@ -109,7 +107,7 @@ public class RestMainAction extends BaseRestHandler {
     }
 
     private static AboutModel toParser(MainResponse mainResponse) {
-        return new AboutModelImpl(
+        return new AboutModel(
             mainResponse.getNodeName(), //name
             mainResponse.getClusterName().value(), //cluster_name
             mainResponse.getClusterUuid(), //cluster_uuid

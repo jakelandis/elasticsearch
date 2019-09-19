@@ -14,12 +14,13 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
-import org.elasticsearch.xcontent.generated.model.ilm.Allocate;
-import org.elasticsearch.xcontent.generated.model.ilm.Cold;
-import org.elasticsearch.xcontent.generated.model.ilm.Delete;
-import org.elasticsearch.xcontent.generated.model.ilm.Hot;
-import org.elasticsearch.xcontent.generated.model.ilm.IlmPutPolicyModelImpl;
-import org.elasticsearch.xcontent.generated.model.ilm.Warm;
+
+import org.elasticsearch.xcontent.generated.ilm.AllocateModel;
+import org.elasticsearch.xcontent.generated.ilm.ColdModel;
+import org.elasticsearch.xcontent.generated.ilm.DeleteModel;
+import org.elasticsearch.xcontent.generated.ilm.HotModel;
+import org.elasticsearch.xcontent.generated.ilm.PutPolicyModel;
+import org.elasticsearch.xcontent.generated.ilm.WarmModel;
 import org.elasticsearch.xpack.core.ilm.AllocateAction;
 import org.elasticsearch.xpack.core.ilm.DeleteAction;
 import org.elasticsearch.xpack.core.ilm.ForceMergeAction;
@@ -58,7 +59,7 @@ public class RestPutLifecycleAction extends BaseRestHandler {
     }
 
     private PutLifecycleAction.Request toTransportRequest(String name, XContentParser parser) {
-        IlmPutPolicyModelImpl model = IlmPutPolicyModelImpl.PARSER.apply(parser, null);
+        PutPolicyModel model = PutPolicyModel.PARSER.apply(parser, null);
         Map<String, Phase> phases = new HashMap<>();
         phases.put("hot", getHotPhase(model.policy.phases.hot));
         phases.put("warm", getWarmPhase(model.policy.phases.warm));
@@ -67,7 +68,7 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         return new PutLifecycleAction.Request(new LifecyclePolicy(name, phases));
     }
 
-    private Phase getHotPhase(Hot hotModel) {
+    private Phase getHotPhase(HotModel hotModel) {
         Map<String, LifecycleAction> actions = new HashMap<>();
         actions.put("rollover",
             new RolloverAction(ByteSizeValue.parseBytesSizeValue(hotModel.actions.rollover.max_size, "max_size"),
@@ -76,7 +77,7 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         return new Phase("hot", TimeValue.parseTimeValue(hotModel.min_age, "min_age"), actions);
     }
 
-    private Phase getWarmPhase(Warm warmModel) {
+    private Phase getWarmPhase(WarmModel warmModel) {
         Map<String, LifecycleAction> actions = new HashMap<>();
         actions.put("allocate", getAllocateAction(warmModel.actions.allocate));
         actions.put("forcemerge", new ForceMergeAction(warmModel.actions.forcemerge.max_num_segments.intValue()));
@@ -84,19 +85,19 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         return new Phase("warm", TimeValue.parseTimeValue(warmModel.min_age, "min_age"), actions);
     }
 
-    private Phase getColdPhase(Cold coldModel) {
+    private Phase getColdPhase(ColdModel coldModel) {
         Map<String, LifecycleAction> actions = new HashMap<>();
         actions.put("allocate", getAllocateAction(coldModel.actions.allocate));
         return new Phase("cold", TimeValue.parseTimeValue(coldModel.min_age, "min_age"), actions);
     }
 
-    private Phase getDeletePhase(Delete deleteModel) {
+    private Phase getDeletePhase(DeleteModel deleteModel) {
         return new Phase("delete", TimeValue.parseTimeValue(deleteModel.min_age, "min_age"),
             Collections.singletonMap("delete", new DeleteAction()));
     }
 
 
-    private AllocateAction getAllocateAction(Allocate allocateModel) {
+    private AllocateAction getAllocateAction(AllocateModel allocateModel) {
         //TODO: fix this .. need to figure out dynamic key names
         return new AllocateAction(allocateModel.number_of_replicas.intValue(), null, null, null);
     }
