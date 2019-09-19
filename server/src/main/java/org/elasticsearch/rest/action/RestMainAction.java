@@ -79,14 +79,14 @@ public class RestMainAction extends BaseRestHandler {
     private static void toXContent(RestRequest request, MainResponse mainResponse, XContentBuilder builder, ToXContent.Params params) throws IOException {
         List<String> v = request.getAllHeaderValues("version");
         if(v == null || v.size() < 1 || (v.size() == 1 && "v8".equalsIgnoreCase(v.get(0)))){
-            toParser(mainResponse).toXContent(builder, params);
+            toModel(mainResponse).toXContent(builder, params);
         }else if(v.size() == 1 && "v7".equalsIgnoreCase(v.get(0))){
-            toParserV7(mainResponse).toXContent(builder, params);
+            toModelV7(mainResponse).toXContent(builder, params);
         }
 
     }
 
-    private static AboutV7Model toParserV7(MainResponse mainResponse) {
+    private static AboutV7Model toModelV7(MainResponse mainResponse) {
         return new AboutV7Model(
             mainResponse.getNodeName(), //name
             mainResponse.getClusterName().value(), //cluster_name
@@ -106,7 +106,7 @@ public class RestMainAction extends BaseRestHandler {
         );
     }
 
-    private static AboutModel toParser(MainResponse mainResponse) {
+    private static AboutModel toModel(MainResponse mainResponse) {
         return new AboutModel(
             mainResponse.getNodeName(), //name
             mainResponse.getClusterName().value(), //cluster_name

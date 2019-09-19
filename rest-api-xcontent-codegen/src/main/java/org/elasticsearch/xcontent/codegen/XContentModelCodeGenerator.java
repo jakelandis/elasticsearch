@@ -300,15 +300,16 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         } else {
             builder.lambdas.add(CodeBlock.builder().add("($T) a[$L]", className, builder.parserPosition.incrementAndGet()).build());
         }
+        //TODO: support required vs. optional
         // PARSER.declare
         if (isObject && isArray == false) {
-            builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.constructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
+            builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
         } else if (isObject & isArray) {
-            builder.staticInitializerBuilder.add("PARSER.declareObjectArray(ConstructingObjectParser.constructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
+            builder.staticInitializerBuilder.add("PARSER.declareObjectArray(ConstructingObjectParser.optionalConstructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
         } else if (isArray) {
-            builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "Array(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, field);
+            builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "Array(ConstructingObjectParser.optionalConstructorArg(), new $T($S));\n", ParseField.class, field);
         } else {
-            builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "(ConstructingObjectParser.constructorArg(), new $T($S));\n", ParseField.class, field);
+            builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "(ConstructingObjectParser.optionalConstructorArg(), new $T($S));\n", ParseField.class, field);
         }
 
         TypeName typeName = className;

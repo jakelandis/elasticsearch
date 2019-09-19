@@ -7,6 +7,7 @@
 package org.elasticsearch.xpack.ilm.action;
 
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -63,7 +64,7 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         Map<String, Phase> phases = new HashMap<>();
         phases.put("hot", getHotPhase(model.policy.phases.hot));
         phases.put("warm", getWarmPhase(model.policy.phases.warm));
-        phases.put("cold", getColdPhase(model.policy.phases.cold));
+       // phases.put("cold", getColdPhase(model.policy.phases.cold));
         phases.put("delete", getDeletePhase(model.policy.phases.delete));
         return new PutLifecycleAction.Request(new LifecyclePolicy(name, phases));
     }
@@ -72,9 +73,9 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         Map<String, LifecycleAction> actions = new HashMap<>();
         actions.put("rollover",
             new RolloverAction(ByteSizeValue.parseBytesSizeValue(hotModel.actions.rollover.max_size, "max_size"),
-                TimeValue.parseTimeValue(hotModel.actions.rollover.max_age, "max_age"),
+                getTimeValue(hotModel.actions.rollover.max_age, "max_age"),
                 hotModel.actions.rollover.max_docs));
-        return new Phase("hot", TimeValue.parseTimeValue(hotModel.min_age, "min_age"), actions);
+        return new Phase("hot", getTimeValue(hotModel.min_age, "min_age"), actions);
     }
 
     private Phase getWarmPhase(WarmModel warmModel) {
@@ -82,17 +83,17 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         actions.put("allocate", getAllocateAction(warmModel.actions.allocate));
         actions.put("forcemerge", new ForceMergeAction(warmModel.actions.forcemerge.max_num_segments.intValue()));
         actions.put("shrink", new ShrinkAction(warmModel.actions.shrink.number_of_shards.intValue()));
-        return new Phase("warm", TimeValue.parseTimeValue(warmModel.min_age, "min_age"), actions);
+        return new Phase("warm", getTimeValue(warmModel.min_age, "min_age"), actions);
     }
 
     private Phase getColdPhase(ColdModel coldModel) {
         Map<String, LifecycleAction> actions = new HashMap<>();
         actions.put("allocate", getAllocateAction(coldModel.actions.allocate));
-        return new Phase("cold", TimeValue.parseTimeValue(coldModel.min_age, "min_age"), actions);
+        return new Phase("cold", getTimeValue(coldModel.min_age, "min_age"), actions);
     }
 
     private Phase getDeletePhase(DeleteModel deleteModel) {
-        return new Phase("delete", TimeValue.parseTimeValue(deleteModel.min_age, "min_age"),
+        return new Phase("delete", getTimeValue(deleteModel.min_age, "min_age"),
             Collections.singletonMap("delete", new DeleteAction()));
     }
 
@@ -101,4 +102,13 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         //TODO: fix this .. need to figure out dynamic key names
         return new AllocateAction(allocateModel.number_of_replicas.intValue(), null, null, null);
     }
+
+    private TimeValue getTimeValue(String value, String key) {
+        if (Strings.isNullOrEmpty(value)) {
+            return TimeValue.ZERO;
+        } else {
+            return TimeValue.parseTimeValue(value, key);
+        }
+    }
+
 }

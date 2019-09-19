@@ -39,6 +39,7 @@ public class RestToXContentListener<Response extends ToXContentObject> extends R
 
     @Override
     public final RestResponse buildResponse(Response response) throws Exception {
+    //    System.out.println(response.getClass().getSimpleName());
         return buildResponse(response, channel.newBuilder());
     }
 
