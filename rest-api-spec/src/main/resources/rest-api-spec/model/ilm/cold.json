@@ -12,17 +12,7 @@
           "type": "object",
           "properties": {
             "allocate": {
-              "type": "object",
-              "properties": {
-                "require": {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
+              "$ref": "allocate.json#/definitions/allocate"
             }
           }
         }

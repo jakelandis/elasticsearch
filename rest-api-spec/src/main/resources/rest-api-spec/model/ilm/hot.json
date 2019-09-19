@@ -5,6 +5,9 @@
     "hot": {
       "type": "object",
       "properties": {
+        "min_age": {
+          "type": "string"
+        },
         "actions": {
           "type": "object",
           "properties": {
@@ -16,6 +19,9 @@
                 },
                 "max_size": {
                   "type": "string"
+                },
+                "max_docs": {
+                  "type": "integer"
                 }
               }
             }

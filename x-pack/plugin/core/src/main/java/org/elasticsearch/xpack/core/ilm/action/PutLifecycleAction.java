@@ -9,14 +9,10 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
 
 import java.io.IOException;
@@ -41,14 +37,8 @@ public class PutLifecycleAction extends ActionType<PutLifecycleAction.Response> 
         }
     }
 
-    public static class Request extends AcknowledgedRequest<Request> implements ToXContentObject {
 
-        public static final ParseField POLICY_FIELD = new ParseField("policy");
-        private static final ConstructingObjectParser<Request, String> PARSER =
-            new ConstructingObjectParser<>("put_lifecycle_request", a -> new Request((LifecyclePolicy) a[0]));
-        static {
-            PARSER.declareObject(ConstructingObjectParser.constructorArg(), LifecyclePolicy::parse, POLICY_FIELD);
-        }
+    public static class Request extends AcknowledgedRequest<Request>  {
 
         private LifecyclePolicy policy;
 
@@ -71,18 +61,6 @@ public class PutLifecycleAction extends ActionType<PutLifecycleAction.Response> 
         @Override
         public ActionRequestValidationException validate() {
             return null;
-        }
-
-        public static Request parseRequest(String name, XContentParser parser) {
-            return PARSER.apply(parser, name);
-        }
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.startObject();
-            builder.field(POLICY_FIELD.getPreferredName(), policy);
-            builder.endObject();
-            return builder;
         }
 
         @Override
@@ -110,7 +88,9 @@ public class PutLifecycleAction extends ActionType<PutLifecycleAction.Response> 
 
         @Override
         public String toString() {
-            return Strings.toString(this, true, true);
+            //FIXME
+            return "TODO";
+            //return Strings.toString(this, true, true);
         }
 
     }

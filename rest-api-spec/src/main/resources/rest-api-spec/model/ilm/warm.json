@@ -28,12 +28,7 @@
               }
             },
             "allocate": {
-              "type": "object",
-              "properties": {
-                "number_of_replicas": {
-                  "type": "integer"
-                }
-              }
+              "$ref": "allocate.json#/definitions/allocate"
             }
           }
         }
