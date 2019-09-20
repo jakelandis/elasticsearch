@@ -55,19 +55,20 @@ final class IndexLifecycleRequestConverters {
         return request;
     }
 
-    static Request putLifecyclePolicy(PutLifecyclePolicyRequest putLifecycleRequest) throws IOException {
-        String endpoint = new RequestConverters.EndpointBuilder()
-            .addPathPartAsIs("_ilm/policy")
-            .addPathPartAsIs(putLifecycleRequest.getName())
-            .build();
-        Request request = new Request(HttpPut.METHOD_NAME, endpoint);
-        RequestConverters.Params params = new RequestConverters.Params();
-        params.withMasterTimeout(putLifecycleRequest.masterNodeTimeout());
-        params.withTimeout(putLifecycleRequest.timeout());
-        request.addParameters(params.asMap());
-        request.setEntity(RequestConverters.createEntity(putLifecycleRequest, RequestConverters.REQUEST_BODY_CONTENT_TYPE));
-        return request;
-    }
+    //TODO: figure out how this interacts with HLRC
+//    static Request putLifecyclePolicy(PutLifecyclePolicyRequest putLifecycleRequest) throws IOException {
+//        String endpoint = new RequestConverters.EndpointBuilder()
+//            .addPathPartAsIs("_ilm/policy")
+//            .addPathPartAsIs(putLifecycleRequest.getName())
+//            .build();
+//        Request request = new Request(HttpPut.METHOD_NAME, endpoint);
+//        RequestConverters.Params params = new RequestConverters.Params();
+//        params.withMasterTimeout(putLifecycleRequest.masterNodeTimeout());
+//        params.withTimeout(putLifecycleRequest.timeout());
+//        request.addParameters(params.asMap());
+//        request.setEntity(RequestConverters.createEntity(putLifecycleRequest, RequestConverters.REQUEST_BODY_CONTENT_TYPE));
+//        return request;
+//    }
 
     static Request deleteLifecyclePolicy(DeleteLifecyclePolicyRequest deleteLifecyclePolicyRequest) {
         Request request = new Request(HttpDelete.METHOD_NAME,

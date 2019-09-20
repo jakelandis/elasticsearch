@@ -26,6 +26,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 
+//TODO: support freeze
 public class FreezeAction implements LifecycleAction, ToXContentObject {
     public static final String NAME = "freeze";
 

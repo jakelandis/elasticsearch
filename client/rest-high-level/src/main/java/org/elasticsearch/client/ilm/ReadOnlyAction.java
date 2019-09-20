@@ -26,6 +26,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 
+//TODO: support this with the code generated parsers
 public class ReadOnlyAction implements LifecycleAction, ToXContentObject {
     public static final String NAME = "readonly";
 

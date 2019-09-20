@@ -20,11 +20,7 @@
 
 package org.elasticsearch.client.ilm;
 
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
@@ -32,7 +28,7 @@ import java.util.Objects;
 
 import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpectedToken;
 
-public class GetLifecyclePolicyResponse implements ToXContentObject {
+public class GetLifecyclePolicyResponse {
 
     private final ImmutableOpenMap<String, LifecyclePolicyMetadata> policies;
 
@@ -44,15 +40,6 @@ public class GetLifecyclePolicyResponse implements ToXContentObject {
         return policies;
     }
 
-    @Override
-    public XContentBuilder toXContent(XContentBuilder builder, ToXContent.Params params) throws IOException {
-        builder.startObject();
-        for (ObjectObjectCursor<String, LifecyclePolicyMetadata> stringLifecyclePolicyObjectObjectCursor : policies) {
-            builder.field(stringLifecyclePolicyObjectObjectCursor.key, stringLifecyclePolicyObjectObjectCursor.value);
-        }
-        builder.endObject();
-        return builder;
-    }
 
     public static GetLifecyclePolicyResponse fromXContent(XContentParser parser) throws IOException {
         ImmutableOpenMap.Builder<String, LifecyclePolicyMetadata> policies = ImmutableOpenMap.builder();

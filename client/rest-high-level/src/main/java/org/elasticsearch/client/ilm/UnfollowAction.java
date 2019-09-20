@@ -28,6 +28,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 
+//tODO: support this via code generation
 public class UnfollowAction implements LifecycleAction, ToXContentObject {
     public static final String NAME = "unfollow";
 

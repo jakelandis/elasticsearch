@@ -27,7 +27,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import java.io.IOException;
 import java.util.Objects;
 
-public class PutLifecyclePolicyRequest extends TimedRequest implements ToXContentObject {
+public class PutLifecyclePolicyRequest extends TimedRequest {
 
     private final LifecyclePolicy policy;
 
@@ -49,13 +49,6 @@ public class PutLifecyclePolicyRequest extends TimedRequest implements ToXConten
         return policy;
     }
 
-    @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        builder.field("policy", policy);
-        builder.endObject();
-        return builder;
-    }
 
     @Override
     public boolean equals(Object o) {

@@ -82,35 +82,36 @@ public class IndexLifecycleClient {
             GetLifecyclePolicyResponse::fromXContent, listener, emptySet());
     }
 
-    /**
-     * Create or modify a lifecycle definition. See <a href=
-     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
-     * the docs</a> for more.
-     * @param request the request
-     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-     * @return the response
-     * @throws IOException in case there is a problem sending the request or parsing back the response
-     */
-    public AcknowledgedResponse putLifecyclePolicy(PutLifecyclePolicyRequest request,
-                                                   RequestOptions options) throws IOException {
-        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
-            AcknowledgedResponse::fromXContent, emptySet());
-    }
+    //TODO: figure this out !
+//    /**
+//     * Create or modify a lifecycle definition. See <a href=
+//     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
+//     * the docs</a> for more.
+//     * @param request the request
+//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+//     * @return the response
+//     * @throws IOException in case there is a problem sending the request or parsing back the response
+//     */
+//    public AcknowledgedResponse putLifecyclePolicy(PutLifecyclePolicyRequest request,
+//                                                   RequestOptions options) throws IOException {
+//        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
+//            AcknowledgedResponse::fromXContent, emptySet());
+//    }
 
-    /**
-     * Asynchronously create or modify a lifecycle definition. See <a href=
-     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
-     * the docs</a> for more.
-     * @param request the request
-     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-     * @param listener the listener to be notified upon request completion
-     * @return cancellable that may be used to cancel the request
-     */
-    public Cancellable putLifecyclePolicyAsync(PutLifecyclePolicyRequest request, RequestOptions options,
-                                               ActionListener<AcknowledgedResponse> listener) {
-        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
-            AcknowledgedResponse::fromXContent, listener, emptySet());
-    }
+//    /**
+//     * Asynchronously create or modify a lifecycle definition. See <a href=
+//     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
+//     * the docs</a> for more.
+//     * @param request the request
+//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+//     * @param listener the listener to be notified upon request completion
+//     * @return cancellable that may be used to cancel the request
+//     */
+//    public Cancellable putLifecyclePolicyAsync(PutLifecyclePolicyRequest request, RequestOptions options,
+//                                               ActionListener<AcknowledgedResponse> listener) {
+//        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
+//            AcknowledgedResponse::fromXContent, listener, emptySet());
+//    }
 
     /**
      * Delete a lifecycle definition

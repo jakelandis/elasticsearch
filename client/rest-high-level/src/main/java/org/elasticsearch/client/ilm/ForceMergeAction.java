@@ -18,40 +18,19 @@
  */
 package org.elasticsearch.client.ilm;
 
-import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 
-import java.io.IOException;
 import java.util.Objects;
 
-public class ForceMergeAction implements LifecycleAction, ToXContentObject {
+public class ForceMergeAction implements LifecycleAction {
     public static final String NAME = "forcemerge";
-    private static final ParseField MAX_NUM_SEGMENTS_FIELD = new ParseField("max_num_segments");
-
-    private static final ConstructingObjectParser<ForceMergeAction, Void> PARSER = new ConstructingObjectParser<>(NAME,
-        true, a -> {
-        int maxNumSegments = (int) a[0];
-        return new ForceMergeAction(maxNumSegments);
-    });
-
-    static {
-        PARSER.declareInt(ConstructingObjectParser.constructorArg(), MAX_NUM_SEGMENTS_FIELD);
-    }
 
     private final int maxNumSegments;
 
-    public static ForceMergeAction parse(XContentParser parser) {
-        return PARSER.apply(parser, null);
-    }
 
     public ForceMergeAction(int maxNumSegments) {
         if (maxNumSegments <= 0) {
-            throw new IllegalArgumentException("[" + MAX_NUM_SEGMENTS_FIELD.getPreferredName()
-                + "] must be a positive integer");
+            throw new IllegalArgumentException("[max_num_segments] must be a positive integer");
         }
         this.maxNumSegments = maxNumSegments;
     }
@@ -65,13 +44,6 @@ public class ForceMergeAction implements LifecycleAction, ToXContentObject {
         return NAME;
     }
 
-    @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        builder.field(MAX_NUM_SEGMENTS_FIELD.getPreferredName(), maxNumSegments);
-        builder.endObject();
-        return builder;
-    }
 
     @Override
     public int hashCode() {
@@ -92,6 +64,8 @@ public class ForceMergeAction implements LifecycleAction, ToXContentObject {
 
     @Override
     public String toString() {
-        return Strings.toString(this);
+        return "ForceMergeAction{" +
+            "maxNumSegments=" + maxNumSegments +
+            '}';
     }
 }
