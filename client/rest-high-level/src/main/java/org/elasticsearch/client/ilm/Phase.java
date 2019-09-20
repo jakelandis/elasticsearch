@@ -18,47 +18,17 @@
  */
 package org.elasticsearch.client.ilm;
 
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
-import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Represents set of {@link LifecycleAction}s which should be executed at a
  * particular point in the lifecycle of an index.
  */
-public class Phase implements ToXContentObject {
+public class Phase {
 
-    static final ParseField MIN_AGE = new ParseField("min_age");
-    static final ParseField ACTIONS_FIELD = new ParseField("actions");
-
-    @SuppressWarnings("unchecked")
-    private static final ConstructingObjectParser<Phase, String> PARSER = new ConstructingObjectParser<>("phase", true,
-        (a, name) -> new Phase(name, (TimeValue) a[0], ((List<LifecycleAction>) a[1]).stream()
-            .collect(Collectors.toMap(LifecycleAction::getName, Function.identity()))));
-    static {
-        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(),
-            (p, c) -> TimeValue.parseTimeValue(p.text(), MIN_AGE.getPreferredName()), MIN_AGE, ValueType.VALUE);
-        PARSER.declareNamedObjects(ConstructingObjectParser.constructorArg(),
-            (p, c, n) -> p.namedObject(LifecycleAction.class, n, null), v -> {
-                throw new IllegalArgumentException("ordered " + ACTIONS_FIELD.getPreferredName() + " are not supported");
-            }, ACTIONS_FIELD);
-    }
-
-    public static Phase parse(XContentParser parser, String name) {
-        return PARSER.apply(parser, name);
-    }
 
     private final String name;
     private final Map<String, LifecycleAction> actions;
@@ -109,15 +79,6 @@ public class Phase implements ToXContentObject {
     }
 
     @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        builder.field(MIN_AGE.getPreferredName(), minimumAge.getStringRep());
-        builder.field(ACTIONS_FIELD.getPreferredName(), actions);
-        builder.endObject();
-        return builder;
-    }
-
-    @Override
     public int hashCode() {
         return Objects.hash(name, minimumAge, actions);
     }
@@ -138,6 +99,10 @@ public class Phase implements ToXContentObject {
 
     @Override
     public String toString() {
-        return Strings.toString(this, true, true);
+        return "Phase{" +
+            "name='" + name + '\'' +
+            ", actions=" + actions +
+            ", minimumAge=" + minimumAge +
+            '}';
     }
 }

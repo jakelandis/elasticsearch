@@ -34,6 +34,7 @@ import org.elasticsearch.xpack.core.ilm.ForceMergeAction;
 import org.elasticsearch.xpack.core.ilm.LifecycleAction;
 import org.elasticsearch.xpack.core.ilm.Phase;
 import org.elasticsearch.xpack.core.ilm.RolloverAction;
+import org.elasticsearch.xpack.core.ilm.SetPriorityAction;
 import org.elasticsearch.xpack.core.ilm.ShrinkAction;
 import org.elasticsearch.xpack.core.ilm.action.GetLifecycleAction;
 
@@ -114,11 +115,17 @@ public class RestGetLifecycleAction extends BaseRestHandler {
 
     private HotModel getHotModel(Phase phase) {
         RolloverAction rollover = (RolloverAction) phase.getActions().get("rollover");
+        SetPriorityAction setPriority = (SetPriorityAction) phase.getActions().get("set_priority");
         HotModel.Actions.Rollover rolloverModel = null;
+        HotModel.Actions.SetPriority setPriorityModel = null;
+
         if (rollover != null) {
             new HotModel.Actions.Rollover(rollover.getMaxAge().getStringRep(), rollover.getMaxSize().getStringRep(), rollover.getMaxDocs());
         }
-        return new HotModel(phase.getMinimumAge().getStringRep(), new HotModel.Actions(rolloverModel));
+        if(setPriority != null){
+            setPriorityModel = new HotModel.Actions.SetPriority(setPriority.getRecoveryPriority().longValue());
+        }
+        return new HotModel(phase.getMinimumAge().getStringRep(), new HotModel.Actions(rolloverModel, setPriorityModel));
     }
 
     private WarmModel getWamModel(Phase phase) {

@@ -29,6 +29,7 @@ import org.elasticsearch.xpack.core.ilm.LifecycleAction;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
 import org.elasticsearch.xpack.core.ilm.Phase;
 import org.elasticsearch.xpack.core.ilm.RolloverAction;
+import org.elasticsearch.xpack.core.ilm.SetPriorityAction;
 import org.elasticsearch.xpack.core.ilm.ShrinkAction;
 import org.elasticsearch.xpack.core.ilm.action.PutLifecycleAction;
 
@@ -83,6 +84,8 @@ public class RestPutLifecycleAction extends BaseRestHandler {
             new RolloverAction(ByteSizeValue.parseBytesSizeValue(hotModel.actions.rollover.max_size, "max_size"),
                 getTimeValue(hotModel.actions.rollover.max_age, "max_age"),
                 hotModel.actions.rollover.max_docs));
+
+        actions.put("set_priority", new SetPriorityAction(hotModel.actions.set_priority.priority.intValue()));
         return new Phase("hot", getTimeValue(hotModel.min_age, "min_age"), actions);
     }
 

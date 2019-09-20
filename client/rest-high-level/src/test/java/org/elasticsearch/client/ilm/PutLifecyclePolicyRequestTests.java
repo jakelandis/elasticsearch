@@ -21,25 +21,25 @@ package org.elasticsearch.client.ilm;
 
 import org.elasticsearch.test.ESTestCase;
 
-import static org.elasticsearch.client.ilm.LifecyclePolicyTests.createRandomPolicy;
+//import static org.elasticsearch.client.ilm.LifecyclePolicyTests.createRandomPolicy;
 
-public class PutLifecyclePolicyRequestTests extends ESTestCase {
+public class PutLifecyclePolicyRequestTests { //extends ESTestCase {
 
-    private PutLifecyclePolicyRequest createTestInstance() {
-        return new PutLifecyclePolicyRequest(createRandomPolicy(randomAlphaOfLengthBetween(5, 20)));
-    }
-
-    public void testValidation() {
-        PutLifecyclePolicyRequest req = createTestInstance();
-        assertFalse(req.validate().isPresent());
-    }
-
-    public void testNullPolicy() {
-        expectThrows(IllegalArgumentException.class, () -> new PutLifecyclePolicyRequest(null));
-    }
-
-    public void testNullPolicyName() {
-        expectThrows(IllegalArgumentException.class, () -> new PutLifecyclePolicyRequest(createRandomPolicy(randomFrom("", null))));
-    }
+//    private PutLifecyclePolicyRequest createTestInstance() {
+//        return new PutLifecyclePolicyRequest(createRandomPolicy(randomAlphaOfLengthBetween(5, 20)));
+//    }
+//
+//    public void testValidation() {
+//        PutLifecyclePolicyRequest req = createTestInstance();
+//        assertFalse(req.validate().isPresent());
+//    }
+//
+//    public void testNullPolicy() {
+//        expectThrows(IllegalArgumentException.class, () -> new PutLifecyclePolicyRequest(null));
+//    }
+//
+//    public void testNullPolicyName() {
+//        expectThrows(IllegalArgumentException.class, () -> new PutLifecyclePolicyRequest(createRandomPolicy(randomFrom("", null))));
+//    }
 
 }

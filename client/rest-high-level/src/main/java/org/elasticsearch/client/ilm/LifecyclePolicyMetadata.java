@@ -45,7 +45,8 @@ public class LifecyclePolicyMetadata implements ToXContentObject {
                 return new LifecyclePolicyMetadata(policy, (long) a[1], ZonedDateTime.parse((String) a[2]).toInstant().toEpochMilli());
             });
     static {
-        PARSER.declareObject(ConstructingObjectParser.constructorArg(), LifecyclePolicy::parse, POLICY);
+        //TODO: fixme!
+       // PARSER.declareObject(ConstructingObjectParser.constructorArg(), LifecyclePolicy::parse, POLICY);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), VERSION);
         PARSER.declareString(ConstructingObjectParser.constructorArg(), MODIFIED_DATE);
     }

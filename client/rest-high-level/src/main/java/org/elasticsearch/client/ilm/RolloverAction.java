@@ -18,43 +18,18 @@
  */
 package org.elasticsearch.client.ilm;
 
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
-import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 
-import java.io.IOException;
 import java.util.Objects;
 
 
-public class RolloverAction implements LifecycleAction, ToXContentObject {
+public class RolloverAction implements LifecycleAction {
     public static final String NAME = "rollover";
-    private static final ParseField MAX_SIZE_FIELD = new ParseField("max_size");
-    private static final ParseField MAX_DOCS_FIELD = new ParseField("max_docs");
-    private static final ParseField MAX_AGE_FIELD = new ParseField("max_age");
-
-    private static final ConstructingObjectParser<RolloverAction, Void> PARSER = new ConstructingObjectParser<>(NAME, true,
-        a -> new RolloverAction((ByteSizeValue) a[0], (TimeValue) a[1], (Long) a[2]));
-    static {
-        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(),
-            (p, c) -> ByteSizeValue.parseBytesSizeValue(p.text(), MAX_SIZE_FIELD.getPreferredName()), MAX_SIZE_FIELD, ValueType.VALUE);
-        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(),
-            (p, c) -> TimeValue.parseTimeValue(p.text(), MAX_AGE_FIELD.getPreferredName()), MAX_AGE_FIELD, ValueType.VALUE);
-        PARSER.declareLong(ConstructingObjectParser.optionalConstructorArg(), MAX_DOCS_FIELD);
-    }
 
     private final ByteSizeValue maxSize;
     private final Long maxDocs;
     private final TimeValue maxAge;
-
-    public static RolloverAction parse(XContentParser parser) {
-        return PARSER.apply(parser, null);
-    }
 
     public RolloverAction(ByteSizeValue maxSize, TimeValue maxAge, Long maxDocs) {
         if (maxSize == null && maxAge == null && maxDocs == null) {
@@ -82,22 +57,6 @@ public class RolloverAction implements LifecycleAction, ToXContentObject {
     }
 
     @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        if (maxSize != null) {
-            builder.field(MAX_SIZE_FIELD.getPreferredName(), maxSize.getStringRep());
-        }
-        if (maxAge != null) {
-            builder.field(MAX_AGE_FIELD.getPreferredName(), maxAge.getStringRep());
-        }
-        if (maxDocs != null) {
-            builder.field(MAX_DOCS_FIELD.getPreferredName(), maxDocs);
-        }
-        builder.endObject();
-        return builder;
-    }
-
-    @Override
     public int hashCode() {
         return Objects.hash(maxSize, maxAge, maxDocs);
     }
@@ -118,6 +77,10 @@ public class RolloverAction implements LifecycleAction, ToXContentObject {
 
     @Override
     public String toString() {
-        return Strings.toString(this);
+        return "RolloverAction{" +
+            "maxSize=" + maxSize +
+            ", maxDocs=" + maxDocs +
+            ", maxAge=" + maxAge +
+            '}';
     }
 }

@@ -18,44 +18,23 @@
  */
 package org.elasticsearch.client.ilm;
 
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.util.set.Sets;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Represents the lifecycle of an index from creation to deletion. A
  * {@link LifecyclePolicy} is made up of a set of {@link Phase}s which it will
  * move through.
  */
-public class LifecyclePolicy implements ToXContentObject {
-    static final ParseField PHASES_FIELD = new ParseField("phases");
+public class LifecyclePolicy {
 
-    @SuppressWarnings("unchecked")
-    public static ConstructingObjectParser<LifecyclePolicy, String> PARSER = new ConstructingObjectParser<>("lifecycle_policy", true,
-        (a, name) -> {
-            List<Phase> phases = (List<Phase>) a[0];
-            Map<String, Phase> phaseMap = phases.stream().collect(Collectors.toMap(Phase::getName, Function.identity()));
-            return new LifecyclePolicy(name, phaseMap);
-        });
     private static Map<String, Set<String>> ALLOWED_ACTIONS = new HashMap<>();
 
     static {
-        PARSER.declareNamedObjects(ConstructingObjectParser.constructorArg(), (p, c, n) -> Phase.parse(p, n), v -> {
-            throw new IllegalArgumentException("ordered " + PHASES_FIELD.getPreferredName() + " are not supported");
-        }, PHASES_FIELD);
 
         ALLOWED_ACTIONS.put("hot", Sets.newHashSet(UnfollowAction.NAME, SetPriorityAction.NAME, RolloverAction.NAME));
         ALLOWED_ACTIONS.put("warm", Sets.newHashSet(UnfollowAction.NAME, SetPriorityAction.NAME, AllocateAction.NAME, ForceMergeAction.NAME,
@@ -90,10 +69,6 @@ public class LifecyclePolicy implements ToXContentObject {
         this.phases = phases;
     }
 
-    public static LifecyclePolicy parse(XContentParser parser, String name) {
-        return PARSER.apply(parser, name);
-    }
-
     /**
      * @return the name of this {@link LifecyclePolicy}
      */
@@ -107,18 +82,6 @@ public class LifecyclePolicy implements ToXContentObject {
      */
     public Map<String, Phase> getPhases() {
         return phases;
-    }
-
-    @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        builder.startObject(PHASES_FIELD.getPreferredName());
-        for (Phase phase : phases.values()) {
-            builder.field(phase.getName(), phase);
-        }
-        builder.endObject();
-        builder.endObject();
-        return builder;
     }
 
     @Override
@@ -141,6 +104,9 @@ public class LifecyclePolicy implements ToXContentObject {
 
     @Override
     public String toString() {
-        return Strings.toString(this, true, true);
+        return "LifecyclePolicy{" +
+            "name='" + name + '\'' +
+            ", phases=" + phases +
+            '}';
     }
 }

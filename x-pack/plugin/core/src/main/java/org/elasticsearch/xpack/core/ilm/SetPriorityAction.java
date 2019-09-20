@@ -34,7 +34,6 @@ public class SetPriorityAction implements LifecycleAction {
     private static final ConstructingObjectParser<SetPriorityAction, Void> PARSER = new ConstructingObjectParser<>(NAME,
         a -> new SetPriorityAction((Integer) a[0]));
 
-    //package private for testing
     final Integer recoveryPriority;
 
     static {
@@ -74,6 +73,10 @@ public class SetPriorityAction implements LifecycleAction {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeOptionalVInt(recoveryPriority);
+    }
+
+    public Integer getRecoveryPriority() {
+        return recoveryPriority;
     }
 
     @Override

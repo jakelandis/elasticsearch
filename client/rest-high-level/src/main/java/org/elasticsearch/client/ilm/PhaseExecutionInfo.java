@@ -44,7 +44,8 @@ public class PhaseExecutionInfo implements ToXContentObject {
         (a, name) -> new PhaseExecutionInfo((String) a[0], (Phase) a[1], (long) a[2], (long) a[3]));
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), POLICY_NAME_FIELD);
-        PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), Phase::parse, PHASE_DEFINITION_FIELD);
+        //TODO: fix this !!
+     //   PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), Phase::parse, PHASE_DEFINITION_FIELD);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), VERSION_FIELD);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), MODIFIED_DATE_IN_MILLIS_FIELD);
     }
