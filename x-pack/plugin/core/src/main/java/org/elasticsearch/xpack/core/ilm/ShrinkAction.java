@@ -54,7 +54,7 @@ public class ShrinkAction implements LifecycleAction {
         this.numberOfShards = in.readVInt();
     }
 
-    int getNumberOfShards() {
+    public int getNumberOfShards() {
         return numberOfShards;
     }
 

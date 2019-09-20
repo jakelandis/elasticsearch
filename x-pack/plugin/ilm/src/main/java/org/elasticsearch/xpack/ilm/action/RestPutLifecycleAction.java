@@ -119,5 +119,4 @@ public class RestPutLifecycleAction extends BaseRestHandler {
             return TimeValue.parseTimeValue(value, key);
         }
     }
-
 }

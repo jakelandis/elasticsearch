@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -56,7 +57,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$id", "$schema", "definitions")).collect(Collectors.toSet());
     private static Set<String> VALID_ARRAY_KEYS = Set.of("description", "type", "items");
     private static Set<String> VALID_ARRAY_ITEMS_KEYS = Set.of("description", "type", "$ref");
-    //TODO more validation
+    private static Set<JavaFile> written = new HashSet<>();
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -107,8 +108,12 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                     HashSet<JavaFile> sourceFiles = new HashSet<>();
                     generateClasses(className, jsonPath, ROOT_OBJECT_NAME, sourceFiles);
                     for (JavaFile sourceFile : sourceFiles) {
-                        try (Writer writer = processingEnv.getFiler().createSourceFile(sourceFile.packageName + "." + sourceFile.typeSpec.name).openWriter()) {
-                            sourceFile.writeTo(writer);
+                        //TODO: consider keeping tracking of which classes are already processed in addition to which one have been written.
+                        //The first one will be written, but it could be generated (identically) many, many times if it is highly referenced
+                        if (written.add(sourceFile)) {
+                            try (Writer writer = processingEnv.getFiler().createSourceFile(sourceFile.packageName + "." + sourceFile.typeSpec.name).openWriter()) {
+                                sourceFile.writeTo(writer);
+                            }
                         }
                     }
                 }
@@ -163,7 +168,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
             for (String externalRef : externalReferences) {
                 Path externalRefPath = jsonPath.getParent().resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here, and/or clean up the jPath/reference stuff.
-                String nameOfClass = getClassNameFromReference(externalRef);
+                String nameOfClass = getNameOfClassFromReference(externalRef);
                 //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
                 generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles);
             }
@@ -186,6 +191,11 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         if ("object".equals(typeNode.asText())) {
             validateObject(node, ROOT_OBJECT_NAME.equals(key));
             JsonNode propertiesNode = node.get("properties");
+            AtomicBoolean patternPropertiesNode = new AtomicBoolean(false);
+            if (propertiesNode == null) {
+                propertiesNode = node.get("patternProperties");
+                patternPropertiesNode.set(true);
+            }
             if (propertiesNode != null) { //support for empty objects
                 propertiesNode.fields().forEachRemaining(f -> {
 
@@ -205,26 +215,27 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                                 if (isExternalReference(refText)) {
                                     externalReferences.add(refText);
                                 }
-                                addArray(f.getKey(), getClassName(nameOfPackage, getClassNameFromReference(refText)), builder, true);
+                                addArray(f.getKey(), getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true);
 
                             }
                         } else if ("object".equals(nestedTypeNode.asText())) {
                             validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
                             if (f.getValue().get("patternProperties") != null) {
-                                // an object with unknown key names, modeled as Map<String, T> where T is the type (does not support combined schemas)
+                                // nested patternProperties
 
                                 JsonNode patternProperties = f.getValue().get("patternProperties");
                                 patternProperties.fields().forEachRemaining(p -> {
                                     validatePrimitive(p.getValue());
-                                    System.out.println("********************* " + f.getKey());
-                                    String type = "Map<String," + formatClassName(p.getValue().get("type").asText(), false) + ">";
-                                    System.out.println("********************* " + type);
-                                    addMap(f.getKey(), getClassName("", type), builder, false);
+                                    String nameOfClass = p.getValue().get("type").asText();
+                                    if (isReservedClassName(nameOfClass)) {
+                                        addMap(f.getKey(), ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true);
+                                    } else {
+                                        addMap(f.getKey(), getClassName(nameOfPackage, p.getValue().get("type").asText()), builder, true);
+
+                                    }
 
                                 });
 
-
-//                            addField(f.getKey(), getClassName("", type), builder, false);
                             } else {
                                 traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true), externalReferences, nameOfPackage);
                             }
@@ -239,7 +250,21 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                         if (isExternalReference(refText)) {
                             externalReferences.add(refText); //used to generate the external class
                         }
-                        addField(f.getKey(), getClassName(nameOfPackage, getClassNameFromReference(refText)), builder, true);
+                        if (ROOT_OBJECT_NAME.equals(key) && patternPropertiesNode.get()) {
+                            // addMap(f.getKey(), getClassName("", type), builder, false);
+                            String nameOfClass = getNameOfClassFromReference(refText);
+                            if (isReservedClassName(nameOfClass)) {
+
+                                addMap("rootMap", ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true);
+                            } else {
+
+                                addMap("rootMap", getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true);
+                            }
+
+                        } else {
+                            addField(f.getKey(), getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true);
+                        }
+
 
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
@@ -253,7 +278,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         return reference.contains(".json") && reference.contains("#");
     }
 
-    private String getClassNameFromReference(String reference) {
+    private String getNameOfClassFromReference(String reference) {
         assert reference.contains("#");
         String[] tokens = reference.split("#");
         assert tokens.length == 2;
@@ -263,7 +288,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization) {
         //don't add inline reference classes to the initialization blocks
         if (addToInitialization) {
-            addInitializationCode(className, field, builder, true, false, false);
+            addInitializationCode(className, className.simpleName(), field, builder, true, false, false);
         }
         XContentClassBuilder child = XContentClassBuilder.newToXContentClassBuilder();
         builder.children.add(new Tuple<>(className, child));
@@ -271,15 +296,17 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     private void addArray(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
-        addInitializationCode(className, field, builder, objectReference, true, false);
+        TypeName typeName = ParameterizedTypeName.get(ClassName.get("java.util", "List"), className);
+        addInitializationCode(typeName, className.simpleName(), field, builder, objectReference, true, false);
     }
 
     private void addField(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
-        addInitializationCode(className, field, builder, objectReference, false, false);
+        addInitializationCode(className, className.simpleName(), field, builder, objectReference, false, false);
     }
 
     private void addMap(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
-        addInitializationCode(className, field, builder, objectReference, false, true);
+        ParameterizedTypeName typeName = ParameterizedTypeName.get(ClassName.get("java.util", "Map"), ClassName.get(String.class), className);
+        addInitializationCode(typeName, className.simpleName(), field, builder, objectReference, false, true);
     }
 
 
@@ -300,10 +327,21 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         }
     }
 
+    boolean isReservedClassName(String nameOfClass) {
+        switch (nameOfClass.toLowerCase(Locale.ROOT)) {
+            case "long":
+            case "double":
+            case "boolean":
+            case "string":
+                return true;
+            default:
+                return false;
+        }
+    }
+
     //consumers must call formatClassName before calling this method
     //TODO: don't requires comusers to call formatClassName before calling this method ;)
     ClassName getClassName(String packageName, String nameOfClass) {
-
         return ClassName.get(packageName, translateClassName(nameOfClass));
     }
 
@@ -312,22 +350,26 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     //Adds the Constructor and static initialization code to the XContentClassBuilder.
-    private void addInitializationCode(ClassName className, String field, XContentClassBuilder builder, boolean isObject, boolean isArray, boolean isMap) {
+    private void addInitializationCode(TypeName typeName, String simpleClassName, String field, XContentClassBuilder builder, boolean isObject, boolean isArray, boolean isMap) {
         // ConstructingObjectParser arguments
         if (isArray) {
-            builder.lambdas.add(CodeBlock.builder().add("(List<$T>) a[$L]", className, builder.parserPosition.incrementAndGet()).build());
+            builder.lambdas.add(CodeBlock.builder().add("(List<$T>) a[$L]", typeName, builder.parserPosition.incrementAndGet()).build());
         } else {
-            builder.lambdas.add(CodeBlock.builder().add("($T) a[$L]", className, builder.parserPosition.incrementAndGet()).build());
+            builder.lambdas.add(CodeBlock.builder().add("($T) a[$L]", typeName, builder.parserPosition.incrementAndGet()).build());
         }
+
+
         //TODO: support required vs. optional
-        if (isObject && isArray == false) {
-            builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
+        if (isObject && isArray == false && isMap == false) {
+            builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), " + simpleClassName + ".PARSER, new $T($S));\n", ParseField.class, field);
         } else if (isObject & isArray) {
-            builder.staticInitializerBuilder.add("PARSER.declareObjectArray(ConstructingObjectParser.optionalConstructorArg(), " + className.simpleName() + ".PARSER, new $T($S));\n", ParseField.class, field);
+            builder.staticInitializerBuilder.add("PARSER.declareObjectArray(ConstructingObjectParser.optionalConstructorArg(), " + simpleClassName + ".PARSER, new $T($S));\n", ParseField.class, field);
         } else if (isArray) {
-            builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "Array(ConstructingObjectParser.optionalConstructorArg(), new $T($S));\n", ParseField.class, field);
+            builder.staticInitializerBuilder.add("PARSER.declare" + simpleClassName + "Array(ConstructingObjectParser.optionalConstructorArg(), new $T($S));\n", ParseField.class, field);
         } else if (isMap) {
-            boolean mapOfStrings = className.simpleName().matches("^.*String\\s*,\\s*String.*");
+            List<TypeName> typeNames = ((ParameterizedTypeName) typeName).typeArguments;
+            boolean mapOfStrings = typeNames.stream().allMatch(t -> "String".equals(ClassName.bestGuess(t.toString()).simpleName()));
+            // boolean mapOfStrings = simpleClassName.matches("^.*String\\s*,\\s*String.*");
             if (mapOfStrings) {
                 builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), (p, c) -> p.mapStrings(), new $T($S));\n", ParseField.class, field);
 
@@ -335,21 +377,9 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                 builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), (p, c) -> p.map(), new $T($S));\n", ParseField.class, field);
             }
         } else {
-            builder.staticInitializerBuilder.add("PARSER.declare" + className.simpleName() + "(ConstructingObjectParser.optionalConstructorArg(), new $T($S));\n", ParseField.class, field);
+            builder.staticInitializerBuilder.add("PARSER.declare" + simpleClassName + "(ConstructingObjectParser.optionalConstructorArg(), new $T($S));\n", ParseField.class, field);
         }
 
-        //handle type parameters
-        TypeName typeName = className;
-        if (isArray) {
-            typeName = ParameterizedTypeName.get(ClassName.get("java.util", "List"), className);
-        } else if (isMap) {
-            boolean mapOfStrings = className.simpleName().matches("^.*String\\s*,\\s*String.*");
-            if (mapOfStrings) {
-                typeName = ParameterizedTypeName.get(ClassName.get("java.util", "Map"), ClassName.get(String.class), ClassName.get(String.class));
-            } else {
-                typeName = ParameterizedTypeName.get(ClassName.get("java.util", "Map"), ClassName.get(String.class), ClassName.get(Object.class));
-            }
-        }
 
         builder.constructorBuilder.addParameter(typeName, field).addStatement("this.$N = $N", field, field);
         builder.fields.add(FieldSpec.builder(typeName, field).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());

@@ -33,7 +33,7 @@ public class SimpleGenerationTests extends ESTestCase {
     public TemporaryFolder tempDir = new TemporaryFolder();
 
     public void testFoo() throws IOException, URISyntaxException {
-        String modelJson = "model/ilm/cold.json";
+        String modelJson = "model/ilm/get_policy.json";
         byte[] model = toByteArray(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(modelJson)));
         Path jsonPath = Paths.get(ClassLoader.getSystemResource(modelJson).toURI());
 
@@ -41,7 +41,7 @@ public class SimpleGenerationTests extends ESTestCase {
         XContentModelCodeGenerator generator = new XContentModelCodeGenerator();
         Set<JavaFile> sourceFiles = new HashSet<>();
         String packageName = "org.elasticsearch.xcontent.ilm";
-        String className = "ColdModel";
+        String className = "GetPolicyModle";
 
         generator.generateClasses(generator.getClassName(packageName, className), jsonPath, ".", sourceFiles);
 

@@ -66,7 +66,7 @@ public class RestMainAction extends BaseRestHandler {
         if (request.hasParam("pretty") == false) {
             builder.prettyPrint().lfAtEnd();
         }
-        toXContent(request, response, builder, request);
+        toXContent(request, response, builder);
         return new BytesRestResponse(RestStatus.OK, builder);
     }
 
@@ -76,12 +76,12 @@ public class RestMainAction extends BaseRestHandler {
     }
 
 
-    private static void toXContent(RestRequest request, MainResponse mainResponse, XContentBuilder builder, ToXContent.Params params) throws IOException {
+    private static void toXContent(RestRequest request, MainResponse mainResponse, XContentBuilder builder) throws IOException {
         List<String> v = request.getAllHeaderValues("version");
         if(v == null || v.size() < 1 || (v.size() == 1 && "v8".equalsIgnoreCase(v.get(0)))){
-            toModel(mainResponse).toXContent(builder, params);
+            toModel(mainResponse).toXContent(builder, request);
         }else if(v.size() == 1 && "v7".equalsIgnoreCase(v.get(0))){
-            toModelV7(mainResponse).toXContent(builder, params);
+            toModelV7(mainResponse).toXContent(builder, request);
         }
 
     }

@@ -8,7 +8,8 @@ import org.elasticsearch.common.xcontent.ToXContent;
     @GeneratedModel("about.json"),
     @GeneratedModel("about_v7.json"),
     //ilm
-    @GeneratedModel("ilm/put_policy.json")
+    @GeneratedModel("ilm/put_policy.json"),
+    @GeneratedModel("ilm/get_policy.json")
 })
 public interface GeneratedModels extends ToXContent {
 }
