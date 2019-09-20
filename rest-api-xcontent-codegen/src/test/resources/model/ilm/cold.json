@@ -16,8 +16,24 @@
               "properties": {
                 "require": {
                   "type": "object",
-                  "properties": {
-                    "type": {
+                  "patternProperties": {
+                    "^.*$": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "include": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^.*$": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "exclude": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^.*$": {
                       "type": "string"
                     }
                   }

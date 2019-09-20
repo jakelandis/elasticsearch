@@ -62,10 +62,18 @@ public class RestPutLifecycleAction extends BaseRestHandler {
     private PutLifecycleAction.Request toTransportRequest(String name, XContentParser parser) {
         PutPolicyModel model = PutPolicyModel.PARSER.apply(parser, null);
         Map<String, Phase> phases = new HashMap<>();
-        phases.put("hot", getHotPhase(model.policy.phases.hot));
-        phases.put("warm", getWarmPhase(model.policy.phases.warm));
-       // phases.put("cold", getColdPhase(model.policy.phases.cold));
-        phases.put("delete", getDeletePhase(model.policy.phases.delete));
+        if (model.policy.phases.hot != null) {
+            phases.put("hot", getHotPhase(model.policy.phases.hot));
+        }
+        if (model.policy.phases.warm != null) {
+            phases.put("warm", getWarmPhase(model.policy.phases.warm));
+        }
+        if (model.policy.phases.cold != null) {
+            phases.put("cold", getColdPhase(model.policy.phases.cold));
+        }
+        if (model.policy.phases.delete != null) {
+            phases.put("delete", getDeletePhase(model.policy.phases.delete));
+        }
         return new PutLifecycleAction.Request(new LifecyclePolicy(name, phases));
     }
 
@@ -99,8 +107,9 @@ public class RestPutLifecycleAction extends BaseRestHandler {
 
 
     private AllocateAction getAllocateAction(AllocateModel allocateModel) {
-        //TODO: fix this .. need to figure out dynamic key names
-        return new AllocateAction(allocateModel.number_of_replicas.intValue(), null, null, null);
+        return new AllocateAction(
+            allocateModel.number_of_replicas == null ? null : allocateModel.number_of_replicas.intValue(),
+            allocateModel.include, allocateModel.exclude, allocateModel.require);
     }
 
     private TimeValue getTimeValue(String value, String key) {
