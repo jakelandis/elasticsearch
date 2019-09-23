@@ -26,28 +26,18 @@ jarHell.enabled = false
 assemble.enabled = false
 //forbiddenApisMain.enabled = false
 
-sourceSets {
-    generated {
-        java {
-            srcDirs = ['src/main/generated']
-        }
+idea {
+    module {
+        sourceDirs += file('src/main/generated')
     }
 }
 
 compileJava {
-
     options.compilerArgs += [
             "-processor",
             "org.elasticsearch.xcontent.codegen.XContentModelCodeGenerator",
             "-Aspec.root=" + new File(projectDir, "../rest-api-spec/src/main/resources/rest-api-spec").getCanonicalPath()
     ]
-    destinationDir = sourceSets.generated.java.srcDirs.iterator().next()
-}
-
-idea {
-    module {
-        sourceDirs += file('src/main/generated')
-    }
 }
 
 dependencies {

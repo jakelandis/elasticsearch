@@ -337,6 +337,26 @@ allprojects {
 idea {
   project {
     vcs = 'Git'
+    ipr {
+      withXml {
+        def node = it.asNode()
+        //TODO: clean this up :/ 
+        def component =  node.component.find { n ->   
+             n.@name == 'CompilerConfiguration'
+        }
+        def ann = component.find { n ->
+           n.name() == 'annotationProcessing' 
+        }
+        component.remove(ann);  
+
+        def profile = component.appendNode('annotationProcessing').appendNode('profile', [name:'model', enabled:'true'])
+        profile.appendNode('outputRelativeToContentRoot', [value:'true'])
+        profile.appendNode('sourceOutputDir ', [name: 'src/main/generated'])
+        profile.appendNode('option', [name:'spec.root', value:'$PROJECT_DIR$/rest-api-spec/src/main/resources/rest-api-spec'])
+        profile.appendNode('module',[name: 'rest-api-models'])
+
+      }
+    }
   }
 }
 
