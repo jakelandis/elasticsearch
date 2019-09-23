@@ -40,28 +40,28 @@ public class GetLifecyclePolicyResponse {
         return policies;
     }
 
-
-    public static GetLifecyclePolicyResponse fromXContent(XContentParser parser) throws IOException {
-        ImmutableOpenMap.Builder<String, LifecyclePolicyMetadata> policies = ImmutableOpenMap.builder();
-
-        if (parser.currentToken() == null) {
-            parser.nextToken();
-        }
-        ensureExpectedToken(XContentParser.Token.START_OBJECT, parser.currentToken(), parser::getTokenLocation);
-        parser.nextToken();
-
-        while (!parser.isClosed()) {
-            if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
-                String policyName = parser.currentName();
-                LifecyclePolicyMetadata policyDefinion = LifecyclePolicyMetadata.parse(parser, policyName);
-                policies.put(policyName, policyDefinion);
-            } else {
-                parser.nextToken();
-            }
-        }
-
-        return new GetLifecyclePolicyResponse(policies.build());
-    }
+//
+//    public static GetLifecyclePolicyResponse fromXContent(XContentParser parser) throws IOException {
+//        ImmutableOpenMap.Builder<String, LifecyclePolicyMetadata> policies = ImmutableOpenMap.builder();
+//
+//        if (parser.currentToken() == null) {
+//            parser.nextToken();
+//        }
+//        ensureExpectedToken(XContentParser.Token.START_OBJECT, parser.currentToken(), parser::getTokenLocation);
+//        parser.nextToken();
+//
+//        while (!parser.isClosed()) {
+//            if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
+//                String policyName = parser.currentName();
+//                LifecyclePolicyMetadata policyDefinion = LifecyclePolicyMetadata.parse(parser, policyName);
+//                policies.put(policyName, policyDefinion);
+//            } else {
+//                parser.nextToken();
+//            }
+//        }
+//
+//        return new GetLifecyclePolicyResponse(policies.build());
+//    }
 
     @Override
     public boolean equals(Object o) {

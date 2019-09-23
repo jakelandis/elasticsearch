@@ -52,35 +52,36 @@ public class IndexLifecycleClient {
         this.restHighLevelClient = restHighLevelClient;
     }
 
-    /**
-     * Retrieve one or more lifecycle policy definition. See
-     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
-     * the docs</a> for more.
-     * @param request the request
-     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-     * @return the response
-     * @throws IOException in case there is a problem sending the request or parsing back the response
-     */
-    public GetLifecyclePolicyResponse getLifecyclePolicy(GetLifecyclePolicyRequest request,
-                                                         RequestOptions options) throws IOException {
-        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
-            GetLifecyclePolicyResponse::fromXContent, emptySet());
-    }
-
-    /**
-     * Asynchronously retrieve one or more lifecycle policy definition. See
-     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
-     * the docs</a> for more.
-     * @param request the request
-     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-     * @param listener the listener to be notified upon request completion
-     * @return cancellable that may be used to cancel the request
-     */
-    public Cancellable getLifecyclePolicyAsync(GetLifecyclePolicyRequest request, RequestOptions options,
-                                               ActionListener<GetLifecyclePolicyResponse> listener) {
-        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
-            GetLifecyclePolicyResponse::fromXContent, listener, emptySet());
-    }
+    //TODO: figure this out !
+//    /**
+//     * Retrieve one or more lifecycle policy definition. See
+//     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
+//     * the docs</a> for more.
+//     * @param request the request
+//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+//     * @return the response
+//     * @throws IOException in case there is a problem sending the request or parsing back the response
+//     */
+//    public GetLifecyclePolicyResponse getLifecyclePolicy(GetLifecyclePolicyRequest request,
+//                                                         RequestOptions options) throws IOException {
+//        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
+//            GetLifecyclePolicyResponse::fromXContent, emptySet());
+//    }
+//
+//    /**
+//     * Asynchronously retrieve one or more lifecycle policy definition. See
+//     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
+//     * the docs</a> for more.
+//     * @param request the request
+//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+//     * @param listener the listener to be notified upon request completion
+//     * @return cancellable that may be used to cancel the request
+//     */
+//    public Cancellable getLifecyclePolicyAsync(GetLifecyclePolicyRequest request, RequestOptions options,
+//                                               ActionListener<GetLifecyclePolicyResponse> listener) {
+//        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
+//            GetLifecyclePolicyResponse::fromXContent, listener, emptySet());
+//    }
 
     //TODO: figure this out !
 //    /**
