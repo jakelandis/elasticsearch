@@ -37,6 +37,6 @@ compileJava {
 
 
 dependencies {
-    annotationProcessor project(path: ':rest-api-xcontent-codegen')
+    annotationProcessor project(path: ':rest-api-codegen')
     compile project(path: ':libs:elasticsearch-x-content')
 }
