@@ -63,18 +63,16 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting processing here" + processingEnv.getOptions().get("spec.root"));
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting to process specification from: " + processingEnv.getOptions().get("spec.root"));
 
         super.init(processingEnv);
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********************************************3");
-
         for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(GeneratedModel.class, GeneratedModels.class))) {
             try {
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, element.getSimpleName());
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing annotation from: " + element.getSimpleName());
                 GeneratedModels generateXContentModels = element.getAnnotation(GeneratedModels.class);
                 List<GeneratedModel> models = new ArrayList<>();
                 if (generateXContentModels != null) {
@@ -105,7 +103,6 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
                     String nameOfPackage = "org.elasticsearch.xcontent.generated" + (additionalPackage.isEmpty() ? "" : "." + additionalPackage);
 
-                    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating somehting something..." + originalClassName + " from " + jsonPath.toAbsolutePath().toString());
                     ClassName className = ClassName.get(nameOfPackage, nameOfClass);
                     HashSet<JavaFile> sourceFiles = new HashSet<>();
                     generateClasses(className, jsonPath, ROOT_OBJECT_NAME, sourceFiles);
@@ -155,6 +152,8 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles) throws IOException {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating class " + className + " from " + jsonPath.toAbsolutePath().toString());
+
         try (InputStream in = Files.newInputStream(jsonPath)) {
             JsonNode objectToParse = findObjectToParse(in, jPath);
             XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
