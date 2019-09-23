@@ -14,7 +14,7 @@
             "forcemerge": {
               "type": "object",
               "properties": {
-                "max_number_segments": {
+                "max_num_segments": {
                   "type": "integer"
                 }
               }
@@ -28,7 +28,7 @@
               }
             },
             "allocate": {
-              "$ref": "allocate.json#/definitions/allocate"
+              "$ref": "../../ilm/allocate.json#/definitions/allocate"
             }
           }
         }

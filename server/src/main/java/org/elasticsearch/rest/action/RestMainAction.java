@@ -23,7 +23,6 @@ import org.elasticsearch.action.main.MainAction;
 import org.elasticsearch.action.main.MainRequest;
 import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.BytesRestResponse;
@@ -32,7 +31,8 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xcontent.generated.AboutModel;
-import org.elasticsearch.xcontent.generated.AboutV7Model;
+import org.elasticsearch.xcontent.generated.v7.AboutV7Model;
+
 
 import java.io.IOException;
 import java.util.List;
@@ -78,12 +78,11 @@ public class RestMainAction extends BaseRestHandler {
 
     private static void toXContent(RestRequest request, MainResponse mainResponse, XContentBuilder builder) throws IOException {
         List<String> v = request.getAllHeaderValues("version");
-        if(v == null || v.size() < 1 || (v.size() == 1 && "v8".equalsIgnoreCase(v.get(0)))){
+        if (v == null || v.size() < 1 || (v.size() == 1 && "v8".equalsIgnoreCase(v.get(0)))) {
             toModel(mainResponse).toXContent(builder, request);
-        }else if(v.size() == 1 && "v7".equalsIgnoreCase(v.get(0))){
+        } else if (v.size() == 1 && "v7".equalsIgnoreCase(v.get(0))) {
             toModelV7(mainResponse).toXContent(builder, request);
         }
-
     }
 
     private static AboutV7Model toModelV7(MainResponse mainResponse) {

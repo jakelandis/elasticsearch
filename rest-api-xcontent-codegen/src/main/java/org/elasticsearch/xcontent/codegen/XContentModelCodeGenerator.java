@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,6 +59,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     private static Set<String> VALID_ARRAY_KEYS = Set.of("description", "type", "items");
     private static Set<String> VALID_ARRAY_ITEMS_KEYS = Set.of("description", "type", "$ref");
     private static Set<JavaFile> written = new HashSet<>();
+    private static String PACAKGE_ROOT = "org.elasticsearch.xcontent.generated";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -161,31 +163,32 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             //handle any inline definitions that will end up as inner classes
             JsonNode definitionNode = objectToParse.get("definitions");
             if (definitionNode != null) {
-                traverseInlineDefinitions(definitionNode, builder, externalReferences, className.packageName());
+                traverseInlineDefinitions(definitionNode, builder, externalReferences, className.packageName(), jsonPath);
             }
 
-            traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences, className.packageName());
+            traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences, className.packageName(), jsonPath);
 
             for (String externalRef : externalReferences) {
                 Path externalRefPath = jsonPath.getParent().resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here, and/or clean up the jPath/reference stuff.
                 String nameOfClass = getNameOfClassFromReference(externalRef);
+                String nameOfPackage = getNameOfPackageFromReference(externalRef, jsonPath);
                 //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
-                generateClasses(getClassName(className.packageName(), nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles);
+                generateClasses(getClassName(nameOfPackage, nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles);
             }
             sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
         }
     }
 
-    private void traverseInlineDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage) {
+    private void traverseInlineDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage, Path jsonPath) {
         definitionNode.fields().forEachRemaining(f -> {
             validateObject(f.getValue(), false);
             addField(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true);
             //TODO: support references that are not objects
-            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, false), externalReferences, nameOfPackage);
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, false), externalReferences, nameOfPackage, jsonPath);
         });
     }
 
-    private void traverse(JsonNode node, String key, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage) {
+    private void traverse(JsonNode node, String key, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage, Path jsonPath) {
         JsonNode typeNode = node.get("type");
         validateNotNull(node, typeNode, "type");
         if ("object".equals(typeNode.asText())) {
@@ -237,7 +240,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                                 });
 
                             } else {
-                                traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true), externalReferences, nameOfPackage);
+                                traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true), externalReferences, nameOfPackage, jsonPath);
                             }
                         } else {
 
@@ -247,6 +250,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                         }
                     } else if (reference != null) {
                         String refText = reference.asText();
+                        String refPackageName = getNameOfPackageFromReference(refText, jsonPath);
                         if (isExternalReference(refText)) {
                             externalReferences.add(refText); //used to generate the external class
                         }
@@ -254,17 +258,15 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                             // addMap(f.getKey(), getClassName("", type), builder, false);
                             String nameOfClass = getNameOfClassFromReference(refText);
                             if (isReservedClassName(nameOfClass)) {
-
                                 addMap("rootMap", ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true);
                             } else {
 
-                                addMap("rootMap", getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true);
+                                addMap("rootMap", getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
                             }
 
                         } else {
-                            addField(f.getKey(), getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true);
+                            addField(f.getKey(), getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
                         }
-
 
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
@@ -282,7 +284,23 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         assert reference.contains("#");
         String[] tokens = reference.split("#");
         assert tokens.length == 2;
-        return formatClassName(tokens[1].substring(tokens[1].lastIndexOf("/") + 1), true);
+        assert tokens[0].contains(".json");
+        String[] fileParts = tokens[0].split("/");
+        String fileName = fileParts[fileParts.length - 1];
+        return formatClassName(fileName.replace(".json", ""), true);
+    }
+
+    private String getNameOfPackageFromReference(String reference, Path jsonPath) {
+        assert reference.contains("#");
+        String[] tokens = reference.split("#");
+        assert tokens.length == 2;
+        Path parent = jsonPath.getParent();
+        System.out.println(parent);
+        Path relativePath = parent.resolve(tokens[0]).normalize();
+        Path relativePathParent = relativePath.getParent();
+        String[] parts = relativePathParent.toString().split("/");
+        String packageName = Arrays.stream(parts).dropWhile(p -> "model".equals(p) == false).collect(Collectors.joining("."));
+        return packageName.replace("model.", PACAKGE_ROOT + ".");
     }
 
     private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization) {
