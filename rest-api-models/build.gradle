@@ -26,6 +26,14 @@ jarHell.enabled = false
 assemble.enabled = false
 //forbiddenApisMain.enabled = false
 
+sourceSets {
+    generated {
+        java {
+            srcDirs = ['src/main/generated']
+        }
+    }
+}
+
 idea {
     module {
         sourceDirs += file('src/main/generated')
