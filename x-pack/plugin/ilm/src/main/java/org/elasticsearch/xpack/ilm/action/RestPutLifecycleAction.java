@@ -66,13 +66,13 @@ public class RestPutLifecycleAction extends BaseRestHandler {
     private PutLifecycleAction.Request toTransportRequest(RestRequest request, String name, XContentParser parser) {
         List<String> v = request.getAllHeaderValues("version");
         if (v == null || v.size() < 1 || (v.size() == 1 && "v8".equalsIgnoreCase(v.get(0)))) {
-            return toTransportRequest(PutPolicyModel.PARSER.apply(parser, null), name, parser);
+            return toTransportRequest(PutPolicyModel.PARSER.apply(parser, null), name);
         } else if (v.size() == 1 && "v7".equalsIgnoreCase(v.get(0))) {
-            return toTransportRequest(PutPolicyV7Model.PARSER.apply(parser, null), name, parser);
+            return toTransportRequest(PutPolicyV7Model.PARSER.apply(parser, null), name);
         } else throw new IllegalStateException("Bad Request ... todo: better error");
     }
 
-    private PutLifecycleAction.Request toTransportRequest(PutPolicyModel model, String name, XContentParser parser) {
+    private PutLifecycleAction.Request toTransportRequest(PutPolicyModel model, String name) {
 
         Map<String, Phase> phases = new HashMap<>();
         if (model.policy.phases.hot != null) {
@@ -90,7 +90,7 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         return new PutLifecycleAction.Request(new LifecyclePolicy(name, phases));
     }
 
-    private PutLifecycleAction.Request toTransportRequest(PutPolicyV7Model v7Model, String name, XContentParser parser) {
+    private PutLifecycleAction.Request toTransportRequest(PutPolicyV7Model v7Model, String name) {
 
         Map<String, Phase> phases = new HashMap<>();
         if (v7Model.policy.phases.hot != null) {

@@ -94,6 +94,7 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
+//TODO: resync with master!
 public class ILMDocumentationIT {//extends ESRestHighLevelClientTestCase {
 
 //    public void testPutLifecyclePolicy() throws Exception {
@@ -942,20 +943,20 @@ public class ILMDocumentationIT {//extends ESRestHighLevelClientTestCase {
 //        latch.await(5, TimeUnit.SECONDS);
 
         // tag::slm-get-snapshot-lifecycle-stats
-        GetSnapshotLifecycleStatsRequest getStatsRequest =
-            new GetSnapshotLifecycleStatsRequest();
+//        GetSnapshotLifecycleStatsRequest getStatsRequest =
+//            new GetSnapshotLifecycleStatsRequest();
         // end::slm-get-snapshot-lifecycle-stats
 
         // tag::slm-get-snapshot-lifecycle-stats-execute
-        GetSnapshotLifecycleStatsResponse statsResp = client.indexLifecycle()
-            .getSnapshotLifecycleStats(getStatsRequest, RequestOptions.DEFAULT);
-        SnapshotLifecycleStats stats = statsResp.getStats();
-        SnapshotLifecycleStats.SnapshotPolicyStats policyStats =
-            stats.getMetrics().get("policy_id");
-        // end::slm-get-snapshot-lifecycle-stats-execute
-        assertThat(
-            statsResp.getStats().getMetrics().get("policy_id").getSnapshotsTaken(),
-            greaterThanOrEqualTo(1L));
+//        GetSnapshotLifecycleStatsResponse statsResp = client.indexLifecycle()
+//            .getSnapshotLifecycleStats(getStatsRequest, RequestOptions.DEFAULT);
+//        SnapshotLifecycleStats stats = statsResp.getStats();
+//        SnapshotLifecycleStats.SnapshotPolicyStats policyStats =
+//            stats.getMetrics().get("policy_id");
+//        // end::slm-get-snapshot-lifecycle-stats-execute
+//        assertThat(
+//            statsResp.getStats().getMetrics().get("policy_id").getSnapshotsTaken(),
+//            greaterThanOrEqualTo(1L));
 //
 //        //////// DELETE
 //        // tag::slm-delete-snapshot-lifecycle-policy

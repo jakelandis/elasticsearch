@@ -152,8 +152,9 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles) throws IOException {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating class " + className + " from " + jsonPath.toAbsolutePath().toString());
-
+        if(processingEnv != null) { //possible from tests
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating class " + className + " from " + jsonPath.toAbsolutePath().toString());
+        }
         try (InputStream in = Files.newInputStream(jsonPath)) {
             JsonNode objectToParse = findObjectToParse(in, jPath);
             XContentClassBuilder builder = XContentClassBuilder.newToXContentClassBuilder();
@@ -198,9 +199,8 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                 propertiesNode = node.get("patternProperties");
                 patternPropertiesNode.set(true);
             }
-            if (propertiesNode != null) { //support for empty objects
+            if (propertiesNode != null) { //support for empty objects by skipping all initialization code
                 propertiesNode.fields().forEachRemaining(f -> {
-
                     //reference to another object
                     JsonNode reference = f.getValue().get("$ref");
                     //not a reference
@@ -218,13 +218,11 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                                     externalReferences.add(refText);
                                 }
                                 addArray(f.getKey(), getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true);
-
                             }
                         } else if ("object".equals(nestedTypeNode.asText())) {
                             validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
                             if (f.getValue().get("patternProperties") != null) {
                                 // nested patternProperties
-
                                 JsonNode patternProperties = f.getValue().get("patternProperties");
                                 patternProperties.fields().forEachRemaining(p -> {
                                     validatePrimitive(p.getValue());
@@ -233,16 +231,13 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                                         addMap(f.getKey(), ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true);
                                     } else {
                                         addMap(f.getKey(), getClassName(nameOfPackage, p.getValue().get("type").asText()), builder, true);
-
                                     }
-
                                 });
 
                             } else {
                                 traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true), externalReferences, nameOfPackage, jsonPath);
                             }
                         } else {
-
                             validatePrimitive(f.getValue());
                             String type = nestedTypeNode.asText();
                             addField(f.getKey(), getClassName("", type), builder, false);
@@ -259,14 +254,11 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                             if (isReservedClassName(nameOfClass)) {
                                 addMap("rootMap", ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true);
                             } else {
-
                                 addMap("rootMap", getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
                             }
-
                         } else {
                             addField(f.getKey(), getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
                         }
-
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
                     }
@@ -294,7 +286,6 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         String[] tokens = reference.split("#");
         assert tokens.length == 2;
         Path parent = jsonPath.getParent();
-        System.out.println(parent);
         Path relativePath = parent.resolve(tokens[0]).normalize();
         Path relativePathParent = relativePath.getParent();
         String[] parts = relativePathParent.toString().split("/");
@@ -374,7 +365,6 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         } else {
             builder.lambdas.add(CodeBlock.builder().add("($T) a[$L]", typeName, builder.parserPosition.incrementAndGet()).build());
         }
-
 
         //TODO: support required vs. optional
         if (isObject && isArray == false && isMap == false) {
