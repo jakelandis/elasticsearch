@@ -32,6 +32,9 @@
                   "type": "integer"
                 }
               }
+            },
+            "unfollow": {
+              "$ref": "unfollow.json#/$defs/unfollow"
             }
           }
         }

@@ -13,6 +13,9 @@
           "properties": {
             "allocate": {
               "$ref": "allocate.json#/$defs/allocate"
+            },
+            "unfollow": {
+              "$ref": "unfollow.json#/$defs/unfollow"
             }
           }
         }

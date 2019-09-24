@@ -33,6 +33,9 @@
             },
             "allocate": {
               "$ref": "../../ilm/allocate.json#/$defs/allocate"
+            },
+            "unfollow": {
+              "$ref": "../../ilm/unfollow.json#/$defs/unfollow"
             }
           }
         }

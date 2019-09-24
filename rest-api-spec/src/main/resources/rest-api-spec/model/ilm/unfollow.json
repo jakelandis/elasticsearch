@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/2019-09/schema#",
+  "type": "object",
+  "$defs": {
+    "unfollow": {
+      "type": "object"
+    }
+  }
+}

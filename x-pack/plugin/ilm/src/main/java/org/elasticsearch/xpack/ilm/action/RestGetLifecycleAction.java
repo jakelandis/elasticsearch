@@ -28,6 +28,7 @@ import org.elasticsearch.xcontent.generated.ilm.HotModel;
 import org.elasticsearch.xcontent.generated.ilm.InnerDeleteModel;
 import org.elasticsearch.xcontent.generated.ilm.PhasesModel;
 import org.elasticsearch.xcontent.generated.ilm.PolicyModel;
+import org.elasticsearch.xcontent.generated.ilm.UnfollowModel;
 import org.elasticsearch.xcontent.generated.ilm.WarmModel;
 import org.elasticsearch.xpack.core.ilm.AllocateAction;
 import org.elasticsearch.xpack.core.ilm.ForceMergeAction;
@@ -36,6 +37,7 @@ import org.elasticsearch.xpack.core.ilm.Phase;
 import org.elasticsearch.xpack.core.ilm.RolloverAction;
 import org.elasticsearch.xpack.core.ilm.SetPriorityAction;
 import org.elasticsearch.xpack.core.ilm.ShrinkAction;
+import org.elasticsearch.xpack.core.ilm.UnfollowAction;
 import org.elasticsearch.xpack.core.ilm.action.GetLifecycleAction;
 
 import java.io.IOException;
@@ -115,9 +117,11 @@ public class RestGetLifecycleAction extends BaseRestHandler {
 
     private HotModel getHotModel(Phase phase) {
         RolloverAction rollover = (RolloverAction) phase.getActions().get(RolloverAction.NAME);
-        SetPriorityAction setPriority = (SetPriorityAction) phase.getActions().get("set_priority");
+        SetPriorityAction setPriority = (SetPriorityAction) phase.getActions().get(SetPriorityAction.NAME);
+
         HotModel.Actions.Rollover rolloverModel = null;
         HotModel.Actions.SetPriority setPriorityModel = null;
+
 
         if (rollover != null) {
             rolloverModel = new HotModel.Actions.Rollover(rollover.getMaxAge().getStringRep(), rollover.getMaxSize().getStringRep(), rollover.getMaxDocs());
@@ -125,7 +129,8 @@ public class RestGetLifecycleAction extends BaseRestHandler {
         if(setPriority != null){
             setPriorityModel = new HotModel.Actions.SetPriority(setPriority.getRecoveryPriority().longValue());
         }
-        return new HotModel(phase.getMinimumAge().getStringRep(), new HotModel.Actions(rolloverModel, setPriorityModel));
+
+        return new HotModel(phase.getMinimumAge().getStringRep(), new HotModel.Actions(rolloverModel, setPriorityModel, getUnfollowModel(phase)));
     }
 
     private WarmModel getWamModel(Phase phase) {
@@ -141,11 +146,11 @@ public class RestGetLifecycleAction extends BaseRestHandler {
         if (shrink != null) {
             shrinkModel = new WarmModel.Actions.Shrink((long) shrink.getNumberOfShards());
         }
-        return new WarmModel(phase.getMinimumAge().getStringRep(), new WarmModel.Actions(forceMergeModel, shrinkModel, getAllocateModel(phase)));
+        return new WarmModel(phase.getMinimumAge().getStringRep(), new WarmModel.Actions(forceMergeModel, shrinkModel, getAllocateModel(phase), getUnfollowModel(phase)));
     }
 
     private ColdModel getColdModel(Phase phase){
-        return new ColdModel(phase.getMinimumAge().getStringRep(), new ColdModel.Actions(getAllocateModel(phase)));
+        return new ColdModel(phase.getMinimumAge().getStringRep(), new ColdModel.Actions(getAllocateModel(phase), getUnfollowModel(phase)));
     }
 
     private DeleteModel getDeleteModel(Phase phase){
@@ -160,5 +165,10 @@ public class RestGetLifecycleAction extends BaseRestHandler {
             allocateModel = new AllocateModel(allocate.getNumberOfReplicas() == null ? null : allocate.getNumberOfReplicas().longValue(), allocate.getRequire(), allocate.getInclude(), allocate.getExclude());
         }
         return allocateModel;
+    }
+
+    @Nullable
+    private UnfollowModel getUnfollowModel(Phase phase){
+        return phase.getActions().get(UnfollowAction.NAME) != null ? new UnfollowModel() : null;
     }
 }
