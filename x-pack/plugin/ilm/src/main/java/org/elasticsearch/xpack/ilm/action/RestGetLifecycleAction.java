@@ -32,8 +32,10 @@ import org.elasticsearch.xcontent.generated.ilm.UnfollowModel;
 import org.elasticsearch.xcontent.generated.ilm.WarmModel;
 import org.elasticsearch.xpack.core.ilm.AllocateAction;
 import org.elasticsearch.xpack.core.ilm.ForceMergeAction;
+import org.elasticsearch.xpack.core.ilm.FreezeAction;
 import org.elasticsearch.xpack.core.ilm.LifecycleAction;
 import org.elasticsearch.xpack.core.ilm.Phase;
+import org.elasticsearch.xpack.core.ilm.ReadOnlyAction;
 import org.elasticsearch.xpack.core.ilm.RolloverAction;
 import org.elasticsearch.xpack.core.ilm.SetPriorityAction;
 import org.elasticsearch.xpack.core.ilm.ShrinkAction;
@@ -86,7 +88,6 @@ public class RestGetLifecycleAction extends BaseRestHandler {
         return new BytesRestResponse(RestStatus.OK, builder);
     }
 
-
     private PhasesModel getPhasesModel(GetLifecycleAction.LifecyclePolicyResponseItem policy) {
         HotModel hotModel = null;
         WarmModel warmModel = null;
@@ -129,16 +130,16 @@ public class RestGetLifecycleAction extends BaseRestHandler {
         if(setPriority != null){
             setPriorityModel = new HotModel.Actions.SetPriority(setPriority.getRecoveryPriority().longValue());
         }
-
         return new HotModel(phase.getMinimumAge().getStringRep(), new HotModel.Actions(rolloverModel, setPriorityModel, getUnfollowModel(phase)));
     }
 
     private WarmModel getWamModel(Phase phase) {
         ForceMergeAction forceMerge = (ForceMergeAction) phase.getActions().get(ForceMergeAction.NAME);
         ShrinkAction shrink = (ShrinkAction) phase.getActions().get(ShrinkAction.NAME);
-
+        ReadOnlyAction readOnly = (ReadOnlyAction) phase.getActions().get(ReadOnlyAction.NAME);
         WarmModel.Actions.Forcemerge forceMergeModel = null;
         WarmModel.Actions.Shrink shrinkModel = null;
+        WarmModel.Actions.Readonly readOnlyModel = null;
 
         if (forceMerge != null) {
             forceMergeModel = new WarmModel.Actions.Forcemerge((long) forceMerge.getMaxNumSegments());
@@ -146,11 +147,19 @@ public class RestGetLifecycleAction extends BaseRestHandler {
         if (shrink != null) {
             shrinkModel = new WarmModel.Actions.Shrink((long) shrink.getNumberOfShards());
         }
-        return new WarmModel(phase.getMinimumAge().getStringRep(), new WarmModel.Actions(forceMergeModel, shrinkModel, getAllocateModel(phase), getUnfollowModel(phase)));
+        if(readOnly != null){
+            readOnlyModel = new WarmModel.Actions.Readonly();
+        }
+        return new WarmModel(phase.getMinimumAge().getStringRep(), new WarmModel.Actions(forceMergeModel, shrinkModel, getAllocateModel(phase), getUnfollowModel(phase), readOnlyModel));
     }
 
     private ColdModel getColdModel(Phase phase){
-        return new ColdModel(phase.getMinimumAge().getStringRep(), new ColdModel.Actions(getAllocateModel(phase), getUnfollowModel(phase)));
+        FreezeAction freeze = (FreezeAction) phase.getActions().get(FreezeAction.NAME);
+        ColdModel.Actions.Freeze freezeModel = null;
+        if(freeze != null){
+            freezeModel = new ColdModel.Actions.Freeze();
+        }
+        return new ColdModel(phase.getMinimumAge().getStringRep(), new ColdModel.Actions(getAllocateModel(phase), getUnfollowModel(phase), freezeModel));
     }
 
     private DeleteModel getDeleteModel(Phase phase){

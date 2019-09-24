@@ -32,6 +32,9 @@
             },
             "unfollow": {
               "$ref": "unfollow.json#/$defs/unfollow"
+            },
+            "readonly": {
+              "type": "object"
             }
           }
         }
