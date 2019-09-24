@@ -22,17 +22,6 @@
                   "type": "integer"
                 }
               }
-            },
-            "shrink": {
-              "type": "object",
-              "properties": {
-                "number_of_shards": {
-                  "type": "integer"
-                }
-              }
-            },
-            "allocate": {
-              "$ref": "../../ilm/allocate.json#/$defs/allocate"
             }
           }
         }

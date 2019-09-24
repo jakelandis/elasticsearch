@@ -104,7 +104,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                     Path modelRootPath = specRootPath.resolve("model");
                     Path jsonPath = modelRootPath.resolve(model.value());
 
-                    String nameOfPackage = "org.elasticsearch.xcontent.generated" + (additionalPackage.isEmpty() ? "" : "." + additionalPackage);
+                    String nameOfPackage = PACKAGE_ROOT + (additionalPackage.isEmpty() ? "" : "." + additionalPackage);
 
                     ClassName className = ClassName.get(nameOfPackage, nameOfClass);
                     HashSet<JavaFile> sourceFiles = new HashSet<>();
@@ -164,7 +164,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
             Set<String> externalReferences = new HashSet<>();
             //handle any inline definitions that will end up as inner classes
-            JsonNode definitionNode = objectToParse.get("definitions");
+            JsonNode definitionNode = objectToParse.get("$defs");
             if (definitionNode != null) {
                 traverseInlineDefinitions(definitionNode, builder, externalReferences, className.packageName(), jsonPath);
             }
@@ -185,9 +185,9 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     private void traverseInlineDefinitions(JsonNode definitionNode, XContentClassBuilder builder, Set<String> externalReferences, String nameOfPackage, Path jsonPath) {
         definitionNode.fields().forEachRemaining(f -> {
             validateObject(f.getValue(), false);
-            addField(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true);
+            addField(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true, false);
             //TODO: support references that are not objects
-            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, false, false), externalReferences, nameOfPackage, jsonPath);
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, false, false, false), externalReferences, nameOfPackage, jsonPath);
         });
     }
 
@@ -208,19 +208,20 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                     JsonNode reference = f.getValue().get("$ref");
                     //not a reference
                     JsonNode nestedTypeNode = f.getValue().get("type");
+                    boolean isDeprecrated = f.getValue().get("$deprecated") != null;
                     if (nestedTypeNode != null) {
                         if ("array".equals(nestedTypeNode.asText())) {
                             validateArray(f.getValue());
                             //normal array
                             if (f.getValue().get("items").get("type") != null) {
-                                addArray(f.getKey(), getClassName("", f.getValue().get("items").get("type").asText()), builder, false);
+                                addArray(f.getKey(), getClassName("", f.getValue().get("items").get("type").asText()), builder, false, isDeprecrated);
                             } else { //an array of object references
                                 reference = f.getValue().get("items").get("$ref");
                                 String refText = reference.asText();
                                 if (isExternalReference(refText)) {
                                     externalReferences.add(refText);
                                 }
-                                addArray(f.getKey(), getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true);
+                                addArray(f.getKey(), getClassName(nameOfPackage, getNameOfClassFromReference(refText)), builder, true, isDeprecrated);
                             }
                         } else if ("object".equals(nestedTypeNode.asText())) {
                             validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
@@ -230,22 +231,22 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                                     validatePrimitive(p.getValue());
                                     String nameOfClass = p.getValue().get("type").asText();
                                     if (isReservedClassName(nameOfClass)) {
-                                        addMap(f.getKey(), ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true);
+                                        addMap(f.getKey(), ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true, isDeprecrated);
                                     } else {
-                                        addMap(f.getKey(), getClassName(nameOfPackage, p.getValue().get("type").asText()), builder, true);
+                                        addMap(f.getKey(), getClassName(nameOfPackage, p.getValue().get("type").asText()), builder, true, isDeprecrated);
                                     }
                                 });
 
                             } else if (patternPropertiesNode.get()) { //if the parent is a patternProperties, and this is an object
-                                traverse(f.getValue(), f.getKey(), addObject(OBJECT_MAP_ITEM_METHOD_NAME, getClassName("", OBJECT_MAP_ITEM_CLASS_NAME), builder, true, true), externalReferences, nameOfPackage, jsonPath);
+                                traverse(f.getValue(), f.getKey(), addObject(OBJECT_MAP_ITEM_METHOD_NAME, getClassName("", OBJECT_MAP_ITEM_CLASS_NAME), builder, true, true, isDeprecrated), externalReferences, nameOfPackage, jsonPath);
                             } else {
-                                traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true, false), externalReferences, nameOfPackage, jsonPath);
+                                traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true, false, isDeprecrated), externalReferences, nameOfPackage, jsonPath);
                             }
 
                         } else {
                             validatePrimitive(f.getValue());
                             String type = nestedTypeNode.asText();
-                            addField(f.getKey(), getClassName("", type), builder, false);
+                            addField(f.getKey(), getClassName("", type), builder, false, isDeprecrated);
                         }
                     } else if (reference != null) {
                         String refText = reference.asText();
@@ -253,7 +254,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                         if (isExternalReference(refText)) {
                             externalReferences.add(refText); //used to generate the external class
                         }
-                        addField(f.getKey(), getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
+                        addField(f.getKey(), getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true, isDeprecrated);
 
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
@@ -290,11 +291,11 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     //
-    private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization, boolean isMapOfObjects) {
+    private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization, boolean isMapOfObjects, boolean isDeprecated) {
         TypeName typeName = isMapOfObjects ? ParameterizedTypeName.get(ClassName.get("java.util", "Map"), ClassName.get(String.class), className) : className;
         //don't add inline reference classes to the initialization blocks
         if (addToInitialization) {
-            addInitializationCode(typeName, className.simpleName(), field, builder, true, false, false);
+            addInitializationCode(typeName, className.simpleName(), field, builder, true, false, false, isDeprecated);
         }
         XContentClassBuilder child = XContentClassBuilder.newToXContentClassBuilder();
         builder.children.add(new Tuple<>(className, child));
@@ -302,19 +303,19 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
 
-    private void addArray(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
+    private void addArray(String field, ClassName className, XContentClassBuilder builder, boolean objectReference, boolean isDeprecated) {
         TypeName typeName = ParameterizedTypeName.get(ClassName.get("java.util", "List"), className);
-        addInitializationCode(typeName, className.simpleName(), field, builder, objectReference, true, false);
+        addInitializationCode(typeName, className.simpleName(), field, builder, objectReference, true, false, isDeprecated);
     }
 
-    private void addField(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
-        addInitializationCode(className, className.simpleName(), field, builder, objectReference, false, false);
+    private void addField(String field, ClassName className, XContentClassBuilder builder, boolean objectReference, boolean isDeprecated) {
+        addInitializationCode(className, className.simpleName(), field, builder, objectReference, false, false, isDeprecated);
     }
 
     //Map<String, className>
-    private void addMap(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
+    private void addMap(String field, ClassName className, XContentClassBuilder builder, boolean objectReference, boolean isDeprecated) {
         ParameterizedTypeName typeName = ParameterizedTypeName.get(ClassName.get("java.util", "Map"), ClassName.get(String.class), className);
-        addInitializationCode(typeName, className.simpleName(), field, builder, objectReference, false, true);
+        addInitializationCode(typeName, className.simpleName(), field, builder, objectReference, false, true, isDeprecated);
     }
 
 
@@ -358,7 +359,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     //Adds the Constructor and static initialization code to the XContentClassBuilder.
-    private void addInitializationCode(TypeName typeName, String simpleClassName, String field, XContentClassBuilder builder, boolean isObject, boolean isArray, boolean isMap) {
+    private void addInitializationCode(TypeName typeName, String simpleClassName, String field, XContentClassBuilder builder, boolean isObject, boolean isArray, boolean isMap, boolean isDeprecated) {
         // ConstructingObjectParser arguments
         if (isArray) {
             builder.lambdas.add(CodeBlock.builder().add("(List<$T>) a[$L]", typeName, builder.parserPosition.incrementAndGet()).build());
@@ -387,7 +388,12 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         }
 
         builder.constructorBuilder.addParameter(typeName, field).addStatement("this.$N = $N", field, field);
-        builder.fields.add(FieldSpec.builder(typeName, field).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
+        FieldSpec.Builder fieldBuilder = FieldSpec.builder(typeName, field).addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+        if (isDeprecated) {
+            fieldBuilder.addAnnotation(Deprecated.class);
+        }
+        builder.fields.add(fieldBuilder.build());
+
         builder.toXContentFields.add(field);
     }
 
