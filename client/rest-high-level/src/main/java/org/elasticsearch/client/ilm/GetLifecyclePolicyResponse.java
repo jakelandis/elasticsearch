@@ -22,6 +22,8 @@ package org.elasticsearch.client.ilm;
 
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xcontent.generated.ilm.GetPolicyModel;
+import org.elasticsearch.xcontent.generated.ilm.PolicyModel;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -30,38 +32,29 @@ import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpect
 
 public class GetLifecyclePolicyResponse {
 
-    private final ImmutableOpenMap<String, LifecyclePolicyMetadata> policies;
+    private final ImmutableOpenMap<String, PolicyModel> policies;
 
-    public GetLifecyclePolicyResponse(ImmutableOpenMap<String, LifecyclePolicyMetadata> policies) {
+
+    public GetLifecyclePolicyResponse(ImmutableOpenMap<String, PolicyModel> policies) {
         this.policies = policies;
     }
 
-    public ImmutableOpenMap<String, LifecyclePolicyMetadata> getPolicies() {
+    public ImmutableOpenMap<String, PolicyModel> getPolicies() {
         return policies;
     }
 
-//
-//    public static GetLifecyclePolicyResponse fromXContent(XContentParser parser) throws IOException {
-//        ImmutableOpenMap.Builder<String, LifecyclePolicyMetadata> policies = ImmutableOpenMap.builder();
-//
-//        if (parser.currentToken() == null) {
-//            parser.nextToken();
-//        }
-//        ensureExpectedToken(XContentParser.Token.START_OBJECT, parser.currentToken(), parser::getTokenLocation);
-//        parser.nextToken();
-//
-//        while (!parser.isClosed()) {
-//            if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
-//                String policyName = parser.currentName();
-//                LifecyclePolicyMetadata policyDefinion = LifecyclePolicyMetadata.parse(parser, policyName);
-//                policies.put(policyName, policyDefinion);
-//            } else {
-//                parser.nextToken();
-//            }
-//        }
-//
-//        return new GetLifecyclePolicyResponse(policies.build());
-//    }
+
+    public static GetLifecyclePolicyResponse fromXContent(XContentParser parser) throws IOException {
+        ImmutableOpenMap.Builder<String, PolicyModel> policies = ImmutableOpenMap.builder();
+
+
+        GetPolicyModel model = GetPolicyModel.PARSER.parse(parser, null);
+        model.objectMap.forEach((k,v) -> {
+            policies.put(k,v.policy);
+            });
+
+        return new GetLifecyclePolicyResponse(policies.build());
+    }
 
     @Override
     public boolean equals(Object o) {

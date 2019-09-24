@@ -23,29 +23,32 @@ import org.elasticsearch.client.TimedRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.xcontent.generated.ilm.PolicyModel;
 
 import java.io.IOException;
 import java.util.Objects;
 
 public class PutLifecyclePolicyRequest extends TimedRequest {
 
-    private final LifecyclePolicy policy;
+    private final PolicyModel policy;
+    private final String name;
 
-    public PutLifecyclePolicyRequest(LifecyclePolicy policy) {
+    public PutLifecyclePolicyRequest(PolicyModel policy, String name) {
         if (policy == null) {
             throw new IllegalArgumentException("policy definition cannot be null");
         }
-        if (Strings.isNullOrEmpty(policy.getName())) {
+        if (Strings.isNullOrEmpty(name)) {
             throw new IllegalArgumentException("policy name must be present");
         }
         this.policy = policy;
+        this.name = name;
     }
 
     public String getName() {
-        return policy.getName();
+        return name;
     }
 
-    public LifecyclePolicy getLifecyclePolicy() {
+    public PolicyModel getLifecyclePolicy() {
         return policy;
     }
 

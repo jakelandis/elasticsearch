@@ -19,34 +19,10 @@
 
 package org.elasticsearch.client;
 
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.client.ilm.DeleteLifecyclePolicyRequest;
-import org.elasticsearch.client.ilm.ExplainLifecycleRequest;
-import org.elasticsearch.client.ilm.GetLifecyclePolicyRequest;
-import org.elasticsearch.client.ilm.LifecycleManagementStatusRequest;
-import org.elasticsearch.client.ilm.LifecyclePolicy;
-import org.elasticsearch.client.ilm.PutLifecyclePolicyRequest;
-import org.elasticsearch.client.ilm.RemoveIndexLifecyclePolicyRequest;
-import org.elasticsearch.client.ilm.RetryLifecyclePolicyRequest;
-import org.elasticsearch.client.ilm.StartILMRequest;
-import org.elasticsearch.client.ilm.StopILMRequest;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.test.ESTestCase;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.elasticsearch.client.RequestConvertersTests.randomIndicesNames;
 import static org.elasticsearch.client.RequestConvertersTests.setRandomIndicesOptions;
 import static org.elasticsearch.client.RequestConvertersTests.setRandomMasterTimeout;
-import static org.elasticsearch.client.RequestConvertersTests.setRandomTimeoutTimeValue;
 //import static org.elasticsearch.client.ilm.LifecyclePolicyTests.createRandomPolicy;
-import static org.hamcrest.CoreMatchers.equalTo;
+
 
 public class IndexLifecycleRequestConvertersTests { //extends ESTestCase {
 //

@@ -21,7 +21,6 @@ package org.elasticsearch.client;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.core.AcknowledgedResponse;
-import org.elasticsearch.client.ilm.DeleteLifecyclePolicyRequest;
 import org.elasticsearch.client.ilm.ExplainLifecycleRequest;
 import org.elasticsearch.client.ilm.ExplainLifecycleResponse;
 import org.elasticsearch.client.ilm.GetLifecyclePolicyRequest;
@@ -54,98 +53,97 @@ public class IndexLifecycleClient {
         this.restHighLevelClient = restHighLevelClient;
     }
 
-    //TODO: figure this out !
-//    /**
-//     * Retrieve one or more lifecycle policy definition. See
-//     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
-//     * the docs</a> for more.
-//     * @param request the request
-//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-//     * @return the response
-//     * @throws IOException in case there is a problem sending the request or parsing back the response
-//     */
-//    public GetLifecyclePolicyResponse getLifecyclePolicy(GetLifecyclePolicyRequest request,
-//                                                         RequestOptions options) throws IOException {
-//        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
-//            GetLifecyclePolicyResponse::fromXContent, emptySet());
-//    }
-//
-//    /**
-//     * Asynchronously retrieve one or more lifecycle policy definition. See
-//     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
-//     * the docs</a> for more.
-//     * @param request the request
-//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-//     * @param listener the listener to be notified upon request completion
-//     * @return cancellable that may be used to cancel the request
-//     */
-//    public Cancellable getLifecyclePolicyAsync(GetLifecyclePolicyRequest request, RequestOptions options,
-//                                               ActionListener<GetLifecyclePolicyResponse> listener) {
-//        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
-//            GetLifecyclePolicyResponse::fromXContent, listener, emptySet());
-//    }
-
-    //TODO: figure this out !
-//    /**
-//     * Create or modify a lifecycle definition. See <a href=
-//     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
-//     * the docs</a> for more.
-//     * @param request the request
-//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-//     * @return the response
-//     * @throws IOException in case there is a problem sending the request or parsing back the response
-//     */
-//    public AcknowledgedResponse putLifecyclePolicy(PutLifecyclePolicyRequest request,
-//                                                   RequestOptions options) throws IOException {
-//        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
-//            AcknowledgedResponse::fromXContent, emptySet());
-//    }
-
-//    /**
-//     * Asynchronously create or modify a lifecycle definition. See <a href=
-//     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
-//     * the docs</a> for more.
-//     * @param request the request
-//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
-//     * @param listener the listener to be notified upon request completion
-//     * @return cancellable that may be used to cancel the request
-//     */
-//    public Cancellable putLifecyclePolicyAsync(PutLifecyclePolicyRequest request, RequestOptions options,
-//                                               ActionListener<AcknowledgedResponse> listener) {
-//        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
-//            AcknowledgedResponse::fromXContent, listener, emptySet());
-//    }
-
     /**
-     * Delete a lifecycle definition
-     * See <a href="https://fix-me-when-we-have-docs.com">
+     * Retrieve one or more lifecycle policy definition. See
+     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
      * the docs</a> for more.
      * @param request the request
      * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
      * @return the response
      * @throws IOException in case there is a problem sending the request or parsing back the response
      */
-    public AcknowledgedResponse deleteLifecyclePolicy(DeleteLifecyclePolicyRequest request,
-                                                      RequestOptions options) throws IOException {
-        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::deleteLifecyclePolicy, options,
-            AcknowledgedResponse::fromXContent, emptySet());
+    public GetLifecyclePolicyResponse getLifecyclePolicy(GetLifecyclePolicyRequest request,
+                                                         RequestOptions options) throws IOException {
+        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
+            GetLifecyclePolicyResponse::fromXContent, emptySet());
     }
 
     /**
-     * Asynchronously delete a lifecycle definition
-     * See <a href="https://fix-me-when-we-have-docs.com">
+     * Asynchronously retrieve one or more lifecycle policy definition. See
+     * <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-get-lifecycle-policy.html">
      * the docs</a> for more.
      * @param request the request
      * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
      * @param listener the listener to be notified upon request completion
      * @return cancellable that may be used to cancel the request
      */
-    public Cancellable deleteLifecyclePolicyAsync(DeleteLifecyclePolicyRequest request, RequestOptions options,
-                                                  ActionListener<AcknowledgedResponse> listener) {
-        return restHighLevelClient.performRequestAsyncAndParseEntity(
-            request, IndexLifecycleRequestConverters::deleteLifecyclePolicy, options,
+    public Cancellable getLifecyclePolicyAsync(GetLifecyclePolicyRequest request, RequestOptions options,
+                                               ActionListener<GetLifecyclePolicyResponse> listener) {
+        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::getLifecyclePolicy, options,
+            GetLifecyclePolicyResponse::fromXContent, listener, emptySet());
+    }
+
+
+    /**
+     * Create or modify a lifecycle definition. See <a href=
+     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
+     * the docs</a> for more.
+     * @param request the request
+     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+     * @return the response
+     * @throws IOException in case there is a problem sending the request or parsing back the response
+     */
+    public AcknowledgedResponse putLifecyclePolicy(PutLifecyclePolicyRequest request,
+                                                   RequestOptions options) throws IOException {
+        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
+            AcknowledgedResponse::fromXContent, emptySet());
+    }
+
+    /**
+     * Asynchronously create or modify a lifecycle definition. See <a href=
+     * "https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-ilm-ilm-put-lifecycle-policy.html">
+     * the docs</a> for more.
+     * @param request the request
+     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+     * @param listener the listener to be notified upon request completion
+     * @return cancellable that may be used to cancel the request
+     */
+    public Cancellable putLifecyclePolicyAsync(PutLifecyclePolicyRequest request, RequestOptions options,
+                                               ActionListener<AcknowledgedResponse> listener) {
+        return restHighLevelClient.performRequestAsyncAndParseEntity(request, IndexLifecycleRequestConverters::putLifecyclePolicy, options,
             AcknowledgedResponse::fromXContent, listener, emptySet());
     }
+//
+//    /**
+//     * Delete a lifecycle definition
+//     * See <a href="https://fix-me-when-we-have-docs.com">
+//     * the docs</a> for more.
+//     * @param request the request
+//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+//     * @return the response
+//     * @throws IOException in case there is a problem sending the request or parsing back the response
+//     */
+//    public AcknowledgedResponse deleteLifecyclePolicy(DeleteLifecyclePolicyRequest request,
+//                                                      RequestOptions options) throws IOException {
+//        return restHighLevelClient.performRequestAndParseEntity(request, IndexLifecycleRequestConverters::deleteLifecyclePolicy, options,
+//            AcknowledgedResponse::fromXContent, emptySet());
+//    }
+//
+//    /**
+//     * Asynchronously delete a lifecycle definition
+//     * See <a href="https://fix-me-when-we-have-docs.com">
+//     * the docs</a> for more.
+//     * @param request the request
+//     * @param options the request options (e.g. headers), use {@link RequestOptions#DEFAULT} if nothing needs to be customized
+//     * @param listener the listener to be notified upon request completion
+//     * @return cancellable that may be used to cancel the request
+//     */
+//    public Cancellable deleteLifecyclePolicyAsync(DeleteLifecyclePolicyRequest request, RequestOptions options,
+//                                                  ActionListener<AcknowledgedResponse> listener) {
+//        return restHighLevelClient.performRequestAsyncAndParseEntity(
+//            request, IndexLifecycleRequestConverters::deleteLifecyclePolicy, options,
+//            AcknowledgedResponse::fromXContent, listener, emptySet());
+//    }
 
     /**
      * Remove the index lifecycle policy for an index
