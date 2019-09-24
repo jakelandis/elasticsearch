@@ -13,6 +13,8 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.GeneratedModels;
 import org.elasticsearch.common.xcontent.GeneratedModel;
+import org.elasticsearch.common.xcontent.ToXContentFragment;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -60,6 +62,8 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     private static Set<String> VALID_ARRAY_ITEMS_KEYS = Set.of("description", "type", "$ref");
     private static Set<JavaFile> written = new HashSet<>();
     private static String PACAKGE_ROOT = "org.elasticsearch.xcontent.generated";
+    static String OBJECT_MAP_ITEM_CLASS_NAME = "ObjectMapItem";
+    static String OBJECT_MAP_ITEM_METHOD_NAME = "objectMap";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -152,7 +156,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     public void generateClasses(ClassName className, Path jsonPath, String jPath, Set<JavaFile> sourceFiles) throws IOException {
-        if(processingEnv != null) { //possible from tests
+        if (processingEnv != null) { //possible from tests
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generating class " + className + " from " + jsonPath.toAbsolutePath().toString());
         }
         try (InputStream in = Files.newInputStream(jsonPath)) {
@@ -184,7 +188,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             validateObject(f.getValue(), false);
             addField(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true);
             //TODO: support references that are not objects
-            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, false), externalReferences, nameOfPackage, jsonPath);
+            traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, false, false), externalReferences, nameOfPackage, jsonPath);
         });
     }
 
@@ -221,8 +225,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                             }
                         } else if ("object".equals(nestedTypeNode.asText())) {
                             validateObject(f.getValue(), ROOT_OBJECT_NAME.equals(key));
-                            if (f.getValue().get("patternProperties") != null) {
-                                // nested patternProperties
+                            if (f.getValue().get("patternProperties") != null) { //if this object is a patternProperties
                                 JsonNode patternProperties = f.getValue().get("patternProperties");
                                 patternProperties.fields().forEachRemaining(p -> {
                                     validatePrimitive(p.getValue());
@@ -234,9 +237,12 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                                     }
                                 });
 
+                            } else if (patternPropertiesNode.get()) { //if the parent is a patternProperties, and this is an object
+                                traverse(f.getValue(), f.getKey(), addObject(OBJECT_MAP_ITEM_METHOD_NAME, getClassName("", OBJECT_MAP_ITEM_CLASS_NAME), builder, true, true), externalReferences, nameOfPackage, jsonPath);
                             } else {
-                                traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true), externalReferences, nameOfPackage, jsonPath);
+                                traverse(f.getValue(), f.getKey(), addObject(f.getKey(), getClassName("", formatClassName(f.getKey(), false)), builder, true, false), externalReferences, nameOfPackage, jsonPath);
                             }
+
                         } else {
                             validatePrimitive(f.getValue());
                             String type = nestedTypeNode.asText();
@@ -248,17 +254,8 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                         if (isExternalReference(refText)) {
                             externalReferences.add(refText); //used to generate the external class
                         }
-                        if (ROOT_OBJECT_NAME.equals(key) && patternPropertiesNode.get()) {
-                            // addMap(f.getKey(), getClassName("", type), builder, false);
-                            String nameOfClass = getNameOfClassFromReference(refText);
-                            if (isReservedClassName(nameOfClass)) {
-                                addMap("rootMap", ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true);
-                            } else {
-                                addMap("rootMap", getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
-                            }
-                        } else {
-                            addField(f.getKey(), getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
-                        }
+                        addField(f.getKey(), getClassName(refPackageName, getNameOfClassFromReference(refText)), builder, true);
+
                     } else {
                         throw new IllegalStateException("Found unsupported object [" + f.getValue().toString() + "]");
                     }
@@ -293,15 +290,18 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         return packageName.replace("model.", PACAKGE_ROOT + ".");
     }
 
-    private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization) {
+    //
+    private XContentClassBuilder addObject(String field, ClassName className, XContentClassBuilder builder, boolean addToInitialization, boolean isMapOfObjects) {
+        TypeName typeName = isMapOfObjects ? ParameterizedTypeName.get(ClassName.get("java.util", "Map"), ClassName.get(String.class), className) : className;
         //don't add inline reference classes to the initialization blocks
         if (addToInitialization) {
-            addInitializationCode(className, className.simpleName(), field, builder, true, false, false);
+            addInitializationCode(typeName, className.simpleName(), field, builder, true, false, false);
         }
         XContentClassBuilder child = XContentClassBuilder.newToXContentClassBuilder();
         builder.children.add(new Tuple<>(className, child));
         return child;
     }
+
 
     private void addArray(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
         TypeName typeName = ParameterizedTypeName.get(ClassName.get("java.util", "List"), className);
@@ -312,6 +312,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         addInitializationCode(className, className.simpleName(), field, builder, objectReference, false, false);
     }
 
+    //Map<String, className>
     private void addMap(String field, ClassName className, XContentClassBuilder builder, boolean objectReference) {
         ParameterizedTypeName typeName = ParameterizedTypeName.get(ClassName.get("java.util", "Map"), ClassName.get(String.class), className);
         addInitializationCode(typeName, className.simpleName(), field, builder, objectReference, false, true);
@@ -387,10 +388,9 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             builder.staticInitializerBuilder.add("PARSER.declare" + simpleClassName + "(ConstructingObjectParser.optionalConstructorArg(), new $T($S));\n", ParseField.class, field);
         }
 
-
         builder.constructorBuilder.addParameter(typeName, field).addStatement("this.$N = $N", field, field);
         builder.fields.add(FieldSpec.builder(typeName, field).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
-        builder.toXContentMethodBuilder.addStatement("builder.field($S," + field + ")", field);
+        builder.toXContentStatements.add(new Tuple<>("builder.field($S," + field + ")", new Object[]{field}));
     }
 
 

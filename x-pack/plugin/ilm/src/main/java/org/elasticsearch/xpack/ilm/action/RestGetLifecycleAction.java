@@ -75,10 +75,10 @@ public class RestGetLifecycleAction extends BaseRestHandler {
     }
 
     RestResponse toRestResponse(RestRequest restRequest, GetLifecycleAction.Response response, XContentBuilder builder) throws IOException {
-        Map<String, PolicyModel> rootMap = new HashMap<>();
+        Map<String, GetPolicyModel.ObjectMapItem> rootMap = new HashMap<>();
         List<GetLifecycleAction.LifecyclePolicyResponseItem> policies = response.getPolicies();
         for (GetLifecycleAction.LifecyclePolicyResponseItem policy : policies) {
-            rootMap.put(policy.getLifecyclePolicy().getName(), new PolicyModel(getPhasesModel(policy)));
+            rootMap.put(policy.getLifecyclePolicy().getName(), new GetPolicyModel.ObjectMapItem(policy.getVersion(), policy.getModifiedDate(), new PolicyModel(getPhasesModel(policy))));
         }
         new GetPolicyModel(rootMap).toXContent(builder, restRequest);
         return new BytesRestResponse(RestStatus.OK, builder);

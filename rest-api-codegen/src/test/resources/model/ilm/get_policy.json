@@ -3,7 +3,15 @@
   "type": "object",
   "patternProperties": {
     "^.*$": {
-      "$ref": "policy.json#/definitions/policy"
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number"
+        },
+        "modified_date": {
+          "type": "string"
+        }
+      }
     }
   }
 }

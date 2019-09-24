@@ -11,6 +11,7 @@ import com.squareup.javapoet.TypeSpec;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentFragment;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -19,8 +20,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.elasticsearch.xcontent.codegen.XContentModelCodeGenerator.OBJECT_MAP_ITEM_CLASS_NAME;
+import static org.elasticsearch.xcontent.codegen.XContentModelCodeGenerator.OBJECT_MAP_ITEM_METHOD_NAME;
 
 public class XContentClassBuilder {
 
@@ -32,6 +37,7 @@ public class XContentClassBuilder {
     final AtomicInteger parserPosition;
     final List<Tuple<ClassName, XContentClassBuilder>> children;
     final Set<ClassName> interfaces;
+    final List<Tuple<String, Object[]>> toXContentStatements;
 
     static XContentClassBuilder newToXContentClassBuilder() {
         //static initializer
@@ -44,7 +50,7 @@ public class XContentClassBuilder {
             .addParameter(XContentBuilder.class, "builder", Modifier.FINAL)
             .addParameter(ToXContent.Params.class, "params", Modifier.FINAL)
             .addAnnotation(Override.class);
-        toXContentMethodBuilder.addStatement("builder.startObject()");
+
         //fields to be added
         List<FieldSpec> fields = new ArrayList<>();
         List<CodeBlock> lambdas = new ArrayList<>();
@@ -60,11 +66,17 @@ public class XContentClassBuilder {
         this.parserPosition = parserPosition;
         this.children = new ArrayList<>();
         this.interfaces = new HashSet<>();
+        this.toXContentStatements = new ArrayList<>();
     }
 
-    static JavaFile build(String packageName, String targetClassName,  XContentClassBuilder builder) {
+    static JavaFile build(String packageName, String targetClassName, XContentClassBuilder builder) {
         ClassName className = ClassName.get(packageName, targetClassName);
-        builder.interfaces.add(ClassName.get(ToXContentObject.class));
+
+        if (OBJECT_MAP_ITEM_CLASS_NAME.equals(className.simpleName())) {
+            builder.interfaces.add(ClassName.get(ToXContentFragment.class));
+        } else {
+            builder.interfaces.add(ClassName.get(ToXContentObject.class));
+        }
 
         // .. new ConstructingObjectParser<> ..
         FieldSpec parserField = createConstructingObjectParser(builder, className);
@@ -75,7 +87,6 @@ public class XContentClassBuilder {
 
         //outer class
         TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
-
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addSuperinterfaces(builder.interfaces)
             .addJavadoc("GENERATED CODE - DO NOT MODIFY") //todo add date and by what
@@ -108,7 +119,6 @@ public class XContentClassBuilder {
                 lambdaBuilder.add(",");
             }
         }
-
         return FieldSpec.builder(typedConstructingObjectParser,
             "PARSER", Modifier.STATIC, Modifier.FINAL, Modifier.PUBLIC)
             .initializer("new $T<>($T.class.getName(), $L))", ClassName.get(ConstructingObjectParser.class), className, lambdaBuilder.build())
@@ -117,9 +127,30 @@ public class XContentClassBuilder {
     }
 
     static MethodSpec createToXContent(XContentClassBuilder builder) {
-        return builder.toXContentMethodBuilder
-            .addStatement("builder.endObject()")
-            .addStatement("return builder")
+        boolean fragment = builder.interfaces.contains(ClassName.get(ToXContentFragment.class));
+        if (fragment == false) {
+            builder.toXContentMethodBuilder.addStatement("builder.startObject()");
+        }
+
+        builder.toXContentStatements.forEach(s -> {
+
+            assert s.v2().length == 1;
+            if (OBJECT_MAP_ITEM_METHOD_NAME.equals(s.v2()[0])) { //map of inner objects ... don't serialize the map itself
+                builder.toXContentMethodBuilder.addStatement(
+                    "for($T<String, $N> item : $N.entrySet()){\n" +
+                        "builder.startObject(item.getKey());\n" +
+                        "item.getValue().toXContent(builder, params);\n" +
+                        "builder.endObject();\n}", Map.Entry.class, OBJECT_MAP_ITEM_CLASS_NAME, OBJECT_MAP_ITEM_METHOD_NAME);
+            } else {
+                builder.toXContentMethodBuilder.addStatement(s.v1(), s.v2());
+            }
+        });
+
+
+        if (fragment == false) {
+            builder.toXContentMethodBuilder.addStatement("builder.endObject()");
+        }
+        return builder.toXContentMethodBuilder.addStatement("return builder")
             .returns(XContentBuilder.class)
             .addException(IOException.class)
             .build();
@@ -128,7 +159,7 @@ public class XContentClassBuilder {
     static TypeSpec.Builder createInnerClassBuilder(XContentClassBuilder builder, ClassName className, FieldSpec parserField, MethodSpec toContentMethod) {
         TypeSpec.Builder clazzBuilder = TypeSpec.classBuilder(className)
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-            .addSuperinterface(ToXContentObject.class)
+            .addSuperinterfaces(builder.interfaces)
             .addStaticBlock(builder.staticInitializerBuilder.build())
             .addField(parserField)
             .addMethod(builder.constructorBuilder.build())
@@ -138,6 +169,12 @@ public class XContentClassBuilder {
     }
 
     static void createChildClass(Tuple<ClassName, XContentClassBuilder> child, TypeSpec.Builder parent) {
+        if (OBJECT_MAP_ITEM_CLASS_NAME.equals(child.v1().simpleName())) {
+            child.v2().interfaces.add(ClassName.get(ToXContentFragment.class));
+        } else {
+            child.v2().interfaces.add(ClassName.get(ToXContentObject.class));
+        }
+
         TypeSpec.Builder childBuilder = createInnerClassBuilder(child.v2(), child.v1(), createConstructingObjectParser(child.v2(), child.v1()), createToXContent(child.v2()));
         for (Tuple<ClassName, XContentClassBuilder> grandChild : child.v2().children) {
             createChildClass(grandChild, childBuilder);
