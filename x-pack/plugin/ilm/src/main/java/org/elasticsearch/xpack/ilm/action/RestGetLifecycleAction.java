@@ -114,13 +114,13 @@ public class RestGetLifecycleAction extends BaseRestHandler {
     }
 
     private HotModel getHotModel(Phase phase) {
-        RolloverAction rollover = (RolloverAction) phase.getActions().get("rollover");
+        RolloverAction rollover = (RolloverAction) phase.getActions().get(RolloverAction.NAME);
         SetPriorityAction setPriority = (SetPriorityAction) phase.getActions().get("set_priority");
         HotModel.Actions.Rollover rolloverModel = null;
         HotModel.Actions.SetPriority setPriorityModel = null;
 
         if (rollover != null) {
-            new HotModel.Actions.Rollover(rollover.getMaxAge().getStringRep(), rollover.getMaxSize().getStringRep(), rollover.getMaxDocs());
+            rolloverModel = new HotModel.Actions.Rollover(rollover.getMaxAge().getStringRep(), rollover.getMaxSize().getStringRep(), rollover.getMaxDocs());
         }
         if(setPriority != null){
             setPriorityModel = new HotModel.Actions.SetPriority(setPriority.getRecoveryPriority().longValue());
@@ -129,8 +129,8 @@ public class RestGetLifecycleAction extends BaseRestHandler {
     }
 
     private WarmModel getWamModel(Phase phase) {
-        ForceMergeAction forceMerge = (ForceMergeAction) phase.getActions().get("forcemerge");
-        ShrinkAction shrink = (ShrinkAction) phase.getActions().get("shrink");
+        ForceMergeAction forceMerge = (ForceMergeAction) phase.getActions().get(ForceMergeAction.NAME);
+        ShrinkAction shrink = (ShrinkAction) phase.getActions().get(ShrinkAction.NAME);
 
         WarmModel.Actions.Forcemerge forceMergeModel = null;
         WarmModel.Actions.Shrink shrinkModel = null;
@@ -154,7 +154,7 @@ public class RestGetLifecycleAction extends BaseRestHandler {
 
     @Nullable
     private AllocateModel getAllocateModel(Phase phase) {
-        AllocateAction allocate = (AllocateAction) phase.getActions().get("allocate");
+        AllocateAction allocate = (AllocateAction) phase.getActions().get(AllocateAction.NAME);
         AllocateModel allocateModel = null;
         if (allocate != null) {
             allocateModel = new AllocateModel(allocate.getNumberOfReplicas() == null ? null : allocate.getNumberOfReplicas().longValue(), allocate.getRequire(), allocate.getInclude(), allocate.getExclude());

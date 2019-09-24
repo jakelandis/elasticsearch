@@ -13,8 +13,6 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.GeneratedModels;
 import org.elasticsearch.common.xcontent.GeneratedModel;
-import org.elasticsearch.common.xcontent.ToXContentFragment;
-import org.elasticsearch.common.xcontent.ToXContentObject;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -39,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -377,7 +374,6 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         } else if (isMap) {
             List<TypeName> typeNames = ((ParameterizedTypeName) typeName).typeArguments;
             boolean mapOfStrings = typeNames.stream().allMatch(t -> "String".equals(ClassName.bestGuess(t.toString()).simpleName()));
-            // boolean mapOfStrings = simpleClassName.matches("^.*String\\s*,\\s*String.*");
             if (mapOfStrings) {
                 builder.staticInitializerBuilder.add("PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), (p, c) -> p.mapStrings(), new $T($S));\n", ParseField.class, field);
 
@@ -390,7 +386,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
         builder.constructorBuilder.addParameter(typeName, field).addStatement("this.$N = $N", field, field);
         builder.fields.add(FieldSpec.builder(typeName, field).addModifiers(Modifier.PUBLIC, Modifier.FINAL).build());
-        builder.toXContentStatements.add(new Tuple<>("builder.field($S," + field + ")", new Object[]{field}));
+        builder.toXContentFields.add(field);
     }
 
 

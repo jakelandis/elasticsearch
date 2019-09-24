@@ -37,7 +37,7 @@ public class XContentClassBuilder {
     final AtomicInteger parserPosition;
     final List<Tuple<ClassName, XContentClassBuilder>> children;
     final Set<ClassName> interfaces;
-    final List<Tuple<String, Object[]>> toXContentStatements;
+    final List<String> toXContentFields;
 
     static XContentClassBuilder newToXContentClassBuilder() {
         //static initializer
@@ -66,7 +66,7 @@ public class XContentClassBuilder {
         this.parserPosition = parserPosition;
         this.children = new ArrayList<>();
         this.interfaces = new HashSet<>();
-        this.toXContentStatements = new ArrayList<>();
+        this.toXContentFields = new ArrayList<>();
     }
 
     static JavaFile build(String packageName, String targetClassName, XContentClassBuilder builder) {
@@ -82,7 +82,7 @@ public class XContentClassBuilder {
         FieldSpec parserField = createConstructingObjectParser(builder, className);
 
         //public XContentBuilder toXContent
-        MethodSpec toContentMethod = createToXContent(builder);
+        MethodSpec toContentMethod = populateToXContent(builder);
 
 
         //outer class
@@ -126,26 +126,22 @@ public class XContentClassBuilder {
             .build();
     }
 
-    static MethodSpec createToXContent(XContentClassBuilder builder) {
+    static MethodSpec populateToXContent(XContentClassBuilder builder) {
         boolean fragment = builder.interfaces.contains(ClassName.get(ToXContentFragment.class));
         if (fragment == false) {
             builder.toXContentMethodBuilder.addStatement("builder.startObject()");
         }
-
-        builder.toXContentStatements.forEach(s -> {
-
-            assert s.v2().length == 1;
-            if (OBJECT_MAP_ITEM_METHOD_NAME.equals(s.v2()[0])) { //map of inner objects ... don't serialize the map itself
+        builder.toXContentFields.forEach(field -> {
+            if (OBJECT_MAP_ITEM_METHOD_NAME.equals(field)) { //map of inner objects ... don't serialize the map itself
                 builder.toXContentMethodBuilder.addStatement(
                     "for($T<String, $N> item : $N.entrySet()){\n" +
                         "builder.startObject(item.getKey());\n" +
                         "item.getValue().toXContent(builder, params);\n" +
                         "builder.endObject();\n}", Map.Entry.class, OBJECT_MAP_ITEM_CLASS_NAME, OBJECT_MAP_ITEM_METHOD_NAME);
             } else {
-                builder.toXContentMethodBuilder.addStatement(s.v1(), s.v2());
+                builder.toXContentMethodBuilder.addStatement("if($N != null) {\nbuilder.field($S," + field + ");}",field, field);
             }
         });
-
 
         if (fragment == false) {
             builder.toXContentMethodBuilder.addStatement("builder.endObject()");
@@ -175,7 +171,7 @@ public class XContentClassBuilder {
             child.v2().interfaces.add(ClassName.get(ToXContentObject.class));
         }
 
-        TypeSpec.Builder childBuilder = createInnerClassBuilder(child.v2(), child.v1(), createConstructingObjectParser(child.v2(), child.v1()), createToXContent(child.v2()));
+        TypeSpec.Builder childBuilder = createInnerClassBuilder(child.v2(), child.v1(), createConstructingObjectParser(child.v2(), child.v1()), populateToXContent(child.v2()));
         for (Tuple<ClassName, XContentClassBuilder> grandChild : child.v2().children) {
             createChildClass(grandChild, childBuilder);
         }
