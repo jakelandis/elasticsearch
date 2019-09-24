@@ -52,13 +52,15 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     static final String ROOT_OBJECT_NAME = ".";
 
 
-    private static Set<String> VALID_OBJECT_KEYS = Set.of("description", "type", "properties", "patternProperties");
-    private static Set<String> VALID_PRIMITIVE_KEYS = Set.of("description", "type", "$ref");
-    private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$id", "$schema", "definitions")).collect(Collectors.toSet());
-    private static Set<String> VALID_ARRAY_KEYS = Set.of("description", "type", "items");
-    private static Set<String> VALID_ARRAY_ITEMS_KEYS = Set.of("description", "type", "$ref");
+    // subsets of valid vocabularies at https://github.com/json-schema-org/json-schema-spec/blob/master/schema.json
+    // adds in a custom vocabulary of $deprecated TODO: create a meta schema that includes the custom vocabulary (and core)
+    private static Set<String> VALID_OBJECT_KEYS = Set.of("$comment", "$deprecated", "description", "type", "properties", "patternProperties");
+    private static Set<String> VALID_PRIMITIVE_KEYS = Set.of("$comment", "$deprecated", "description", "type", "$ref");
+    private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$comment", "$id", "$schema", "$defs")).collect(Collectors.toSet());
+    private static Set<String> VALID_ARRAY_KEYS = Set.of("$comment", "$deprecated", "description", "type", "items");
+    private static Set<String> VALID_ARRAY_ITEMS_KEYS = Set.of("$comment", "description", "type", "$ref");
     private static Set<JavaFile> written = new HashSet<>();
-    private static String PACAKGE_ROOT = "org.elasticsearch.xcontent.generated";
+    private String PACKAGE_ROOT = "org.elasticsearch.xcontent.generated";
     static String OBJECT_MAP_ITEM_CLASS_NAME = "ObjectMapItem";
     static String OBJECT_MAP_ITEM_METHOD_NAME = "objectMap";
 
@@ -284,7 +286,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         Path relativePathParent = relativePath.getParent();
         String[] parts = relativePathParent.toString().split("/");
         String packageName = Arrays.stream(parts).dropWhile(p -> "model".equals(p) == false).collect(Collectors.joining("."));
-        return packageName.replace("model.", PACAKGE_ROOT + ".");
+        return packageName.replace("model.", PACKAGE_ROOT + ".");
     }
 
     //

@@ -1,19 +1,19 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/2019-09/schema#",
   "type": "object",
   "properties": {
     "vegetables": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/veggie",
+        "$ref": "#/$defs/veggie",
         "description" : "bar"
       }
     },
     "fruits": {
-      "$ref": "#/definitions/veggie"
+      "$ref": "#/$defs/veggie"
     }
   },
-  "definitions": {
+  "$defs": {
     "veggie": {
       "type": "object",
       "properties": {

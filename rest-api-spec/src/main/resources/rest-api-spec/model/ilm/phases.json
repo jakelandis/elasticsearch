@@ -1,21 +1,21 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/2019-09/schema#",
   "type": "object",
-  "definitions": {
+  "$defs": {
     "phases": {
       "type": "object",
       "properties": {
         "hot": {
-          "$ref": "hot.json#/definitions/hot"
+          "$ref": "hot.json#/$defs/hot"
         },
         "warm": {
-          "$ref": "warm.json#/definitions/warm"
+          "$ref": "warm.json#/$defs/warm"
         },
         "cold": {
-          "$ref": "cold.json#/definitions/cold"
+          "$ref": "cold.json#/$defs/cold"
         },
         "delete": {
-          "$ref": "delete.json#/definitions/delete"
+          "$ref": "delete.json#/$defs/delete"
         }
       }
     }

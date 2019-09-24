@@ -1,12 +1,12 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/2019-09/schema#",
   "type": "object",
-  "definitions": {
+  "$defs": {
     "policy": {
       "type": "object",
       "properties": {
         "phases": {
-          "$ref": "phases.json#/definitions/phases"
+          "$ref": "phases.json#/$defs/phases"
         }
       }
     }

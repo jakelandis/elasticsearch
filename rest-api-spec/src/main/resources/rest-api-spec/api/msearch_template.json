@@ -60,7 +60,7 @@
       }
     },
     "body":{
-      "description":"The request definitions (metadata-search request definition pairs), separated by newlines",
+      "description":"The request $defs (metadata-search request definition pairs), separated by newlines",
       "required":true,
       "serialize":"bulk"
     }

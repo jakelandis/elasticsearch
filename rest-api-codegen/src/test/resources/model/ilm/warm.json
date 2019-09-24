@@ -1,7 +1,7 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/2019-09/schema#",
   "type": "object",
-  "definitions": {
+  "$defs": {
     "warm": {
       "type": "object",
       "properties": {
