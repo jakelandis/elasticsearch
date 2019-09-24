@@ -511,4 +511,15 @@ public class RestRequest implements ToXContent.Params {
 
     }
 
+    public boolean isVersion7() {
+        String versionParam = this.param("version");
+        //check the param
+        if ("7".equals(versionParam)) {
+            return true;
+        }
+        //check the header
+        List<String> v = this.getAllHeaderValues("version");
+        return v != null && v.size() == 1 && "7".equalsIgnoreCase(v.get(0));
+    }
+
 }

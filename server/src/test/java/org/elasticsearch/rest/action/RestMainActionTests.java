@@ -57,7 +57,7 @@ public class RestMainActionTests extends ESTestCase {
             }
         };
 
-        BytesRestResponse response = RestMainAction.convertMainResponse(mainResponse, restRequest, builder);
+        BytesRestResponse response = RestMainAction.convertMainResponse(mainResponse, restRequest, builder, false);
         assertNotNull(response);
         assertThat(response.status(), equalTo(RestStatus.OK));
 

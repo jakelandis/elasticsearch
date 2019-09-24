@@ -10,6 +10,7 @@ import org.elasticsearch.common.xcontent.ToXContent;
     //ilm
     @GeneratedModel("ilm/put_policy.json"),
     @GeneratedModel("v7/ilm/put_policy_v7.json"),
+    @GeneratedModel("v7/ilm/get_policy_v7.json"),
     @GeneratedModel("ilm/get_policy.json")
 })
 public interface GeneratedModels extends ToXContent {

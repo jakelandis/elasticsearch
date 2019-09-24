@@ -6,8 +6,10 @@
 
 package org.elasticsearch.xpack.ilm.action;
 
+import org.apache.logging.log4j.LogManager;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -15,7 +17,6 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
-
 import org.elasticsearch.xcontent.generated.ilm.AllocateModel;
 import org.elasticsearch.xcontent.generated.ilm.ColdModel;
 import org.elasticsearch.xcontent.generated.ilm.DeleteModel;
@@ -41,10 +42,11 @@ import org.elasticsearch.xpack.core.ilm.action.PutLifecycleAction;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class RestPutLifecycleAction extends BaseRestHandler {
+
+    private static final DeprecationLogger deprecationLogger = new DeprecationLogger(LogManager.getLogger(RestPutLifecycleAction.class));
 
     public RestPutLifecycleAction(RestController controller) {
         controller.registerHandler(RestRequest.Method.PUT, "/_ilm/policy/{name}", this);
@@ -67,12 +69,11 @@ public class RestPutLifecycleAction extends BaseRestHandler {
     }
 
     private PutLifecycleAction.Request toTransportRequest(RestRequest request, String name, XContentParser parser) {
-        List<String> v = request.getAllHeaderValues("version");
-        if (v == null || v.size() < 1 || (v.size() == 1 && "v8".equalsIgnoreCase(v.get(0)))) {
+        if (request.isVersion7()) {
+            return toTransportRequestV7(PutPolicyV7Model.PARSER.apply(parser, null), name);
+        } else {
             return toTransportRequest(PutPolicyModel.PARSER.apply(parser, null), name);
-        } else if (v.size() == 1 && "v7".equalsIgnoreCase(v.get(0))) {
-            return toTransportRequest(PutPolicyV7Model.PARSER.apply(parser, null), name);
-        } else throw new IllegalStateException("Bad Request ... todo: better error");
+        }
     }
 
     private PutLifecycleAction.Request toTransportRequest(PutPolicyModel model, String name) {
@@ -92,7 +93,7 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         return new PutLifecycleAction.Request(new LifecyclePolicy(name, phases));
     }
 
-    private PutLifecycleAction.Request toTransportRequest(PutPolicyV7Model v7Model, String name) {
+    private PutLifecycleAction.Request toTransportRequestV7(PutPolicyV7Model v7Model, String name) {
         Map<String, Phase> phases = new HashMap<>();
         if (v7Model.policy.phases.hot != null) {
             phases.put("hot", getHotPhase(v7Model.policy.phases.hot));
@@ -130,8 +131,11 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         if (warmV7Model.actions.allocate != null) {
             actions.put(AllocateAction.NAME, getAllocateAction(warmV7Model.actions.allocate));
         }
-        if (warmV7Model.actions.forcemerge != null) {
-            actions.put(ForceMergeAction.NAME, new ForceMergeAction(warmV7Model.actions.forcemerge.max_num_segments.intValue())); //<--  here
+        if (warmV7Model.actions.forcemerge != null && warmV7Model.actions.forcemerge.max_num_segments != null) {
+            actions.put(ForceMergeAction.NAME, new ForceMergeAction(warmV7Model.actions.forcemerge.max_num_segments.intValue()));
+            deprecationLogger.deprecatedAndMaybeLog("ilm_max_num_segments", "[max_num_segments] has been deprecated please use [max_number_segments]");
+        } else if (warmV7Model.actions.forcemerge != null && warmV7Model.actions.forcemerge.max_number_segments != null) {
+            actions.put(ForceMergeAction.NAME, new ForceMergeAction(warmV7Model.actions.forcemerge.max_number_segments.intValue()));
         }
         if (warmV7Model.actions.shrink != null) {
             actions.put(ShrinkAction.NAME, new ShrinkAction(warmV7Model.actions.shrink.number_of_shards.intValue()));
@@ -198,4 +202,6 @@ public class RestPutLifecycleAction extends BaseRestHandler {
             return TimeValue.parseTimeValue(value, key);
         }
     }
+
+
 }

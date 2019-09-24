@@ -53,20 +53,22 @@ public class RestMainAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
+        boolean isVersion7 = request.isVersion7(); //need to consume this parameter early ... //TODO: make this not so ugly
         return channel -> client.execute(MainAction.INSTANCE, new MainRequest(), new RestBuilderListener<MainResponse>(channel) {
             @Override
             public RestResponse buildResponse(MainResponse mainResponse, XContentBuilder builder) throws Exception {
-                return convertMainResponse(mainResponse, request, builder);
+
+                return convertMainResponse(mainResponse, request, builder, isVersion7);
             }
         });
     }
 
-    static BytesRestResponse convertMainResponse(MainResponse response, RestRequest request, XContentBuilder builder) throws IOException {
+    static BytesRestResponse convertMainResponse(MainResponse response, RestRequest request, XContentBuilder builder, boolean version7) throws IOException {
         // Default to pretty printing, but allow ?pretty=false to disable
         if (request.hasParam("pretty") == false) {
             builder.prettyPrint().lfAtEnd();
         }
-        toXContent(request, response, builder);
+        toXContent(request, response, builder,version7);
         return new BytesRestResponse(RestStatus.OK, builder);
     }
 
@@ -76,12 +78,11 @@ public class RestMainAction extends BaseRestHandler {
     }
 
 
-    private static void toXContent(RestRequest request, MainResponse mainResponse, XContentBuilder builder) throws IOException {
-        List<String> v = request.getAllHeaderValues("version");
-        if (v == null || v.size() < 1 || (v.size() == 1 && "v8".equalsIgnoreCase(v.get(0)))) {
-            toModel(mainResponse).toXContent(builder, request);
-        } else if (v.size() == 1 && "v7".equalsIgnoreCase(v.get(0))) {
+    private static void toXContent(RestRequest request, MainResponse mainResponse, XContentBuilder builder, boolean version7) throws IOException {
+        if (version7) {
             toModelV7(mainResponse).toXContent(builder, request);
+        } else {
+            toModel(mainResponse).toXContent(builder, request);
         }
     }
 

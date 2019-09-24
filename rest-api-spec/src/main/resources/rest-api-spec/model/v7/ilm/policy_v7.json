@@ -6,7 +6,7 @@
       "type": "object",
       "properties": {
         "phases": {
-          "$ref": "phases_7.json#/$defs/phases"
+          "$ref": "phases_v7.json#/$defs/phases"
         }
       }
     }

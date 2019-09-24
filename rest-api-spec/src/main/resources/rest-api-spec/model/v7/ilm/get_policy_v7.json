@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/2019-09/schema#",
+  "type": "object",
+  "patternProperties": {
+    "^.*$": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "modified_date": {
+          "type": "string"
+        },
+        "policy" : {
+          "$ref":  "policy_v7.json#/$defs/policy"
+        }
+      }
+    }
+  }
+}
