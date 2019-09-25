@@ -355,6 +355,7 @@ idea {
         restModelProfile.appendNode('sourceOutputDir ', [name: 'src/main/generated'])
         restModelProfile.appendNode('option', [name:'spec.root', value:'$PROJECT_DIR$/rest-api-spec/src/main/resources/rest-api-spec'])
         restModelProfile.appendNode('option', [name:'package.root', value:'org.elasticsearch.xcontent.generated'])
+        restModelProfile.appendNode('option', [name:'postfix.name', value:'Model'])
         restModelProfile.appendNode('module',[name: 'rest-api-models'])
 
         def internalModelProfile = annotationProcessing.appendNode('profile', [name:'internal', enabled:'true'])
@@ -362,6 +363,7 @@ idea {
         internalModelProfile.appendNode('sourceOutputDir ', [name: 'src/main/generated'])
         internalModelProfile.appendNode('option', [name:'spec.root', value:'$PROJECT_DIR$/server-models/src/main/resources'])
         internalModelProfile.appendNode('option', [name:'package.root', value:'org.elasticsearch.xcontent.generated.internal'])
+        internalModelProfile.appendNode('option', [name:'postfix.name', value:'InternalModel'])
         internalModelProfile.appendNode('module',[name: 'server-models'])
       }
     }

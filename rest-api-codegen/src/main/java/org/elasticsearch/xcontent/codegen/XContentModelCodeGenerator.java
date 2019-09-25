@@ -46,7 +46,7 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 
 @SupportedSourceVersion(RELEASE_11)
 @SupportedAnnotationTypes({"org.elasticsearch.common.xcontent.GeneratedModel", "org.elasticsearch.common.xcontent.GeneratedModels"})
-@SupportedOptions({"spec.root", "package.root"})
+@SupportedOptions({"spec.root", "package.root", "postfix.name"})
 public class XContentModelCodeGenerator extends AbstractProcessor {
 
     static final String ROOT_OBJECT_NAME = ".";
@@ -65,8 +65,10 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     static String OBJECT_MAP_ITEM_CLASS_NAME = "ObjectMapItem";
     static String OBJECT_MAP_ITEM_METHOD_NAME = "objectMap";
 
-    //package private for testing
-    String packageRoot;
+    //defaults for testing
+    String packageRoot = "org.example";
+
+    String postFixName = "ModelTest";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -80,6 +82,8 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(GeneratedModel.class, GeneratedModels.class))) {
             try {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing annotation from: " + element.getSimpleName());
+                packageRoot = processingEnv.getOptions().get("package.root");
+                postFixName = processingEnv.getOptions().get("postfix.name");
                 GeneratedModels generateXContentModels = element.getAnnotation(GeneratedModels.class);
                 List<GeneratedModel> models = new ArrayList<>();
                 if (generateXContentModels != null) {
@@ -106,7 +110,6 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                     Path specRootPath = new File(processingEnv.getOptions().get("spec.root")).toPath();
                     Path modelRootPath = specRootPath.resolve("model");
                     Path jsonPath = modelRootPath.resolve(model.value());
-                    packageRoot = processingEnv.getOptions().get("package.root");
 
                     String nameOfPackage = packageRoot + (additionalPackage.isEmpty() ? "" : "." + additionalPackage);
 
@@ -359,7 +362,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     private String formatClassName(String nameOfClass, boolean appendModel) {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass) + (appendModel ? "Model" : "");
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass) + (appendModel ? postFixName : "");
     }
 
     //Adds the Constructor and static initialization code to the XContentClassBuilder.
