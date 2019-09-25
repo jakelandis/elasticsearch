@@ -46,7 +46,7 @@ import static javax.lang.model.SourceVersion.RELEASE_11;
 
 @SupportedSourceVersion(RELEASE_11)
 @SupportedAnnotationTypes({"org.elasticsearch.common.xcontent.GeneratedModel", "org.elasticsearch.common.xcontent.GeneratedModels"})
-@SupportedOptions("spec.root")
+@SupportedOptions({"spec.root", "package.root"})
 public class XContentModelCodeGenerator extends AbstractProcessor {
 
     static final String ROOT_OBJECT_NAME = ".";
@@ -60,13 +60,17 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     private static Set<String> VALID_ARRAY_KEYS = Set.of("$comment", "$deprecated", "description", "type", "items");
     private static Set<String> VALID_ARRAY_ITEMS_KEYS = Set.of("$comment", "description", "type", "$ref");
     private static Set<JavaFile> written = new HashSet<>();
-    private String PACKAGE_ROOT = "org.elasticsearch.xcontent.generated";
+
+   // private String PACKAGE_ROOT = "org.elasticsearch.xcontent.generated";
     static String OBJECT_MAP_ITEM_CLASS_NAME = "ObjectMapItem";
     static String OBJECT_MAP_ITEM_METHOD_NAME = "objectMap";
 
+    //package private for testing
+    String packageRoot;
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
-        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting to process specification from: " + processingEnv.getOptions().get("spec.root"));
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "*********** Starting to process specification from: " + processingEnv.getOptions().get("spec.root") + " with package name:" + processingEnv.getOptions().get("package.root"));
 
         super.init(processingEnv);
     }
@@ -99,12 +103,12 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                     String nameOfClass = formatClassName(fileName.split("\\.")[0], true);
                     String additionalPackage = parts.length > 1 ? Arrays.stream(parts).limit(parts.length - 1).collect(Collectors.joining(".")) : "";
 
-
                     Path specRootPath = new File(processingEnv.getOptions().get("spec.root")).toPath();
                     Path modelRootPath = specRootPath.resolve("model");
                     Path jsonPath = modelRootPath.resolve(model.value());
+                    packageRoot = processingEnv.getOptions().get("package.root");
 
-                    String nameOfPackage = PACKAGE_ROOT + (additionalPackage.isEmpty() ? "" : "." + additionalPackage);
+                    String nameOfPackage = packageRoot + (additionalPackage.isEmpty() ? "" : "." + additionalPackage);
 
                     ClassName className = ClassName.get(nameOfPackage, nameOfClass);
                     HashSet<JavaFile> sourceFiles = new HashSet<>();
@@ -287,7 +291,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         Path relativePathParent = relativePath.getParent();
         String[] parts = relativePathParent.toString().split("/");
         String packageName = Arrays.stream(parts).dropWhile(p -> "model".equals(p) == false).collect(Collectors.joining("."));
-        return packageName.replace("model.", PACKAGE_ROOT + ".");
+        return packageName.replace("model.", packageRoot + ".");
     }
 
     //

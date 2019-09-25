@@ -44,7 +44,8 @@ compileJava {
     options.compilerArgs += [
             "-processor",
             "org.elasticsearch.xcontent.codegen.XContentModelCodeGenerator",
-            "-Aspec.root=" + new File(projectDir, "resources").getCanonicalPath()
+            "-Aspec.root=" + new File(projectDir, "resources").getCanonicalPath(),
+            "-Apackage.root=org.elasticsearch.xcontent.generated.internal"
     ]
 }
 
