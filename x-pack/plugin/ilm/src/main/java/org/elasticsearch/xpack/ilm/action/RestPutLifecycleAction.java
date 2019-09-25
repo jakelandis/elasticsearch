@@ -21,9 +21,9 @@ import org.elasticsearch.xcontent.generated.ilm.AllocateModel;
 import org.elasticsearch.xcontent.generated.ilm.ColdModel;
 import org.elasticsearch.xcontent.generated.ilm.DeleteModel;
 import org.elasticsearch.xcontent.generated.ilm.HotModel;
-import org.elasticsearch.xcontent.generated.ilm.PutPolicyModel;
+import org.elasticsearch.xcontent.generated.ilm.LifecyclePolicyModel;
 import org.elasticsearch.xcontent.generated.ilm.WarmModel;
-import org.elasticsearch.xcontent.generated.v7.ilm.PutPolicyV7Model;
+import org.elasticsearch.xcontent.generated.v7.ilm.LifecyclePolicyV7Model;
 import org.elasticsearch.xcontent.generated.v7.ilm.WarmV7Model;
 import org.elasticsearch.xpack.core.ilm.AllocateAction;
 import org.elasticsearch.xpack.core.ilm.DeleteAction;
@@ -70,13 +70,13 @@ public class RestPutLifecycleAction extends BaseRestHandler {
 
     private PutLifecycleAction.Request toTransportRequest(RestRequest request, String name, XContentParser parser) {
         if (request.isVersion7()) {
-            return toTransportRequestV7(PutPolicyV7Model.PARSER.apply(parser, null), name);
+            return toTransportRequestV7(LifecyclePolicyV7Model.PARSER.apply(parser, null), name);
         } else {
-            return toTransportRequest(PutPolicyModel.PARSER.apply(parser, null), name);
+            return toTransportRequest(LifecyclePolicyModel.PARSER.apply(parser, null), name);
         }
     }
 
-    private PutLifecycleAction.Request toTransportRequest(PutPolicyModel model, String name) {
+    private PutLifecycleAction.Request toTransportRequest(LifecyclePolicyModel model, String name) {
         Map<String, Phase> phases = new HashMap<>();
         if (model.policy.phases.hot != null) {
             phases.put("hot", getHotPhase(model.policy.phases.hot));
@@ -93,7 +93,7 @@ public class RestPutLifecycleAction extends BaseRestHandler {
         return new PutLifecycleAction.Request(new LifecyclePolicy(name, phases));
     }
 
-    private PutLifecycleAction.Request toTransportRequestV7(PutPolicyV7Model v7Model, String name) {
+    private PutLifecycleAction.Request toTransportRequestV7(LifecyclePolicyV7Model v7Model, String name) {
         Map<String, Phase> phases = new HashMap<>();
         if (v7Model.policy.phases.hot != null) {
             phases.put("hot", getHotPhase(v7Model.policy.phases.hot));

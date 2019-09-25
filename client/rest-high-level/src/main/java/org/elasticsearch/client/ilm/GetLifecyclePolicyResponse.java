@@ -22,13 +22,11 @@ package org.elasticsearch.client.ilm;
 
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xcontent.generated.ilm.GetPolicyModel;
+import org.elasticsearch.xcontent.generated.ilm.LifecyclePolicyWithMetadataModel;
 import org.elasticsearch.xcontent.generated.ilm.PolicyModel;
 
 import java.io.IOException;
 import java.util.Objects;
-
-import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpectedToken;
 
 public class GetLifecyclePolicyResponse {
 
@@ -48,7 +46,7 @@ public class GetLifecyclePolicyResponse {
         ImmutableOpenMap.Builder<String, PolicyModel> policies = ImmutableOpenMap.builder();
 
 
-        GetPolicyModel model = GetPolicyModel.PARSER.parse(parser, null);
+        LifecyclePolicyWithMetadataModel model = LifecyclePolicyWithMetadataModel.PARSER.parse(parser, null);
         model.objectMap.forEach((k,v) -> {
             policies.put(k,v.policy);
             });

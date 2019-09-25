@@ -65,10 +65,11 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     static String OBJECT_MAP_ITEM_CLASS_NAME = "ObjectMapItem";
     static String OBJECT_MAP_ITEM_METHOD_NAME = "objectMap";
 
-    //defaults for testing
-    String packageRoot = "org.example";
+    //package private for testing
+    String packageRoot;
 
-    String postFixName = "ModelTest";
+    private String postFixName;
+
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {

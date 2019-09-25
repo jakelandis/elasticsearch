@@ -22,14 +22,14 @@ import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xcontent.generated.ilm.AllocateModel;
 import org.elasticsearch.xcontent.generated.ilm.ColdModel;
 import org.elasticsearch.xcontent.generated.ilm.DeleteModel;
-import org.elasticsearch.xcontent.generated.ilm.GetPolicyModel;
 import org.elasticsearch.xcontent.generated.ilm.HotModel;
 import org.elasticsearch.xcontent.generated.ilm.InnerDeleteModel;
+import org.elasticsearch.xcontent.generated.ilm.LifecyclePolicyWithMetadataModel;
 import org.elasticsearch.xcontent.generated.ilm.PhasesModel;
 import org.elasticsearch.xcontent.generated.ilm.PolicyModel;
 import org.elasticsearch.xcontent.generated.ilm.UnfollowModel;
 import org.elasticsearch.xcontent.generated.ilm.WarmModel;
-import org.elasticsearch.xcontent.generated.v7.ilm.GetPolicyV7Model;
+import org.elasticsearch.xcontent.generated.v7.ilm.LifecyclePolicyWithMetadataV7Model;
 import org.elasticsearch.xcontent.generated.v7.ilm.PhasesV7Model;
 import org.elasticsearch.xcontent.generated.v7.ilm.PolicyV7Model;
 import org.elasticsearch.xcontent.generated.v7.ilm.WarmV7Model;
@@ -82,17 +82,17 @@ public class RestGetLifecycleAction extends BaseRestHandler {
     RestResponse toRestResponse(RestRequest restRequest, GetLifecycleAction.Response response, XContentBuilder builder, boolean isVersion7) throws IOException {
         List<GetLifecycleAction.LifecyclePolicyResponseItem> policies = response.getPolicies();
         if (isVersion7) {
-            Map<String, GetPolicyV7Model.ObjectMapItem> rootMap = new HashMap<>();
+            Map<String, LifecyclePolicyWithMetadataV7Model.ObjectMapItem> rootMap = new HashMap<>();
             for (GetLifecycleAction.LifecyclePolicyResponseItem policy : policies) {
-                rootMap.put(policy.getLifecyclePolicy().getName(), new GetPolicyV7Model.ObjectMapItem(policy.getVersion(), policy.getModifiedDate(), new PolicyV7Model(getPhasesModelV7(policy))));
+                rootMap.put(policy.getLifecyclePolicy().getName(), new LifecyclePolicyWithMetadataV7Model.ObjectMapItem(policy.getVersion(), policy.getModifiedDate(), new PolicyV7Model(getPhasesModelV7(policy))));
             }
-            new GetPolicyV7Model(rootMap).toXContent(builder, restRequest);
+            new LifecyclePolicyWithMetadataV7Model(rootMap).toXContent(builder, restRequest);
         } else {
-            Map<String, GetPolicyModel.ObjectMapItem> rootMap = new HashMap<>();
+            Map<String, LifecyclePolicyWithMetadataModel.ObjectMapItem> rootMap = new HashMap<>();
             for (GetLifecycleAction.LifecyclePolicyResponseItem policy : policies) {
-                rootMap.put(policy.getLifecyclePolicy().getName(), new GetPolicyModel.ObjectMapItem(policy.getVersion(), policy.getModifiedDate(), new PolicyModel(getPhasesModel(policy))));
+                rootMap.put(policy.getLifecyclePolicy().getName(), new LifecyclePolicyWithMetadataModel.ObjectMapItem(policy.getVersion(), policy.getModifiedDate(), new PolicyModel(getPhasesModel(policy))));
             }
-            new GetPolicyModel(rootMap).toXContent(builder, restRequest);
+            new LifecyclePolicyWithMetadataModel(rootMap).toXContent(builder, restRequest);
         }
         return new BytesRestResponse(RestStatus.OK, builder);
     }
