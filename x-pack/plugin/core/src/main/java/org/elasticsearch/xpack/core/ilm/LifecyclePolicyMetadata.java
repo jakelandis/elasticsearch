@@ -104,6 +104,7 @@ public class LifecyclePolicyMetadata extends AbstractDiffable<LifecyclePolicyMet
         builder.field(VERSION.getPreferredName(), version);
         builder.field(MODIFIED_DATE.getPreferredName(), modifiedDate);
         builder.field(MODIFIED_DATE_STRING.getPreferredName(), getModifiedDateString());
+
         builder.endObject();
         return builder;
     }

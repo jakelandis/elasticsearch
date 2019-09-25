@@ -19,6 +19,7 @@ import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.core.ilm.Step.StepKey;
+import org.elasticsearch.xpack.core.ilm.adaptors.LifecyclePolicyAdaptor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -134,12 +135,13 @@ public class LifecyclePolicy extends AbstractDiffable<LifecyclePolicy>
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        //return LifecyclePolicyAdaptor.toModel(this).toXContent(builder, params);
         builder.startObject();
-            builder.startObject(PHASES_FIELD.getPreferredName());
-                for (Phase phase : phases.values()) {
-                    builder.field(phase.getName(), phase);
-                }
-            builder.endObject();
+        builder.startObject(PHASES_FIELD.getPreferredName());
+        for (Phase phase : phases.values()) {
+            builder.field(phase.getName(), phase);
+        }
+        builder.endObject();
         builder.endObject();
         return builder;
     }

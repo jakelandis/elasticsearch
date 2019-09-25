@@ -26,17 +26,22 @@ import java.util.Objects;
  * A {@link LifecycleAction} which force-merges the index.
  */
 public class ForceMergeAction implements LifecycleAction {
+
+    //TODO: remove this hack ... once i get the cluster state serailzationa and de-serialization using the model, I remove toXContent for all of these actions.
     public static final String NAME = "forcemerge";
     public static final ParseField MAX_NUM_SEGMENTS_FIELD = new ParseField("max_num_segments");
+    public static final ParseField MAX_NUM_SEGMENTS_FIELD2 = new ParseField("max_number_segments");
 
     private static final ConstructingObjectParser<ForceMergeAction, Void> PARSER = new ConstructingObjectParser<>(NAME,
-        false, a -> {
-        int maxNumSegments = (int) a[0];
+        true,
+        a -> {
+        int maxNumSegments = a[0] != null ? (int) a[0] : (int) a[1];
         return new ForceMergeAction(maxNumSegments);
     });
 
     static {
-        PARSER.declareInt(ConstructingObjectParser.constructorArg(), MAX_NUM_SEGMENTS_FIELD);
+        PARSER.declareInt(ConstructingObjectParser.optionalConstructorArg(), MAX_NUM_SEGMENTS_FIELD);
+        PARSER.declareInt(ConstructingObjectParser.optionalConstructorArg(), MAX_NUM_SEGMENTS_FIELD2);
     }
 
     private final int maxNumSegments;

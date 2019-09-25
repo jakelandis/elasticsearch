@@ -14,8 +14,6 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ToXContentObject;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.core.ilm.LifecyclePolicy;
 
 import java.io.IOException;
@@ -31,7 +29,7 @@ public class GetLifecycleAction extends ActionType<GetLifecycleAction.Response> 
         super(NAME, GetLifecycleAction.Response::new);
     }
 
-    public static class Response extends ActionResponse implements ToXContentObject {
+    public static class Response extends ActionResponse {
 
         private List<LifecyclePolicyResponseItem> policies;
 
@@ -46,20 +44,6 @@ public class GetLifecycleAction extends ActionType<GetLifecycleAction.Response> 
 
         public List<LifecyclePolicyResponseItem> getPolicies() {
             return policies;
-        }
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.startObject();
-            for (LifecyclePolicyResponseItem item : policies) {
-                builder.startObject(item.getLifecyclePolicy().getName());
-                builder.field("version", item.getVersion());
-                builder.field("modified_date", item.getModifiedDate());
-                builder.field("policy", item.getLifecyclePolicy());
-                builder.endObject();
-            }
-            builder.endObject();
-            return builder;
         }
 
         @Override
@@ -86,9 +70,10 @@ public class GetLifecycleAction extends ActionType<GetLifecycleAction.Response> 
 
         @Override
         public String toString() {
-            return Strings.toString(this, true, true);
+            return "Response{" +
+                "policies=" + policies +
+                '}';
         }
-
     }
 
     public static class Request extends AcknowledgedRequest<Request> {
