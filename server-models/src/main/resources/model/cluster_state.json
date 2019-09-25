@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "cluster_name": {
+      "type": "string"
+    },
+    "cluster_uuid" : {
+      "type": "string"
+    },
+    "state_uuid" : {
+      "type": "string"
+    },
+    "master_node" : {
+      "type": "string"
+    }
+  }
+}
