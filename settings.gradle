@@ -7,6 +7,7 @@ List projects = [
   'rest-api-spec',
   'rest-api-codegen',
   'rest-api-models',
+  'server-models',
   'docs',
   'client:rest',
   'client:rest-high-level',

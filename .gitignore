@@ -46,5 +46,5 @@ eclipse-build
 testfixtures_shared/
 
 # generated source code
-rest-api-models/generated/
 rest-api-models/src/main/generated/
+server-models/src/main/generated/

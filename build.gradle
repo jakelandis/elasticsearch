@@ -347,14 +347,20 @@ idea {
         def ann = component.find { n ->
            n.name() == 'annotationProcessing' 
         }
-        component.remove(ann);  
+        component.remove(ann);
+        def annotationProcessing = component.appendNode('annotationProcessing');
 
-        def profile = component.appendNode('annotationProcessing').appendNode('profile', [name:'model', enabled:'true'])
-        profile.appendNode('outputRelativeToContentRoot', [value:'true'])
-        profile.appendNode('sourceOutputDir ', [name: 'src/main/generated'])
-        profile.appendNode('option', [name:'spec.root', value:'$PROJECT_DIR$/rest-api-spec/src/main/resources/rest-api-spec'])
-        profile.appendNode('module',[name: 'rest-api-models'])
+        def restModelProfile = annotationProcessing.appendNode('profile', [name:'rest', enabled:'true'])
+        restModelProfile.appendNode('outputRelativeToContentRoot', [value:'true'])
+        restModelProfile.appendNode('sourceOutputDir ', [name: 'src/main/generated'])
+        restModelProfile.appendNode('option', [name:'spec.root', value:'$PROJECT_DIR$/rest-api-spec/src/main/resources/rest-api-spec'])
+        restModelProfile.appendNode('module',[name: 'rest-api-models'])
 
+        def internalModelProfile = annotationProcessing.appendNode('profile', [name:'internal', enabled:'true'])
+        internalModelProfile.appendNode('outputRelativeToContentRoot', [value:'true'])
+        internalModelProfile.appendNode('sourceOutputDir ', [name: 'src/main/generated'])
+        internalModelProfile.appendNode('option', [name:'spec.root', value:'$PROJECT_DIR$/rest-api-spec/src/main/resources/internal'])
+        internalModelProfile.appendNode('module',[name: 'server-models'])
       }
     }
   }
