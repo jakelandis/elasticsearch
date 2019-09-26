@@ -18,7 +18,9 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.core.ilm.adaptors.ILMClusterStateAdaptor;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xcontent.generated.internal.ilm.ClusterStateIlmPolicyModel;
+import org.elasticsearch.xpack.core.ilm.adaptors.ClusterStateIlmPolicyAdaptor;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,6 +52,12 @@ public class IndexLifecycleMetadata implements MetaData.Custom {
                 }, POLICIES_FIELD);
         PARSER.declareString(ConstructingObjectParser.constructorArg(), OPERATION_MODE_FIELD);
     }
+
+    //FIXME: this doesn't work yet :(  start and start the server ... the parser needs to be smarter with how to inflate patternProperties ... it only handles deflating
+//    public static IndexLifecycleMetadata parse(XContentParser parser) throws IOException {
+//        ClusterStateIlmPolicyModel model = ClusterStateIlmPolicyModel.PARSER.parse(parser, null);
+//        return ClusterStateIlmPolicyAdaptor.fromModel(model);
+//    }
 
     private final Map<String, LifecyclePolicyMetadata> policyMetadatas;
 
@@ -100,7 +108,7 @@ public class IndexLifecycleMetadata implements MetaData.Custom {
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-       return  ILMClusterStateAdaptor.toModel(this).toXContent(builder, params);
+       return  ClusterStateIlmPolicyAdaptor.toModel(this).toXContent(builder, params);
 //        builder.field(POLICIES_FIELD.getPreferredName(), policyMetadatas);
 //        builder.field(OPERATION_MODE_FIELD.getPreferredName(), operationMode);
 //        return builder;

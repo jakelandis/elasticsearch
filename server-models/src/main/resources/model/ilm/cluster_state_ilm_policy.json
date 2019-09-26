@@ -9,30 +9,36 @@
     },
     "policies": {
       "type": "object",
-      "patternProperties": {
-        "^.*$": {
+      "properties": {
+        "$comment" : "THIS IS A BUG IN THE PROCESSOR ... I SHOULDN'T NEED TO DEFINE THIS TWICE !! ",
+        "policies": {
           "type": "object",
-          "properties": {
-            "version": {
-              "type": "integer"
-            },
-            "modified_date": {
-              "type": "integer"
-            },
-            "modified_date_string": {
-              "type": "string"
-            },
-            "headers": {
+          "patternProperties": {
+            "^.*$": {
               "type": "object",
-              "patternProperties": {
-                "^.*$": {
+              "properties": {
+                "version": {
+                  "type": "integer"
+                },
+                "modified_date": {
+                  "type": "integer"
+                },
+                "modified_date_string": {
                   "type": "string"
+                },
+                "headers": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^.*$": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "policy": {
+                  "$packageRoot": "org.elasticsearch.xcontent.generated",
+                  "$ref": "../../../../../../rest-api-spec/src/main/resources/rest-api-spec/model/ilm/policy.json#/$defs/policy"
                 }
               }
-            },
-            "policy": {
-              "$packageRoot": "org.elasticsearch.xcontent.generated",
-              "$ref": "../../../../../../rest-api-spec/src/main/resources/rest-api-spec/model/ilm/policy.json#/$defs/policy"
             }
           }
         }

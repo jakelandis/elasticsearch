@@ -182,6 +182,10 @@ public class IndexLifecycle extends Plugin implements ActionPlugin {
     public List<org.elasticsearch.common.xcontent.NamedXContentRegistry.Entry> getNamedXContent() {
         return Arrays.asList(
             // Custom Metadata
+
+            //TODO: need better support for inflating pattern properties (e.g. maps)
+//            new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(IndexLifecycleMetadata.TYPE),
+//                IndexLifecycleMetadata::parse),
             new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(IndexLifecycleMetadata.TYPE),
                 parser -> IndexLifecycleMetadata.PARSER.parse(parser, null)),
             new NamedXContentRegistry.Entry(MetaData.Custom.class, new ParseField(SnapshotLifecycleMetadata.TYPE),

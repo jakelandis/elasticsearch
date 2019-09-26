@@ -39,19 +39,23 @@ public class LifecyclePolicyAdaptor {
     /**
      * FROM MODEL
      */
-    public static LifecyclePolicy fromModel(LifecyclePolicyModel model, String name){
+    public static LifecyclePolicy fromModel(LifecyclePolicyModel model, String name) {
+        return fromModel(model.policy, name);
+    }
+
+    public static LifecyclePolicy fromModel(PolicyModel model, String name) {
         Map<String, Phase> phases = new HashMap<>();
-        if (model.policy.phases.hot != null) {
-            phases.put("hot", getHotPhase(model.policy.phases.hot));
+        if (model.phases.hot != null) {
+            phases.put("hot", getHotPhase(model.phases.hot));
         }
-        if (model.policy.phases.warm != null) {
-            phases.put("warm", getWarmPhase(model.policy.phases.warm));
+        if (model.phases.warm != null) {
+            phases.put("warm", getWarmPhase(model.phases.warm));
         }
-        if (model.policy.phases.cold != null) {
-            phases.put("cold", getColdPhase(model.policy.phases.cold));
+        if (model.phases.cold != null) {
+            phases.put("cold", getColdPhase(model.phases.cold));
         }
-        if (model.policy.phases.delete != null) {
-            phases.put("delete", getDeletePhase(model.policy.phases.delete));
+        if (model.phases.delete != null) {
+            phases.put("delete", getDeletePhase(model.phases.delete));
         }
         return new LifecyclePolicy(name, phases);
     }
