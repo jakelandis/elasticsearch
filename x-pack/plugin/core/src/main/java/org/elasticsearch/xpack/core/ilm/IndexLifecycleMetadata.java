@@ -18,6 +18,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.xpack.core.ilm.adaptors.ILMClusterStateAdaptor;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -51,6 +52,7 @@ public class IndexLifecycleMetadata implements MetaData.Custom {
     }
 
     private final Map<String, LifecyclePolicyMetadata> policyMetadatas;
+
     private final OperationMode operationMode;
 
     public IndexLifecycleMetadata(Map<String, LifecyclePolicyMetadata> policies, OperationMode operationMode) {
@@ -98,9 +100,10 @@ public class IndexLifecycleMetadata implements MetaData.Custom {
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.field(POLICIES_FIELD.getPreferredName(), policyMetadatas);
-        builder.field(OPERATION_MODE_FIELD.getPreferredName(), operationMode);
-        return builder;
+       return  ILMClusterStateAdaptor.toModel(this).toXContent(builder, params);
+//        builder.field(POLICIES_FIELD.getPreferredName(), policyMetadatas);
+//        builder.field(OPERATION_MODE_FIELD.getPreferredName(), operationMode);
+//        return builder;
     }
 
     @Override

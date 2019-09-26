@@ -45,12 +45,12 @@ compileJava {
             "-processor",
             "org.elasticsearch.xcontent.codegen.XContentModelCodeGenerator",
             "-Aspec.root=" + new File(projectDir, "resources").getCanonicalPath(),
-            "-Apackage.root=org.elasticsearch.xcontent.generated.internal",
-            "-Apostfix.name=InternalModel"
+            "-Apackage.root=org.elasticsearch.xcontent.generated.internal"
     ]
 }
 
 dependencies {
     annotationProcessor project(path: ':rest-api-codegen')
     compile project(path: ':libs:elasticsearch-x-content')
+    compile project(path: ':rest-api-models')
 }

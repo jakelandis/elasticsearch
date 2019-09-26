@@ -13,6 +13,8 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.xcontent.GeneratedModels;
 import org.elasticsearch.common.xcontent.GeneratedModel;
+import org.elasticsearch.common.xcontent.ToXContentFragment;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -55,20 +57,18 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     // subsets of valid vocabularies at https://github.com/json-schema-org/json-schema-spec/blob/master/schema.json
     // adds in a custom vocabulary of $deprecated TODO: create a meta schema that includes the custom vocabulary (and core)
     private static Set<String> VALID_OBJECT_KEYS = Set.of("$comment", "$deprecated", "description", "type", "properties", "patternProperties");
-    private static Set<String> VALID_PRIMITIVE_KEYS = Set.of("$comment", "$deprecated", "description", "type", "$ref");
-    private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$comment", "$id", "$schema", "$defs")).collect(Collectors.toSet());
+    private static Set<String> VALID_PRIMITIVE_KEYS = Set.of("$comment", "$deprecated", "description", "type", "$ref", "$packageRoot");
+    private static Set<String> VALID_ROOT_OBJECT_KEYS = Stream.concat(VALID_OBJECT_KEYS.stream(), Stream.of("$comment", "$id", "$schema", "$defs", "$writeExternalRefs", "$xContentFragment")).collect(Collectors.toSet());
     private static Set<String> VALID_ARRAY_KEYS = Set.of("$comment", "$deprecated", "description", "type", "items");
     private static Set<String> VALID_ARRAY_ITEMS_KEYS = Set.of("$comment", "description", "type", "$ref");
     private static Set<JavaFile> written = new HashSet<>();
 
-   // private String PACKAGE_ROOT = "org.elasticsearch.xcontent.generated";
+    // private String PACKAGE_ROOT = "org.elasticsearch.xcontent.generated";
     static String OBJECT_MAP_ITEM_CLASS_NAME = "ObjectMapItem";
     static String OBJECT_MAP_ITEM_METHOD_NAME = "objectMap";
 
     //package private for testing
     String packageRoot;
-
-    private String postFixName;
 
 
     @Override
@@ -84,7 +84,6 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             try {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing annotation from: " + element.getSimpleName());
                 packageRoot = processingEnv.getOptions().get("package.root");
-                postFixName = processingEnv.getOptions().get("postfix.name");
                 GeneratedModels generateXContentModels = element.getAnnotation(GeneratedModels.class);
                 List<GeneratedModel> models = new ArrayList<>();
                 if (generateXContentModels != null) {
@@ -179,12 +178,16 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
 
             traverse(objectToParse, ROOT_OBJECT_NAME, builder, externalReferences, className.packageName(), jsonPath);
 
+            JsonNode writeExternalRefs = objectToParse.get("$writeExternalRefs");
+            boolean shouldWriteExternalReferences = writeExternalRefs == null || writeExternalRefs.asBoolean();
+
             for (String externalRef : externalReferences) {
                 Path externalRefPath = jsonPath.getParent().resolve(Paths.get(externalRef.split("#")[0])); //todo more validation here, and/or clean up the jPath/reference stuff.
                 String nameOfClass = getNameOfClassFromReference(externalRef);
                 String nameOfPackage = getNameOfPackageFromReference(externalRef, jsonPath);
                 //TODO: here we assume that all references are objects and result in a class, primitive references should not result in classes , but rather add the field/array to the this builder
-                generateClasses(getClassName(nameOfPackage, nameOfClass), externalRefPath, externalRef.split("#")[1], sourceFiles);
+
+                 generateClasses(getClassName(nameOfPackage, nameOfClass), externalRefPath, externalRef.split("#")[1], shouldWriteExternalReferences ? sourceFiles : new HashSet<>());
             }
             sourceFiles.add(XContentClassBuilder.build(className.packageName(), className.simpleName(), builder));
         }
@@ -203,6 +206,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
         JsonNode typeNode = node.get("type");
         validateNotNull(node, typeNode, "type");
         if ("object".equals(typeNode.asText())) {
+            maybeSetAsFragment(node.get("$xContentFragment"), builder);
             validateObject(node, ROOT_OBJECT_NAME.equals(key));
             JsonNode propertiesNode = node.get("properties");
             AtomicBoolean patternPropertiesNode = new AtomicBoolean(false);
@@ -214,6 +218,8 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                 propertiesNode.fields().forEachRemaining(f -> {
                     //reference to another object
                     JsonNode reference = f.getValue().get("$ref");
+
+                    maybeHijackPackageRoot(f.getValue().get("$packageRoot"));
                     //not a reference
                     JsonNode nestedTypeNode = f.getValue().get("type");
                     boolean isDeprecrated = f.getValue().get("$deprecated") != null;
@@ -225,6 +231,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                                 addArray(f.getKey(), getClassName("", f.getValue().get("items").get("type").asText()), builder, false, isDeprecrated);
                             } else { //an array of object references
                                 reference = f.getValue().get("items").get("$ref");
+                                maybeHijackPackageRoot(f.getValue().get("items").get("$packageRoot"));
                                 String refText = reference.asText();
                                 if (isExternalReference(refText)) {
                                     externalReferences.add(refText);
@@ -236,12 +243,20 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                             if (f.getValue().get("patternProperties") != null) { //if this object is a patternProperties
                                 JsonNode patternProperties = f.getValue().get("patternProperties");
                                 patternProperties.fields().forEachRemaining(p -> {
-                                    validatePrimitive(p.getValue());
-                                    String nameOfClass = p.getValue().get("type").asText();
-                                    if (isReservedClassName(nameOfClass)) {
-                                        addMap(f.getKey(), ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true, isDeprecrated);
-                                    } else {
-                                        addMap(f.getKey(), getClassName(nameOfPackage, p.getValue().get("type").asText()), builder, true, isDeprecrated);
+                                    JsonNode type = p.getValue().get("type");
+                                    if(type != null && "object".equals(type.asText()) == false) {
+                                        validatePrimitive(p.getValue());
+                                        String nameOfClass = type.asText();
+                                        if (isReservedClassName(nameOfClass)) {
+                                            addMap(f.getKey(), ClassName.bestGuess(formatClassName(nameOfClass, false)), builder, true, isDeprecrated);
+                                        } else {
+                                            addMap(f.getKey(), getClassName(nameOfPackage, p.getValue().get("type").asText()), builder, true, isDeprecrated);
+                                        }
+                                    }else if(type != null && "object".equals(type.asText())){
+                                        //TODO: to support multiple of these, need to keep track of used names within a given class and change the name ...(same goes for normal inner classes)
+                                        traverse(p.getValue(), p.getKey(), addObject(OBJECT_MAP_ITEM_METHOD_NAME, getClassName("", OBJECT_MAP_ITEM_CLASS_NAME), builder, true, true, isDeprecrated), externalReferences, nameOfPackage, jsonPath);
+                                    }else{
+                                        throw new RuntimeException("could not find type of patternProperties for [" + patternProperties + "]");
                                     }
                                 });
 
@@ -269,6 +284,20 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
                     }
                 });
             }
+        }
+    }
+
+    //TODO: WARNING this will change the package root for all future objects, if this is set, it will need to be reset
+    //TODO: figure out how to set it back to the correct value when done hijacking...or better track the package name per object creation
+    private void maybeHijackPackageRoot(JsonNode packageRootNode) {
+        if (packageRootNode != null) {
+            packageRoot = packageRootNode.asText();
+        }
+    }
+
+    private void maybeSetAsFragment(JsonNode fragmentNode, XContentClassBuilder builder){
+        if(fragmentNode != null && fragmentNode.asBoolean()){
+            builder.interfaces.add(ClassName.get(ToXContentFragment.class));
         }
     }
 
@@ -306,6 +335,9 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             addInitializationCode(typeName, className.simpleName(), field, builder, true, false, false, isDeprecated);
         }
         XContentClassBuilder child = XContentClassBuilder.newToXContentClassBuilder();
+        if (isMapOfObjects) {
+            child.interfaces.add(ClassName.get(ToXContentFragment.class));
+        }
         builder.children.add(new Tuple<>(className, child));
         return child;
     }
@@ -363,7 +395,7 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
     }
 
     private String formatClassName(String nameOfClass, boolean appendModel) {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass) + (appendModel ? postFixName : "");
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, nameOfClass) + (appendModel ? "Model" : "");
     }
 
     //Adds the Constructor and static initialization code to the XContentClassBuilder.
@@ -401,6 +433,8 @@ public class XContentModelCodeGenerator extends AbstractProcessor {
             fieldBuilder.addAnnotation(Deprecated.class);
         }
         builder.fields.add(fieldBuilder.build());
+
+
 
         builder.toXContentFields.add(field);
     }

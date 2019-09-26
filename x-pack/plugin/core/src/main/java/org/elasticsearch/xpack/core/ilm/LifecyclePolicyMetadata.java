@@ -16,6 +16,7 @@ import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.core.ilm.adaptors.ILMClusterStateAdaptor;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -98,6 +99,7 @@ public class LifecyclePolicyMetadata extends AbstractDiffable<LifecyclePolicyMet
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        // return ILMClusterStateAdaptor.toModel(this).toXContent(builder, params);
         builder.startObject();
         builder.field(POLICY.getPreferredName(), policy);
         builder.field(HEADERS.getPreferredName(), headers);

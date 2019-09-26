@@ -5,7 +5,7 @@ import org.elasticsearch.common.xcontent.ToXContent;
 
 @org.elasticsearch.common.xcontent.GeneratedModels({
 
-    @GeneratedModel("cluster_state.json")
+    @GeneratedModel("ilm/cluster_state_ilm_policy.json")
 })
 public interface GeneratedServerModels extends ToXContent {
 }

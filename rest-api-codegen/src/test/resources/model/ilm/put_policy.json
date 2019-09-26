@@ -1,8 +1,10 @@
 {
   "$schema": "http://json-schema.org/2019-09/schema#",
   "type": "object",
+  "$writeExternalRefs" : true,
   "properties": {
     "policy": {
+      "$packageRoot" : "foo.bar",
       "$ref": "policy.json#/$defs/policy"
     }
   }

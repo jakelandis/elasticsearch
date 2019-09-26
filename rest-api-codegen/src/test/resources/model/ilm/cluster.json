@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/2019-09/schema#",
+  "type": "object",
+  "$xContentFragment" : true,
+  "properties": {
+    "index_lifecycle": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "number"
+            },
+            "modified_date": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

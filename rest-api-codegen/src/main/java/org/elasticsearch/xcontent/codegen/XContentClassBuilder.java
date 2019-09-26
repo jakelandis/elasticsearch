@@ -72,9 +72,7 @@ public class XContentClassBuilder {
     static JavaFile build(String packageName, String targetClassName, XContentClassBuilder builder) {
         ClassName className = ClassName.get(packageName, targetClassName);
 
-        if (OBJECT_MAP_ITEM_CLASS_NAME.equals(className.simpleName())) {
-            builder.interfaces.add(ClassName.get(ToXContentFragment.class));
-        } else {
+        if(builder.interfaces.contains(ClassName.get(ToXContentFragment.class)) == false){
             builder.interfaces.add(ClassName.get(ToXContentObject.class));
         }
 
@@ -165,9 +163,7 @@ public class XContentClassBuilder {
     }
 
     static void createChildClass(Tuple<ClassName, XContentClassBuilder> child, TypeSpec.Builder parent) {
-        if (OBJECT_MAP_ITEM_CLASS_NAME.equals(child.v1().simpleName())) {
-            child.v2().interfaces.add(ClassName.get(ToXContentFragment.class));
-        } else {
+        if(child.v2().interfaces.contains(ClassName.get(ToXContentFragment.class)) == false){
             child.v2().interfaces.add(ClassName.get(ToXContentObject.class));
         }
 

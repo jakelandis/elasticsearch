@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/2019-09/schema#",
+  "type": "object",
+  "$writeExternalRefs": false,
+  "$xContentFragment": true,
+  "properties": {
+    "operation_mode": {
+      "type": "string"
+    },
+    "policies": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "integer"
+            },
+            "modified_date": {
+              "type": "integer"
+            },
+            "modified_date_string": {
+              "type": "string"
+            },
+            "headers": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {
+                  "type": "string"
+                }
+              }
+            },
+            "policy": {
+              "$packageRoot": "org.elasticsearch.xcontent.generated",
+              "$ref": "../../../../../../rest-api-spec/src/main/resources/rest-api-spec/model/ilm/policy.json#/$defs/policy"
+            }
+          }
+        }
+      }
+    }
+  }
+}
