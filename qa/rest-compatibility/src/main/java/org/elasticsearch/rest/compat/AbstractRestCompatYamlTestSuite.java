@@ -43,7 +43,6 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
 
         Set<String> testsClassPaths = new HashSet<>();
         Path absoluteTestsPath = PathUtils.get(ESClientYamlSuiteTestCase.class.getResource(ESClientYamlSuiteTestCase.TESTS_PATH).toURI());
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>. " + absoluteTestsPath);
         if (Files.isDirectory(absoluteTestsPath)) {
             Files.walk(absoluteTestsPath).forEach(file -> {
                 if (file.toString().endsWith(".yml")) {
@@ -52,7 +51,6 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
                 }
             });
         }
-        testsClassPaths.forEach(t -> System.out.println("************************ " + t));
         Map<ClientYamlTestCandidate, ClientYamlTestCandidate> testOverrides = getTestsOverrides();
         List<Object[]> tests = new ArrayList<>(100);
 
@@ -63,9 +61,8 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
                 .flatMap(Arrays::stream).map(o -> (ClientYamlTestCandidate) o)
                 .forEach(testCandidate -> {
                     List<ClientYamlTestCandidate> testCandidates = new ArrayList<>(100);
-
                     if (testOverrides.containsKey(testCandidate)) {
-                        testCandidate = testOverrides.get(testCandidate);
+                        testCandidate = testOverrides.remove(testCandidate);
                     }
                     testCandidates.add(testCandidate);
                     //disable checking for warning headers, we know that many of the tests will have deprecation and compatibility warnings.
@@ -84,10 +81,13 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
 
                 });
         }
+        if(testOverrides.isEmpty() == false){
+            fail("You have lingering test overrides");
+            testOverrides.forEach((k,v) -> System.out.println(k));
+        }
         return tests;
     }
 
-    //TODO: clean up this silliness
     private static Map<ClientYamlTestCandidate, ClientYamlTestCandidate> getTestsOverrides() throws Exception {
         Iterable<Object[]> candidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, TESTS_PATH_OVERRIDE);
         Map<ClientYamlTestCandidate, ClientYamlTestCandidate> testOverrides = new HashMap<>(100);
