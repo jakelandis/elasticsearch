@@ -16,27 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.elasticsearch.gradle.test
+import org.elasticsearch.gradle.test.RestIntegTestTask
 
+apply plugin: 'elasticsearch.testclusters'
+apply plugin: 'elasticsearch.build'
+apply plugin: 'elasticsearch.rest-test'
 
-import org.gradle.api.tasks.Input
-
-/**
- * A wrapper task around setting up a cluster and running rest tests.
- */
-class RestIntegTestTask extends AbstractRestTestTask {
-
-     /** Flag indicating whether the rest tests in the rest spec should be run. */
-    @Input
-    Boolean includePackaged = false
-
-    RestIntegTestTask() {
-        super.setup()
-    }
-
-    /** Sets the includePackaged property */
-    public void includePackaged(boolean include) {
-        includePackaged = include
-    }
-
+dependencies {
+  compile project(':test:framework')
 }
+
+
+
+

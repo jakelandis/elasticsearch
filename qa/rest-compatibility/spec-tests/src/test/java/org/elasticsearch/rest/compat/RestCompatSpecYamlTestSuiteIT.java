@@ -5,16 +5,16 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
 /**
- * Runs the prior version's elasticsearch/modules REST tests against a cluster of the current (this) version.
+ * Runs the prior version's elasticsearch/rest-api-spec REST tests against a cluster of the current (this) version.
  */
-public class RestCompatModulesYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+public class RestCompatSpecYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-    public RestCompatModulesYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public RestCompatSpecYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 
     @ParametersFactory
     public static Iterable<Object[]> parameters() throws Exception {
-        return AbstractRestCompatYamlTestSuite.getPriorVersionTests("modules");
+        return AbstractRestCompatYamlTestSuite.getTests();
     }
 }

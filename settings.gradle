@@ -54,6 +54,8 @@ List projects = [
   'distribution:tools:launchers',
   'distribution:tools:plugin-cli',
   'distribution:tools:keystore-cli',
+  'qa:rest-compatibility',
+  'qa:rest-compatibility:spec-tests',
   'server',
   'server:cli',
   'test:framework',

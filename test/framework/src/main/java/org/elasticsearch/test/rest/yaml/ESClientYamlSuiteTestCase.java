@@ -51,7 +51,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,8 +88,8 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      */
     private static final String REST_TESTS_VALIDATE_SPEC = "tests.rest.validate_spec";
 
-    private static final String DEFAULT_TESTS_PATH = "/rest-api-spec/test";
-    private static final String DEFAULT_SPEC_PATH = "/rest-api-spec/api";
+    public static final String TESTS_PATH = "/rest-api-spec/test";
+    public static final String SPEC_PATH = "/rest-api-spec/api";
 
     /**
      * This separator pattern matches ',' except it is preceded by a '\'.
@@ -126,7 +125,7 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
         if (restTestExecutionContext == null) {
             assert adminExecutionContext == null;
             assert blacklistPathMatchers == null;
-            final ClientYamlSuiteRestSpec restSpec = ClientYamlSuiteRestSpec.load(getApiSpecRelativePath());
+            final ClientYamlSuiteRestSpec restSpec = ClientYamlSuiteRestSpec.load(SPEC_PATH);
             validateSpec(restSpec);
             final List<HttpHost> hosts = getClusterHosts();
             Tuple<Version, Version> versionVersionTuple = readVersionsFromCatNodes(adminClient());
@@ -156,10 +155,6 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
         restTestExecutionContext.clear();
     }
 
-    protected String getApiSpecRelativePath() {
-        return DEFAULT_SPEC_PATH;
-    }
-
     protected ClientYamlTestClient initClientYamlTestClient(
             final ClientYamlSuiteRestSpec restSpec,
             final RestClient restClient,
@@ -187,7 +182,7 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      * defined in {@link ExecutableSection}.
      */
     public static Iterable<Object[]> createParameters() throws Exception {
-        return createParameters(ExecutableSection.XCONTENT_REGISTRY, DEFAULT_TESTS_PATH);
+        return createParameters(ExecutableSection.XCONTENT_REGISTRY, TESTS_PATH);
     }
 
     /**
