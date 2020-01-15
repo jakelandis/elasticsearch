@@ -56,6 +56,8 @@ class RestCompatTestTask extends AbstractRestTestTask {
         }
 
         return Boilerplate.maybeCreate(project.tasks, "${versionPrefix}copyRestSpec", Copy) { Copy copy ->
+            //need to ensure different versions land in different directories to ensure parallel builds don't stomp on each other
+            copy.into(new File(project.sourceSets.test.output.resourcesDir, version))
             if (isSnapshot) {
                 //TODO: figure out which source to pull from
                 //copy files from source
@@ -64,6 +66,7 @@ class RestCompatTestTask extends AbstractRestTestTask {
                 copy.from(new File(project.findProject(":distribution:bwc:minor").checkoutDir, "rest-api-spec/src/main/resources")) {
                     includeEmptyDirs = false
                     include 'rest-api-spec/**'
+                    //TODO: always pull the tests from source, even for released versions so that we can better support modules and plugins
                     filesMatching('rest-api-spec/test/**') { FileCopyDetails details ->
                         if (copyRestSpecTests == false) {
                             details.exclude()
@@ -72,7 +75,6 @@ class RestCompatTestTask extends AbstractRestTestTask {
                 }
             } else {
                 // copy from repository jar
-                copy.into(project.sourceSets.test.output.resourcesDir)
                 copy.dependsOn project.configurations."${versionPrefix}restSpec"
                 copy.from({ project.zipTree(project.configurations."${versionPrefix}restSpec".singleFile) }) {
                     includeEmptyDirs = false
@@ -83,7 +85,6 @@ class RestCompatTestTask extends AbstractRestTestTask {
                         }
                     }
                 }
-
                 if (project.plugins.hasPlugin(IdeaPlugin)) {
                     project.idea {
                         module {

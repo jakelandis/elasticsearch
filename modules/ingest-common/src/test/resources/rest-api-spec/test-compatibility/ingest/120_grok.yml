@@ -1,4 +1,4 @@
-# Overriding since when the number of grok patterns are different between versions
+# Overriding since the number of grok patterns are different between versions
 "Test Grok Patterns Retrieval":
   - do:
       ingest.processor_grok: {}
