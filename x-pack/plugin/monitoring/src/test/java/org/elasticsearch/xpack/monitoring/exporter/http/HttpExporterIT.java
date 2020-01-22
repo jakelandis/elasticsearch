@@ -5,6 +5,7 @@
  */
 package org.elasticsearch.xpack.monitoring.exporter.http;
 
+import com.unboundid.util.Base64;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest;
@@ -19,6 +20,7 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.settings.MockSecureSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.time.DateFormatter;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
@@ -33,6 +35,7 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.env.TestEnvironment;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.rest.RestUtils;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
@@ -42,6 +45,9 @@ import org.elasticsearch.test.http.MockWebServer;
 import org.elasticsearch.xpack.core.monitoring.exporter.MonitoringDoc;
 import org.elasticsearch.xpack.core.monitoring.exporter.MonitoringTemplateUtils;
 import org.elasticsearch.xpack.core.ssl.SSLService;
+import org.elasticsearch.xpack.monitoring.LocalStateMonitoring;
+import org.elasticsearch.xpack.monitoring.Monitoring;
+import org.elasticsearch.xpack.monitoring.MonitoringService;
 import org.elasticsearch.xpack.monitoring.MonitoringTestUtils;
 import org.elasticsearch.xpack.monitoring.collector.indices.IndexRecoveryMonitoringDoc;
 import org.elasticsearch.xpack.monitoring.exporter.ClusterAlertsUtil;
@@ -50,6 +56,8 @@ import org.elasticsearch.xpack.monitoring.exporter.Exporter;
 import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
 import org.junit.After;
 import org.junit.Before;
+import org.mockito.Mock;
+import org.mockito.cglib.core.Local;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -93,8 +101,31 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
     private final boolean currentLicenseAllowsWatcher = true;
     private final boolean watcherAlreadyExists = randomBoolean();
     private final Environment environment = TestEnvironment.newEnvironment(Settings.builder().put("path.home", createTempDir()).build());
+    private final String userName = "elasticuser";
+    private final String pass = "elasticpass";
+    private final String pass2 = "anotherpassword";
+    private final String authHeaderValue = Base64.encode(userName + ":" + pass);
+    private final String authHeaderValue2 = Base64.encode(userName + ":" + pass2);
 
     private MockWebServer webServer;
+
+    private MockSecureSettings mockSecureSettings  = new MockSecureSettings();
+    @Override
+    protected Settings nodeSettings(int nodeOrdinal) {
+
+        Settings.Builder builder = Settings.builder()
+            .put(super.nodeSettings(nodeOrdinal))
+            .put(MonitoringService.INTERVAL.getKey(), MonitoringService.MIN_INTERVAL)
+//                .put(XPackSettings.SECURITY_ENABLED.getKey(), false)
+//                .put(XPackSettings.WATCHER_ENABLED.getKey(), false)
+            // Disable native ML autodetect_process as the c++ controller won't be available
+//                .put(MachineLearningField.AUTODETECT_PROCESS.getKey(), false)
+//                .put(XPackSettings.MACHINE_LEARNING_ENABLED.getKey(), false)
+            // we do this by default in core, but for monitoring this isn't needed and only adds noise.
+            .put("index.lifecycle.history_index_enabled", false)
+            .put("index.store.mock.check_index_on_close", false);
+        return builder.build();
+    }
 
     @Before
     public void startWebServer() throws IOException {
@@ -113,7 +144,12 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         return true;
     }
 
+    private Settings.Builder secureSettings(String password) {
+        mockSecureSettings.setString("xpack.monitoring.exporters._http.secure_auth_password", password);
+        return baseSettings().setSecureSettings(mockSecureSettings);
+    }
     private Settings.Builder baseSettings() {
+
         return Settings.builder()
             .put("xpack.monitoring.exporters._http.enabled", false)
             .put("xpack.monitoring.exporters._http.type", "http")
@@ -121,10 +157,13 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
             .put("xpack.monitoring.exporters._http.headers.ignored", "value") // ensure that headers can be used by settings
             .put("xpack.monitoring.exporters._http.host", getFormattedAddress(webServer))
             .putList("xpack.monitoring.exporters._http.cluster_alerts.management.blacklist", clusterAlertBlacklist)
-            .put("xpack.monitoring.exporters._http.index.template.create_legacy_templates", includeOldTemplates);
+            .put("xpack.monitoring.exporters._http.index.template.create_legacy_templates", includeOldTemplates)
+            .put("xpack.monitoring.exporters._http.auth.username", userName);
+
     }
 
     public void testExport() throws Exception {
+
         final Settings settings = baseSettings().build();
 
         enqueueGetClusterVersionResponse(Version.CURRENT);
@@ -136,10 +175,43 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         final int nbDocs = randomIntBetween(1, 25);
         export(settings, newRandomMonitoringDocs(nbDocs));
 
+
         assertMonitorResources(webServer,
                                templatesExistsAlready, includeOldTemplates, pipelineExistsAlready,
                                remoteClusterAllowsWatcher, currentLicenseAllowsWatcher, watcherAlreadyExists);
+
         assertBulk(webServer, nbDocs);
+
+    }
+
+    public void testSecureSetting() throws Exception{
+        Settings settings = secureSettings(pass).build();
+        PluginsService pluginsService =  internalCluster().getInstances(PluginsService.class).iterator().next();
+        LocalStateMonitoring localStateMonitoring = pluginsService.filterPlugins(LocalStateMonitoring.class).iterator().next();
+        localStateMonitoring.getMonitoring().reload(settings);
+
+        enqueueGetClusterVersionResponse(Version.CURRENT);
+        enqueueSetupResponses(webServer,
+            templatesExistsAlready, includeOldTemplates, pipelineExistsAlready,
+            remoteClusterAllowsWatcher, currentLicenseAllowsWatcher, watcherAlreadyExists);
+        enqueueResponse(200, "{\"errors\": false, \"msg\": \"successful bulk request\"}");
+
+        final int nbDocs = randomIntBetween(1, 25);
+        export(settings, newRandomMonitoringDocs(nbDocs));
+        assertEquals(webServer.takeRequest().getHeader("Authorization").replace("Basic", "").replace(" ", ""), authHeaderValue);
+
+        settings = secureSettings(pass2).build();
+        localStateMonitoring.getMonitoring().reload(settings);
+        enqueueGetClusterVersionResponse(Version.CURRENT);
+        enqueueSetupResponses(webServer,
+            templatesExistsAlready, includeOldTemplates, pipelineExistsAlready,
+            remoteClusterAllowsWatcher, currentLicenseAllowsWatcher, watcherAlreadyExists);
+        enqueueResponse(200, "{\"errors\": false, \"msg\": \"successful bulk request\"}");
+
+        export(settings, newRandomMonitoringDocs(nbDocs));
+        //this fails ... but the config is indeed updated
+        assertEquals(webServer.takeRequest().getHeader("Authorization").replace("Basic", "").replace(" ", ""), authHeaderValue2);
+
     }
 
     public void testExportWithHeaders() throws Exception {

@@ -43,12 +43,13 @@ public class LocalStateMonitoring extends LocalStateCompositeXPackPlugin {
             return Collections.singletonList(XPackUsageFeatureAction.MONITORING);
         }
     }
+    final Monitoring monitoring;
 
     public LocalStateMonitoring(final Settings settings, final Path configPath) throws Exception {
         super(settings, configPath);
         LocalStateMonitoring thisVar = this;
 
-        plugins.add(new Monitoring(settings) {
+        monitoring = new Monitoring(settings) {
             @Override
             protected SSLService getSslService() {
                 return thisVar.getSslService();
@@ -63,7 +64,9 @@ public class LocalStateMonitoring extends LocalStateCompositeXPackPlugin {
             protected XPackLicenseState getLicenseState() {
                 return thisVar.getLicenseState();
             }
-        });
+
+        };
+        plugins.add(monitoring);
         plugins.add(new Watcher(settings) {
             @Override
             protected SSLService getSslService() {
@@ -76,6 +79,12 @@ public class LocalStateMonitoring extends LocalStateCompositeXPackPlugin {
             }
         });
         plugins.add(new IndexLifecycle(settings));
+
+
+    }
+
+    public Monitoring getMonitoring() {
+        return monitoring;
     }
 
     @Override
