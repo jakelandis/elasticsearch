@@ -294,6 +294,14 @@ public class BwcVersions {
             .orElse(null);
     }
 
+    private Version getLatestRevisionInMinor(int major, int minor ,int revision) {
+        return groupByMajor.get(major).stream()
+            .filter(v -> v.getMinor() == minor)
+            .filter(v -> v.getRevision() == revision)
+            .max(Version::compareTo)
+            .orElse(null);
+    }
+
     private Version getLatestVersionByKey(Map<Integer, List<Version>> groupByMajor, int key) {
         return groupByMajor.getOrDefault(key, emptyList()).stream()
             .max(Version::compareTo)
@@ -385,4 +393,19 @@ public class BwcVersions {
         return unmodifiableList(unreleasedWireCompatible);
     }
 
+    public Version getCurrentVersion() {
+        return currentVersion;
+    }
+
+    public Version getLatestInMinor() {
+        List<Version> prevMajors = groupByMajor.get(currentVersion.getMajor() - 1);
+        return getLatestInMinor(currentVersion.getMajor() - 1, prevMajors.get(prevMajors.size() - 1).getMinor());
+
+    }
+
+    public Version getLatestRevisionInMinor() {
+        List<Version> prevMajors = groupByMajor.get(currentVersion.getMajor() - 1);
+        return getLatestRevisionInMinor(currentVersion.getMajor() - 1, prevMajors.get(prevMajors.size() - 2).getMinor(),
+            prevMajors.get(prevMajors.size() - 2).getRevision());
+    }
 }
