@@ -4,3 +4,16 @@ apply plugin: 'nebula.maven-scm'
 
 test.enabled = false
 jarHell.enabled = false
+
+
+//import org.elasticsearch.gradle.BwcVersions
+//import org.elasticsearch.gradle.git.CheckoutVersion;
+
+//bwcVersions.forPreviousIndexCompatible() { BwcVersions.SimpleVersionInfo versionInfo ->
+//
+//
+//  tasks.create(name: "v${versionInfo.version}#checkout", type: CheckoutVersion, constructorArgs: [versionInfo.version, versionInfo.branch]) {
+//
+//  }
+//
+//}

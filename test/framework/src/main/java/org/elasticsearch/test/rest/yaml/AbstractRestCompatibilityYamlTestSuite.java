@@ -48,8 +48,8 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
             List<ClientYamlTestCandidate> testCandidates = new ArrayList<>(1);
             Arrays.stream(candidateArray).map(o -> (ClientYamlTestCandidate) o).forEach(testCandidate -> {
                 if (localCandidates.containsKey(testCandidate)) {
-                    logger.info("Overriding test [{}] from version [{}] with local test.",
-                        testCandidate.toString(), getApiAndTestVersion());
+                    logger.info("Overriding test[{}] from version [{}] with local test.",
+                        testCandidate.toString(), getCompatSource());
                     testCandidate = localCandidates.remove(testCandidate);
                 }
                 mutateTestCandidate(testCandidate);
@@ -91,16 +91,17 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
         return localCompatibilityTests;
     }
 
-    private static String getApiAndTestVersion() {
-        return Objects.requireNonNull(System.getProperty("bwcVersion"), "Gradle is required to set the bwcVersion system property");
+    private static String getCompatSource() {
+        System.out.println("**************************** compatVersion: " + System.getProperty("compatVersion"));
+        return Objects.requireNonNull(System.getProperty("compatVersion"), "Gradle is required to set the compatVersion system property");
     }
 
     private static String getTestsPath() {
-        return "/" + getApiAndTestVersion() + ESClientYamlSuiteTestCase.TESTS_PATH;
+        return "/" + getCompatSource() + ESClientYamlSuiteTestCase.TESTS_PATH;
     }
 
     @Override
     protected String getSpecPath() {
-        return "/" + getApiAndTestVersion() + ESClientYamlSuiteTestCase.SPEC_PATH;
+        return "/" + getCompatSource() + ESClientYamlSuiteTestCase.SPEC_PATH;
     }
 }

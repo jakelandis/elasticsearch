@@ -90,17 +90,19 @@ public class BwcVersions {
 
     private final Version currentVersion;
     private final Map<Integer, List<Version>> groupByMajor;
-    private final Map<Version, UnreleasedVersionInfo> unreleased;
+    private final Map<Version, VersionInfo> unreleased;
 
-    public class UnreleasedVersionInfo {
+    public class VersionInfo {
         public final Version version;
         public final String branch;
         public final String gradleProjectPath;
+        public final boolean isReleased;
 
-        UnreleasedVersionInfo(Version version, String branch, String gradleProjectPath) {
+        VersionInfo(Version version, String branch, String gradleProjectPath, boolean isReleased) {
             this.version = version;
             this.branch = branch;
             this.gradleProjectPath = gradleProjectPath;
+            this.isReleased = isReleased;
         }
     }
 
@@ -138,10 +140,11 @@ public class BwcVersions {
 
         assertNoOlderThanTwoMajors();
 
-        Map<Version, UnreleasedVersionInfo> unreleased = new HashMap<>();
+        Map<Version, VersionInfo> unreleased = new HashMap<>();
         for (Version unreleasedVersion : getUnreleased()) {
             unreleased.put(unreleasedVersion,
-                new UnreleasedVersionInfo(unreleasedVersion, getBranchFor(unreleasedVersion), getGradleProjectPathFor(unreleasedVersion)));
+                new VersionInfo(unreleasedVersion, getBranchForProject(unreleasedVersion), getGradleProjectPathFor(unreleasedVersion),
+                    false));
         }
         this.unreleased = Collections.unmodifiableMap(unreleased);
     }
@@ -168,22 +171,38 @@ public class BwcVersions {
     /**
       * Returns info about the unreleased version, or {@code null} if the version is released.
       */
-    public UnreleasedVersionInfo unreleasedInfo(Version version) {
+    public VersionInfo unreleasedInfo(Version version) {
         return unreleased.get(version);
     }
 
-    public void forPreviousUnreleased(Consumer<UnreleasedVersionInfo> consumer) {
-        List<UnreleasedVersionInfo> collect = getUnreleased().stream()
+    public void forPreviousUnreleased(Consumer<VersionInfo> consumer) {
+        List<VersionInfo> collect = getUnreleased().stream()
             .filter(version -> version.equals(currentVersion) == false)
-            .map(version -> new UnreleasedVersionInfo(
+            .map(version -> new VersionInfo(
                     version,
-                    getBranchFor(version),
-                    getGradleProjectPathFor(version)
+                    getBranchForProject(version),
+                    getGradleProjectPathFor(version),
+                    false
                 )
             )
             .collect(Collectors.toList());
 
         collect.forEach(uvi -> consumer.accept(uvi));
+    }
+
+    public void forPreviousIndexCompatible(Consumer<VersionInfo> consumer) {
+        List<VersionInfo> collect = getIndexCompatible().stream()
+            .filter(version -> version.equals(currentVersion) == false)
+            .map(version -> new VersionInfo(
+                    version,
+                    getBranchForVersion(version),
+                    getGradleProjectPathFor(version),
+                    getUnreleased().contains(version) == false
+                )
+            )
+            .collect(Collectors.toList());
+
+        collect.forEach(vi -> consumer.accept(vi));
     }
 
     private String getGradleProjectPathFor(Version version) {
@@ -193,56 +212,96 @@ public class BwcVersions {
             return ":distribution";
         }
 
-        Map<Integer, List<Version>> releasedMajorGroupedByMinor = getReleasedMajorGroupedByMinor();
+        if (getUnreleased().contains(version)) {
+            Map<Integer, List<Version>> releasedMajorGroupedByMinor = getReleasedMajorGroupedByMinor();
 
-        if (version.getRevision() == 0) {
-            List<Version> unreleasedStagedOrMinor = getUnreleased().stream()
-                .filter(v -> v.getRevision() == 0)
-                .collect(Collectors.toList());
-            if (unreleasedStagedOrMinor.size() > 2) {
-                if (unreleasedStagedOrMinor.get(unreleasedStagedOrMinor.size() - 2).equals(version)) {
+            if (version.getRevision() == 0) {
+                List<Version> unreleasedStagedOrMinor = getUnreleased().stream()
+                    .filter(v -> v.getRevision() == 0)
+                    .collect(Collectors.toList());
+                if (unreleasedStagedOrMinor.size() > 2) {
+                    if (unreleasedStagedOrMinor.get(unreleasedStagedOrMinor.size() - 2).equals(version)) {
+                        return ":distribution:bwc:minor";
+                    } else {
+                        return ":distribution:bwc:staged";
+                    }
+                } else {
                     return ":distribution:bwc:minor";
-                } else{
-                    return ":distribution:bwc:staged";
                 }
             } else {
-                return ":distribution:bwc:minor";
+                if (releasedMajorGroupedByMinor
+                    .getOrDefault(version.getMinor(), emptyList())
+                    .contains(version)) {
+                    return ":distribution:bwc:bugfix";
+                } else {
+                    return ":distribution:bwc:maintenance";
+                }
             }
         } else {
-            if (releasedMajorGroupedByMinor
-                .getOrDefault(version.getMinor(), emptyList())
-                .contains(version)) {
-                return ":distribution:bwc:bugfix";
-            } else {
-                return ":distribution:bwc:maintenance";
-            }
+            return ":distribution:bwc:release";
         }
     }
 
-    private String getBranchFor(Version version) {
+    private String getBranchForProject(Version version) {
         // based on the rules described in this classes javadoc, figure out the branch on which an unreleased version
         // lives.
         // We do this based on the Gradle project path because there's a direct correlation, so we dont have to duplicate
         // the logic from there
         switch (getGradleProjectPathFor(version)) {
             case ":distribution":
-                return "master";
+                return getBranchForCurrent();
             case ":distribution:bwc:minor":
-                // The .x branch will always point to the latest minor (for that major), so a "minor" project will be on the .x branch
-                //  unless there is more recent (higher) minor.
-                final Version latestInMajor = getLatestVersionByKey(groupByMajor, version.getMajor());
-                if (latestInMajor.getMinor() == version.getMinor()) {
-                    return version.getMajor() + ".x";
-                } else {
-                    return version.getMajor() + "." + version.getMinor();
-                }
+                return getBranchForLastMinor(version);
             case ":distribution:bwc:staged":
             case ":distribution:bwc:maintenance":
             case ":distribution:bwc:bugfix":
-                return version.getMajor() + "." + version.getMinor();
+                return getBranchForLastMinorRevision(version);
             default:
                 throw new IllegalStateException("Unexpected Gradle project name");
         }
+    }
+
+    private String getBranchForVersion(Version version){
+        if(version.equals(getCurrentVersion())){
+            return getBranchForCurrent();
+        }else if(version.equals(getLastMinor())){
+            return getBranchForLastMinor(version);
+        }else if(version.equals(getLastMinorRevision())){
+            return getBranchForLastMinorRevision(version);
+        }else{
+            return "v" + version.toString(); //release tag
+        }
+    }
+
+    private String getBranchForCurrent() {
+        return "master";
+    }
+
+    /**
+     * @param version - Must be the last minor version. See {@link #getLastMinor()} to find the last minor version.
+     */
+    private String getBranchForLastMinor(Version version) {
+        if(version.equals(getLastMinor()) == false){
+            throw new IllegalStateException("The version " + version + " is not the last minor version");
+        }
+        // The .x branch will always point to the latest minor (for that major), so a "minor" project will be on the .x branch
+        //  unless there is more recent (higher) minor.
+        final Version latestInMajor = getLatestVersionByKey(groupByMajor, version.getMajor());
+        if (latestInMajor.getMinor() == version.getMinor()) {
+            return version.getMajor() + ".x";
+        } else {
+            return version.getMajor() + "." + version.getMinor();
+        }
+    }
+
+    /**
+     * @param version - Must be the last minor revision version. See {@link #getLastMinorRevision()} to find the last minor revision version
+     */
+    private String getBranchForLastMinorRevision(Version version) {
+        if(version.equals(getLastMinorRevision()) == false){
+            throw new IllegalStateException("The version " + version + " is not the last minor revision version");
+        }
+        return version.getMajor() + "." + version.getMinor();
     }
 
     public List<Version> getUnreleased() {
@@ -294,7 +353,7 @@ public class BwcVersions {
             .orElse(null);
     }
 
-    private Version getLatestRevisionInMinor(int major, int minor ,int revision) {
+    private Version getLastMinorRevision(int major, int minor , int revision) {
         return groupByMajor.get(major).stream()
             .filter(v -> v.getMinor() == minor)
             .filter(v -> v.getRevision() == revision)
@@ -397,15 +456,16 @@ public class BwcVersions {
         return currentVersion;
     }
 
-    public Version getLatestInMinor() {
+    //TODO: double check this logic !!
+    public Version getLastMinor() {
         List<Version> prevMajors = groupByMajor.get(currentVersion.getMajor() - 1);
         return getLatestInMinor(currentVersion.getMajor() - 1, prevMajors.get(prevMajors.size() - 1).getMinor());
-
     }
 
-    public Version getLatestRevisionInMinor() {
+    //TODO: double check this logic !!
+    public Version getLastMinorRevision() {
         List<Version> prevMajors = groupByMajor.get(currentVersion.getMajor() - 1);
-        return getLatestRevisionInMinor(currentVersion.getMajor() - 1, prevMajors.get(prevMajors.size() - 2).getMinor(),
+        return getLastMinorRevision(currentVersion.getMajor() - 1, prevMajors.get(prevMajors.size() - 2).getMinor(),
             prevMajors.get(prevMajors.size() - 2).getRevision());
     }
 }

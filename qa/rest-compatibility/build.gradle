@@ -16,27 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import org.elasticsearch.gradle.Version
+
+import org.elasticsearch.gradle.BwcVersions
 import org.elasticsearch.gradle.test.RestCompatTestTask
 
 apply plugin: 'elasticsearch.testclusters'
 apply plugin: 'elasticsearch.build'
 apply plugin: 'elasticsearch.rest-compat-test'
 
-for (Version bwcVersion : bwcVersions.indexCompatible) {
-  tasks.create(name: "v${bwcVersion}#restCompatTest", type: RestCompatTestTask, constructorArgs: [bwcVersions, bwcVersion]) {
-    dependsOn "v${bwcVersion}#copyRestSpec"
-    //TODO: get rid of this entirely and always pull the tests from source
-    copyRestSpecTests true
+bwcVersions.forPreviousIndexCompatible() { BwcVersions.VersionInfo versionInfo ->
+  tasks.create(name: "v${versionInfo.version}#restCompatTest", type: RestCompatTestTask, constructorArgs: [versionInfo]) {
   }
 }
 
-for (Version bwcVersion : bwcVersions.indexCompatible) {
-  tasks.getByName("v${bwcVersion}#restCompatTestRunner").nonInputProperties.systemProperty('bwcVersion', bwcVersion.toString())
-}
 
 dependencies {
   compile project(':test:framework')
-  testCompile project(path: ':qa:rest-compatibility')
 }
-

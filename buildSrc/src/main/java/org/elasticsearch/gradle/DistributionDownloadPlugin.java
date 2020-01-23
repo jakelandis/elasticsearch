@@ -208,7 +208,7 @@ public class DistributionDownloadPlugin implements Plugin<Project> {
             if (VersionProperties.getElasticsearch().equals(distribution.getVersion())) {
                 return projectDependency(project, distributionProjectPath(distribution), "default");
             }
-            BwcVersions.UnreleasedVersionInfo unreleasedInfo = bwcVersions.unreleasedInfo(Version.fromString(distribution.getVersion()));
+            BwcVersions.VersionInfo unreleasedInfo = bwcVersions.unreleasedInfo(Version.fromString(distribution.getVersion()));
             if (unreleasedInfo != null) {
                 assert distribution.getBundledJdk();
                 return projectDependency(project, unreleasedInfo.gradleProjectPath, distributionProjectName(distribution));
