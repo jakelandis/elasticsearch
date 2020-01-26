@@ -82,6 +82,7 @@ class RestIntegTestTask extends DefaultTask {
         Copy copyRestSpec = createCopyRestSpecTask(currentCopyTo)
         project.sourceSets.test.output.builtBy(copyRestSpec)
 
+        runner.dependsOn(":distribution:bwc:minor:checkoutBwcBranch")
         // this must run after all projects have been configured, so we know any project
         // references can be accessed as a fully configured
         project.gradle.projectsEvaluated {
