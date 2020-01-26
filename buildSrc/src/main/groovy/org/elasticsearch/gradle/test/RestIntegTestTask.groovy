@@ -74,8 +74,12 @@ class RestIntegTestTask extends DefaultTask {
             runner.systemProperty('test.clustername', System.getProperty("tests.clustername"))
         }
 
-        // copy the rest spec/tests onto the test classpath
-        Copy copyRestSpec = createCopyRestSpecTask()
+        File currentCopyTo = new File(project.rootProject.buildDir, "rest-api-current")
+        runner.nonInputProperties.systemProperty('tests.rest.spec_root', currentCopyTo)
+        runner.nonInputProperties.systemProperty('tests.rest.test_root', project.sourceSets.test.output.resourcesDir)
+
+        // copy the current rest spec/tests to a common location
+        Copy copyRestSpec = createCopyRestSpecTask(currentCopyTo)
         project.sourceSets.test.output.builtBy(copyRestSpec)
 
         // this must run after all projects have been configured, so we know any project
@@ -119,7 +123,7 @@ class RestIntegTestTask extends DefaultTask {
         project.tasks.getByName("${name}Runner").configure(configure)
     }
 
-    Copy createCopyRestSpecTask() {
+    Copy createCopyRestSpecTask(File copyTo) {
         Boilerplate.maybeCreate(project.configurations, 'restSpec') {
             project.dependencies.add(
                     'restSpec',
@@ -130,12 +134,13 @@ class RestIntegTestTask extends DefaultTask {
 
         return Boilerplate.maybeCreate(project.tasks, 'copyRestSpec', Copy) { Copy copy ->
             copy.dependsOn project.configurations.restSpec
-            copy.into(project.rootProject.buildDir)
+            copy.into(copyTo)
             copy.from({ project.zipTree(project.configurations.restSpec.singleFile) }) {
                 includeEmptyDirs = false
                 include 'rest-api-spec/**'
                 filesMatching('rest-api-spec/test/**') { FileCopyDetails details ->
                     if (includePackaged == false) {
+                        runner.nonInputProperties.systemProperty('tests.rest.test_root', copyTo)
                         details.exclude()
                     }
                 }

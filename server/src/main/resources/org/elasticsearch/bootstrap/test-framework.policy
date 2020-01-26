@@ -110,5 +110,6 @@ grant {
   // since the gradle test worker jar is on the test classpath, our tests should be able to read it
   permission java.io.FilePermission "${gradle.worker.jar}", "read";
   // the rest specs and tests are copied here and used across most modules and plugins
-  permission java.io.FilePermission "${gradle.root.build_dir}/-", "read";
+  permission java.io.FilePermission "${tests.rest.spec_root}/-", "read";
+  permission java.io.FilePermission "${tests.rest.test_root}/-", "read";
 };

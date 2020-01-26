@@ -178,17 +178,11 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
     }
 
     protected Path getSpecPath() {
-        String rootBuildDir = Objects.requireNonNull(System.getProperty("gradle.root.build_dir"),
-            "The system property gradle.root.build_dir may not be null");
-        return System.getProperty(REST_TESTS_SPEC_ROOT) == null ?
-            Paths.get(rootBuildDir).resolve(SPEC_PATH)
-            : Paths.get(System.getProperty(REST_TESTS_SPEC_ROOT)).resolve(SPEC_PATH);
+        return Paths.get(System.getProperty(REST_TESTS_SPEC_ROOT)).resolve(SPEC_PATH);
     }
 
-    static Path getTestsPath() throws URISyntaxException {
-        return System.getProperty(REST_TESTS_TEST_ROOT) == null ?
-            Paths.get(ESClientYamlSuiteTestCase.class.getResource("/" + TESTS_PATH.toString()).toURI())
-            : Paths.get(System.getProperty(REST_TESTS_TEST_ROOT)).resolve(TESTS_PATH);
+    static Path getTestsPath() {
+        return Paths.get(System.getProperty(REST_TESTS_TEST_ROOT)).resolve(TESTS_PATH);
     }
 
     @AfterClass
