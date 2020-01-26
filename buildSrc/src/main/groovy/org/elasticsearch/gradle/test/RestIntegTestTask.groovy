@@ -83,6 +83,12 @@ class RestIntegTestTask extends DefaultTask {
         project.sourceSets.test.output.builtBy(copyRestSpec)
 
         runner.dependsOn(":distribution:bwc:minor:checkoutBwcBranch")
+
+        runner.doFirst {
+            runner.nonInputProperties.systemProperty('tests.rest.compat_root',
+                project.findProject(":distribution:bwc:minor").ext.get("checkoutDir"))
+        }
+
         // this must run after all projects have been configured, so we know any project
         // references can be accessed as a fully configured
         project.gradle.projectsEvaluated {
@@ -141,7 +147,7 @@ class RestIntegTestTask extends DefaultTask {
                 include 'rest-api-spec/**'
                 filesMatching('rest-api-spec/test/**') { FileCopyDetails details ->
                     if (includePackaged == false) {
-                        runner.nonInputProperties.systemProperty('tests.rest.test_root', copyTo)
+                   //     runner.nonInputProperties.systemProperty('tests.rest.test_root', copyTo)
                         details.exclude()
                     }
                 }

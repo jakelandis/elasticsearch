@@ -95,14 +95,14 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      * Property that allows to set the test root. This value plus TESTS_PATH is the location of the REST tests
      */
     public static final String REST_TESTS_TEST_ROOT = "tests.rest.test_root";
-    private static final Path TESTS_PATH = Paths.get("rest-api-spec/test");
+    public static final Path TESTS_PATH = Paths.get("rest-api-spec/test");
 
     /**
      * Property that allows to set the root for the rest API spec. This value plus SPEC_PATH is the location of the REST API spec can be
      * found.
      */
     public static final String REST_TESTS_SPEC_ROOT = "tests.rest.spec_root";
-    private static final Path SPEC_PATH = Paths.get("rest-api-spec/api");
+    public static final Path SPEC_PATH = Paths.get("rest-api-spec/api");
 
     /**
      * This separator pattern matches ',' except it is preceded by a '\'.
@@ -203,14 +203,14 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      * defined in {@link ExecutableSection}.
      */
     public static Iterable<Object[]> createParameters() throws Exception {
-        return createParameters(ExecutableSection.XCONTENT_REGISTRY);
+        return createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestsPath());
     }
 
     /**
      * Create parameters for this parameterized test.
      */
-    public static Iterable<Object[]> createParameters(NamedXContentRegistry executeableSectionRegistry) throws Exception {
-        Map<String, Set<Path>> yamlSuites = loadSuites(getTestsPath());
+    public static Iterable<Object[]> createParameters(NamedXContentRegistry executeableSectionRegistry, Path testsPath) throws Exception {
+        Map<String, Set<Path>> yamlSuites = loadSuites(testsPath);
         List<ClientYamlTestSuite> suites = new ArrayList<>();
         IllegalArgumentException validationException = null;
         // yaml suites are grouped by directory (effectively by api)
@@ -271,6 +271,7 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
                 });
             } else {
                 path = testRoot.resolve(strPath + ".yml");
+                System.out.println("**************************----->> " + path);
                 assert Files.exists(path);
                 addSuite(testRoot, path, files);
             }
