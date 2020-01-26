@@ -709,6 +709,8 @@ class BuildPlugin implements Plugin<Project> {
                 nonInputProperties.systemProperty('gradle.worker.jar', "${project.gradle.getGradleUserHomeDir()}/caches/${project.gradle.gradleVersion}/workerMain/gradle-worker.jar")
                 nonInputProperties.systemProperty('gradle.user.home', project.gradle.getGradleUserHomeDir())
 
+                nonInputProperties.systemProperty('gradle.root.build_dir', project.rootProject.buildDir)
+
                 nonInputProperties.systemProperty('compiler.java', "${-> BuildParams.compilerJavaVersion.majorVersion}")
 
                 // TODO: remove setting logging level via system property

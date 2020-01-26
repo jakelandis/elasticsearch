@@ -130,7 +130,7 @@ class RestIntegTestTask extends DefaultTask {
 
         return Boilerplate.maybeCreate(project.tasks, 'copyRestSpec', Copy) { Copy copy ->
             copy.dependsOn project.configurations.restSpec
-            copy.into(project.sourceSets.test.output.resourcesDir)
+            copy.into(project.rootProject.buildDir)
             copy.from({ project.zipTree(project.configurations.restSpec.singleFile) }) {
                 includeEmptyDirs = false
                 include 'rest-api-spec/**'

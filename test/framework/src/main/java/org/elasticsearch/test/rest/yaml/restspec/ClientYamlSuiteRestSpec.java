@@ -79,11 +79,10 @@ public class ClientYamlSuiteRestSpec {
     /**
      * Parses the complete set of REST spec available under the provided directories
      */
-    public static ClientYamlSuiteRestSpec load(String classpathPrefix) throws Exception {
-        Path dir = PathUtils.get(ClientYamlSuiteRestSpec.class.getResource(classpathPrefix).toURI());
+    public static ClientYamlSuiteRestSpec load(Path specPath) throws Exception {
         ClientYamlSuiteRestSpec restSpec = new ClientYamlSuiteRestSpec();
         ClientYamlSuiteRestApiParser restApiParser = new ClientYamlSuiteRestApiParser();
-        try (Stream<Path> stream = Files.walk(dir)) {
+        try (Stream<Path> stream = Files.walk(specPath)) {
             stream.forEach(item -> {
                 if (item.toString().endsWith(".json")) {
                     parseSpecFile(restApiParser, item, restSpec);
