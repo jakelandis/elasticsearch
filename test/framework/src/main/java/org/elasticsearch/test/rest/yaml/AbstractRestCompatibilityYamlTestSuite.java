@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.rest.yaml.section.DoSection;
 import org.elasticsearch.test.rest.yaml.section.ExecutableSection;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -16,10 +17,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.StreamSupport;
 
 public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTestCase {
-     // normal tests
+    // normal tests
 // ./gradlew ':modules:ingest-common:integTestRunner'   --tests "org.elasticsearch.ingest.common.IngestCommonClientYamlTestSuiteIT.test"  -Dtests.timestamp=$(date +%S) --info
     //compat tests
 // ./gradlew ':modules:ingest-common:integTestRunner'   --tests "org.elasticsearch.ingest.common.IngestCommonRestCompatTestSuiteIT.test"  -Dtests.timestamp=$(date +%S) --info
@@ -65,27 +67,46 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
 
     @Override
     protected Path getSpecPath() {
-        return Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(SPEC_SOURCE_PATH).resolve(SPEC_PATH);
+        //TODO: figure out how to merge local rest spec with the core in the remote dir.. gradle copy ?
+        Path compatSpec = Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(SPEC_SOURCE_PATH).resolve(SPEC_PATH);
+        logger.info("Reading REST compatible spec from [{}]", compatSpec);
+        return compatSpec;
     }
 
-    private static Path getTestPath()  {
+    private static Path getTestPath() {
         String resourceDir = null;
+        Path projectPath = null;
         try {
+            //use this project's resourceDir to figure out which module or plugin we are running.
             resourceDir = ESClientYamlSuiteTestCase.class.getResource("/").toURI().toASCIIString();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        //TODO: make this much safer and clean up
-        String parts[] = resourceDir.split(System.getProperty("file.separator"));
-        int i =0;
-        for(; i < parts.length -1 ; i++){
-            if("modules".equals(parts[i])){ //TODO: support plugins and the rest-api project
-                break;
+            String parts[] = resourceDir.split(System.getProperty("file.separator"));
+            int i = 0;
+            for (; i < parts.length - 1; i++) {
+                if ("modules".equals(parts[i]) || "plugins".equals(parts[i])) { //TODO: rest-api project
+                    break;
+                }
             }
+            //for example: modules/ingest-common
+            projectPath = Objects.requireNonNull(Paths.get(parts[i], parts[i + 1]),
+                "Could not find the project path for [" + resourceDir + "]");
+        } catch (Exception e) {
+            //shouldn't happen, but this code is kinda fragile since it depends on specific directory structure convention.
+            throw new IllegalStateException("Could not determine the path for the compatible REST tests from ["
+                + resourceDir + "]. This is likely an bug.", e);
         }
-        Path projectPath = Paths.get(parts[i], parts[i+1]);
-
-        return Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(projectPath).resolve(TESTS_SOURCE_PATH).resolve(TESTS_PATH);
+        // for example:
+        // /Users/me/elasticsearch/distribution/bwc/minor/build/bwc/checkout-7.x/modules/ingest-common/src/test/resources/rest-api-spec/test
+        Path compatTestsRoot = Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(projectPath);
+        Path compatTests = compatTestsRoot.resolve(TESTS_SOURCE_PATH).resolve(TESTS_PATH);
+        if(new File(compatTestsRoot.toUri()).exists()){
+            logger.info("Reading REST compatible tests from [{}]", compatTests);
+            return compatTests;
+        }else{
+            //TODO: make this execute a no-op test to allow this to pass ... this is for new modules that don't have
+            logger.info("Can not run REST compatible tests for [{}] since we could not find that module or plugin at [{}]",
+                projectPath, compatTests);
+            throw new IllegalStateException("TODO: change this to a no-op test so it does not fail !");
+        }
     }
 
     private static Path getTestsCompatPath() throws URISyntaxException {
@@ -93,8 +114,7 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
         return url == null ? null : Paths.get(url.toURI());
     }
 
-
-        /**
+    /**
      * Mutates the tests before they are executed.
      * <ul>
      *     <li>
@@ -117,7 +137,7 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
 
     private static Map<ClientYamlTestCandidate, ClientYamlTestCandidate> getLocalCompatibilityTests() throws Exception {
         Path compatTestPath = getTestsCompatPath();
-        if(compatTestPath == null){
+        if (compatTestPath == null) {
             return Collections.emptyMap();
         }
         Iterable<Object[]> candidates =
@@ -127,8 +147,4 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
             .flatMap(Arrays::stream).forEach(o -> localCompatibilityTests.put((ClientYamlTestCandidate) o, (ClientYamlTestCandidate) o));
         return localCompatibilityTests;
     }
-
-
-
-
 }

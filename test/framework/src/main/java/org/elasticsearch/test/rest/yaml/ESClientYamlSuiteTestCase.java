@@ -22,6 +22,8 @@ package org.elasticsearch.test.rest.yaml;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import org.apache.http.HttpHost;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.TimeUnits;
 import org.elasticsearch.Version;
 import org.elasticsearch.client.Node;
@@ -71,6 +73,8 @@ import java.util.Set;
 @TimeoutSuite(millis = 30 * TimeUnits.MINUTE)
 public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
 
+    //please use the non-static logger if possible
+    private static final Logger staticLogger = LogManager.getLogger(ESClientYamlSuiteTestCase.class);
     /**
      * Property that allows to control which REST tests get run. Supports comma separated list of tests
      * or directories that contain tests e.g. -Dtests.rest.suite=index,get,create/10_with_id
@@ -178,11 +182,15 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
     }
 
     protected Path getSpecPath() {
-        return Paths.get(System.getProperty(REST_TESTS_SPEC_ROOT)).resolve(SPEC_PATH);
+        Path restSpec = Paths.get(System.getProperty(REST_TESTS_SPEC_ROOT)).resolve(SPEC_PATH);
+        logger.info("Reading REST spec from [{}]", restSpec);
+        return restSpec;
     }
 
     static Path getTestsPath() {
-        return Paths.get(System.getProperty(REST_TESTS_TEST_ROOT)).resolve(TESTS_PATH);
+        Path restTests = Paths.get(System.getProperty(REST_TESTS_TEST_ROOT)).resolve(TESTS_PATH);
+        staticLogger.info("Reading REST tests from [{}]", restTests);
+        return restTests;
     }
 
     @AfterClass
