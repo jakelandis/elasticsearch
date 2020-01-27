@@ -30,6 +30,7 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.testing.Test
 import org.gradle.plugins.ide.idea.IdeaPlugin
+
 /**
  * A wrapper task around setting up a cluster and running rest tests.
  */
@@ -46,9 +47,9 @@ class RestIntegTestTask extends DefaultTask {
         super.dependsOn(runner)
 
         project.testClusters {
-                "$name" {
-                    javaHome = BuildParams.runtimeJavaHome
-                }
+            "$name" {
+                javaHome = BuildParams.runtimeJavaHome
+            }
         }
         runner.useCluster project.testClusters."$name"
 
@@ -78,7 +79,7 @@ class RestIntegTestTask extends DefaultTask {
         runner.nonInputProperties.systemProperty('tests.rest.spec_root', currentCopyTo)
         runner.nonInputProperties.systemProperty('tests.rest.test_root', project.sourceSets.test.output.resourcesDir)
 
-        // copy the current rest spec/tests to a common location
+        // copy the current rest spec/tests to a common location (root-project/rest-api-current)
         Copy copyRestSpec = createCopyRestSpecTask(currentCopyTo)
         // also copy all module and plugin specific rest specs to the same location
         Copy copyModuleRestSpec = createCopyModulesRestSpecTask(currentCopyTo)
@@ -93,16 +94,18 @@ class RestIntegTestTask extends DefaultTask {
         project.sourceSets.test.output.builtBy(copyXpackPluginRestSpec)
 
         runner.dependsOn(":distribution:bwc:minor:checkoutBwcBranch")
-
         runner.doFirst {
-            //TODO: copy this to root dir, then copy all the the plugins and modules
-            runner.nonInputProperties.systemProperty('tests.rest.compat_root',
-                project.findProject(":distribution:bwc:minor").ext.get("checkoutDir"))
-
-//            //copy any current local rest-api-spec from plugins and modules to the current copy
-//            project.sourceSets.test.output.resourcesDir
-
-
+            //copy the bwc:minor version specs to a single directory (root-project/rest-api-prior/checkoutDir) in the root project
+            File checkoutDir = project.findProject(":distribution:bwc:minor").ext.get("checkoutDir")
+            File priorCopyTo = new File(project.rootProject.buildDir, "rest-api-prior/" + checkoutDir.getName())
+            new AntBuilder().copy(todir: new File(priorCopyTo, "rest-api-spec/api")) {
+                fileset(dir: checkoutDir) {
+                    include(name: "**/src/**/rest-api-spec/api/**")
+                    exclude(name: "**/examples/**")
+                }
+            }
+            runner.nonInputProperties.systemProperty('tests.rest.test_root_compat', checkoutDir)
+            runner.nonInputProperties.systemProperty('tests.rest.spec_root_compat', priorCopyTo)
         }
 
         // this must run after all projects have been configured, so we know any project
@@ -149,9 +152,9 @@ class RestIntegTestTask extends DefaultTask {
     Copy createCopyRestSpecTask(File copyTo) {
         Boilerplate.maybeCreate(project.configurations, 'restSpec') {
             project.dependencies.add(
-                    'restSpec',
-                    BuildParams.internal ? project.project(':rest-api-spec') :
-                            "org.elasticsearch:rest-api-spec:${VersionProperties.elasticsearch}"
+                'restSpec',
+                BuildParams.internal ? project.project(':rest-api-spec') :
+                    "org.elasticsearch:rest-api-spec:${VersionProperties.elasticsearch}"
             )
         }
 
@@ -163,7 +166,7 @@ class RestIntegTestTask extends DefaultTask {
                 include 'rest-api-spec/**'
                 filesMatching('rest-api-spec/test/**') { FileCopyDetails details ->
                     if (includePackaged == false) {
-                   //     runner.nonInputProperties.systemProperty('tests.rest.test_root', copyTo)
+                        //     runner.nonInputProperties.systemProperty('tests.rest.test_root', copyTo)
                         details.exclude()
                     }
                 }
@@ -183,19 +186,19 @@ class RestIntegTestTask extends DefaultTask {
 
     Copy createCopyModulesRestSpecTask(File copyTo) {
         return Boilerplate.maybeCreate(project.tasks, 'copyModulesRestSpecs', Copy) { Copy copy ->
-                copy.into(new File(copyTo, "rest-api-spec/api"))
-                copy.from({project.findProject(':modules').projectDir}) {
-                    includeEmptyDirs = false
-                    include '**/src/**/rest-api-spec/api/**'
-                    exclude '**/examples/**'
-                }
+            copy.into(new File(copyTo, "rest-api-spec/api"))
+            copy.from({ project.findProject(':modules').projectDir }) {
+                includeEmptyDirs = false
+                include '**/src/**/rest-api-spec/api/**'
+                exclude '**/examples/**'
             }
         }
+    }
 
     Copy createCopyPluginsRestSpecTask(File copyTo) {
         return Boilerplate.maybeCreate(project.tasks, 'copyPluginsRestSpecs', Copy) { Copy copy ->
             copy.into(new File(copyTo, "rest-api-spec/api"))
-            copy.from({project.findProject(':plugins').projectDir}) {
+            copy.from({ project.findProject(':plugins').projectDir }) {
                 includeEmptyDirs = false
                 include '**/src/**/rest-api-spec/api/**'
                 exclude '**/examples/**'
@@ -206,7 +209,7 @@ class RestIntegTestTask extends DefaultTask {
     Copy createCopyXpackPluginsRestSpecTask(File copyTo) {
         return Boilerplate.maybeCreate(project.tasks, 'copyXpackPluginsRestSpecs', Copy) { Copy copy ->
             copy.into(new File(copyTo, "rest-api-spec/api/x-pack"))
-            copy.from({project.findProject(':x-pack:plugin').projectDir}) {
+            copy.from({ project.findProject(':x-pack:plugin').projectDir }) {
                 includeEmptyDirs = false
                 include '**/src/**/rest-api-spec/api/**'
                 exclude '**/examples/**'

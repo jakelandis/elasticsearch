@@ -112,5 +112,6 @@ grant {
   // the rest specs and tests are copied here and used across most modules and plugins
   permission java.io.FilePermission "${tests.rest.spec_root}/-", "read";
   permission java.io.FilePermission "${tests.rest.test_root}/-", "read";
-  permission java.io.FilePermission "${tests.rest.compat_root}/-", "read";
+  permission java.io.FilePermission "${tests.rest.test_root_compat}/-", "read";
+  permission java.io.FilePermission "${tests.rest.spec_root_compat}/-", "read";
 };

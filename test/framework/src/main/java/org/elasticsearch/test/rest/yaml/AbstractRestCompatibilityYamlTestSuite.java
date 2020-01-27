@@ -27,17 +27,18 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
 // ./gradlew ':modules:ingest-common:integTestRunner'   --tests "org.elasticsearch.ingest.common.IngestCommonRestCompatTestSuiteIT.test"  -Dtests.timestamp=$(date +%S) --info
     private static final Logger logger = LogManager.getLogger(AbstractRestCompatibilityYamlTestSuite.class);
 
+    public static final String REST_SPEC_COMPAT_ROOT = "tests.rest.spec_root_compat";
+
+    //TODO: fix this comment
     /**
      * Property that allows to set the root for the compat rest API tests. This value plus SPEC_PATH and TESTS_PATH is the location
      * of the compatibility REST API spec and tests. TESTS_COMPAT_PATH is also considered to allow locally defined tests to specifically
      * test parts of the compatibility. Any tests from TESTS_COMPAT_PATH with the same name will override the test found from
      * REST_TESTS_COMPAT_ROOT + TESTS_PATH.
      */
-    public static final String REST_TESTS_COMPAT_ROOT = "tests.rest.compat_root";
-    public static final Path TESTS_COMPAT_PATH = Paths.get("rest-api-spec/test-compatibility");
-
-    private static final Path SPEC_SOURCE_PATH = Paths.get("rest-api-spec/src/main/resources");
+    public static final String REST_TESTS_COMPAT_ROOT = "tests.rest.test_root_compat";
     private static final Path TESTS_SOURCE_PATH = Paths.get("src/test/resources");
+    public static final String TESTS_COMPAT_CLASS_PATH = "/rest-api-spec/test-compatibility";
 
     protected AbstractRestCompatibilityYamlTestSuite(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
@@ -67,8 +68,7 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
 
     @Override
     protected Path getSpecPath() {
-        //TODO: figure out how to merge local rest spec with the core in the remote dir.. gradle copy ?
-        Path compatSpec = Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(SPEC_SOURCE_PATH).resolve(SPEC_PATH);
+        Path compatSpec = Paths.get(System.getProperty(REST_SPEC_COMPAT_ROOT)).resolve(SPEC_PATH);
         logger.info("Reading REST compatible spec from [{}]", compatSpec);
         return compatSpec;
     }
@@ -110,7 +110,7 @@ public class AbstractRestCompatibilityYamlTestSuite extends ESClientYamlSuiteTes
     }
 
     private static Path getTestsCompatPath() throws URISyntaxException {
-        URL url = ESClientYamlSuiteTestCase.class.getResource("/" + TESTS_COMPAT_PATH.toString());
+        URL url = ESClientYamlSuiteTestCase.class.getResource(TESTS_COMPAT_CLASS_PATH);
         return url == null ? null : Paths.get(url.toURI());
     }
 
