@@ -17,20 +17,16 @@
  * under the License.
  */
 
-package org.elasticsearch.http.netty4;
+package org.elasticsearch.index.analysis;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
-import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
-import org.apache.lucene.util.TimeUnits;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-//TODO: This is a *temporary* workaround to ensure a timeout does not mask other problems
-@TimeoutSuite(millis = 30 * TimeUnits.MINUTE)
-public class Netty4RestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+public class PhoneticRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-    public Netty4RestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public PhoneticRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 
@@ -38,5 +34,5 @@ public class Netty4RestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestS
     public static Iterable<Object[]> parameters() throws Exception {
         return AbstractRestCompatYamlTestSuite.createParameters();
     }
-
 }
+
