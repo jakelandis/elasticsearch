@@ -18,7 +18,7 @@ public class EnrichRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite
 
     @ParametersFactory
     public static Iterable<Object[]> parameters() throws Exception {
-        return AbstractRestCompatYamlTestSuite.createCompatParameters();
+        return AbstractRestCompatYamlTestSuite.createParameters();
     }
 
 }

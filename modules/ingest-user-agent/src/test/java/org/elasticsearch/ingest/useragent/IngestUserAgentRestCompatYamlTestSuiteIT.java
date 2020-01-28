@@ -17,17 +17,17 @@
  * under the License.
  */
 
-package org.elasticsearch.painless;
+package org.elasticsearch.ingest.useragent;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
+import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 
-/** Runs yaml rest tests */
-public class LangPainlessRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+public class IngestUserAgentRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-    public LangPainlessRestCompatTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public IngestUserAgentRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

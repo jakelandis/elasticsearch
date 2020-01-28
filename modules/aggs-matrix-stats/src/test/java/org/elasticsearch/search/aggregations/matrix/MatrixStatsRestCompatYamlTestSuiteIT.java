@@ -16,18 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.elasticsearch.painless;
+package org.elasticsearch.search.aggregations.matrix;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-/** Runs yaml rest tests */
-public class LangPainlessRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite {
-
-    public LangPainlessRestCompatTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+public class MatrixStatsRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+    public MatrixStatsRestCompatYamlTestSuiteIT(@Name("yaml")ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

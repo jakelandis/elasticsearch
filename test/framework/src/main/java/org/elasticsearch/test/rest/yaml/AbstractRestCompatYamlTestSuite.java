@@ -47,7 +47,7 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
         super(testCandidate);
     }
 
-    public static Iterable<Object[]> createCompatParameters() throws Exception {
+    public static Iterable<Object[]> createParameters() throws Exception {
         List<Object[]> finalTestCandidates = new ArrayList<>();
         Iterable<Object[]> bwcCandidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestPath());
         Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCandidates = getLocalCompatibilityTests();
