@@ -21,12 +21,11 @@ package org.elasticsearch.painless;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
-import org.elasticsearch.test.rest.yaml.AbstractRestCompatibilityYamlTestSuite;
+import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
-import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 
 /** Runs yaml rest tests */
-public class LangPainlessRestCompatTestSuiteIT extends AbstractRestCompatibilityYamlTestSuite {
+public class LangPainlessRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
     public LangPainlessRestCompatTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
@@ -34,6 +33,6 @@ public class LangPainlessRestCompatTestSuiteIT extends AbstractRestCompatibility
 
     @ParametersFactory
     public static Iterable<Object[]> parameters() throws Exception {
-        return AbstractRestCompatibilityYamlTestSuite.getTests();
+        return AbstractRestCompatYamlTestSuite.createCompatParameters();
     }
 }

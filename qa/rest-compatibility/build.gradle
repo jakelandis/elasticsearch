@@ -17,22 +17,12 @@
  * under the License.
  */
 
-package org.elasticsearch.index.analysis;
+apply plugin: 'elasticsearch.testclusters'
+apply plugin: 'elasticsearch.build'
+apply plugin: 'elasticsearch.rest-test'
 
-import com.carrotsearch.randomizedtesting.annotations.Name;
-import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
-import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
-import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-public class IcuRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-    public IcuRestCompatTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
-        super(testCandidate);
-    }
-
-    @ParametersFactory
-    public static Iterable<Object[]> parameters() throws Exception {
-        return AbstractRestCompatYamlTestSuite.createCompatParameters();
-    }
+dependencies {
+  compile project(':test:framework')
 }
-

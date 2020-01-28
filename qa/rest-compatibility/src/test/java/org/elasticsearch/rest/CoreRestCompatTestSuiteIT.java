@@ -1,12 +1,12 @@
-package org.elasticsearch.ingest.common;
+package org.elasticsearch.rest;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-public class IngestCommonRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite {
-    public IngestCommonRestCompatTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+public class CoreRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+    public CoreRestCompatTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 
