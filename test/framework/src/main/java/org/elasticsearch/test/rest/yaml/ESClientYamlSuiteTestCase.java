@@ -48,13 +48,17 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,6 +67,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Runs a suite of yaml tests shared with all the official Elasticsearch
@@ -211,13 +216,14 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      * defined in {@link ExecutableSection}.
      */
     public static Iterable<Object[]> createParameters() throws Exception {
-        return createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestsPath());
+        return createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestsPath(), Collections.emptyMap());
     }
 
     /**
      * Create parameters for this parameterized test.
      */
-    public static Iterable<Object[]> createParameters(NamedXContentRegistry executeableSectionRegistry, Path testsPath) throws Exception {
+    public static Iterable<Object[]> createParameters(NamedXContentRegistry executeableSectionRegistry, Path testsPath,
+                                                      Map<String, String> filterValues) throws Exception {
         Map<String, Set<Path>> yamlSuites = loadSuites(testsPath);
         List<ClientYamlTestSuite> suites = new ArrayList<>();
         IllegalArgumentException validationException = null;
@@ -225,6 +231,20 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
         for (String api : yamlSuites.keySet()) {
             List<Path> yamlFiles = new ArrayList<>(yamlSuites.get(api));
             for (Path yamlFile : yamlFiles) {
+                if(filterValues.isEmpty() == false){
+                    SecureRandom random = new SecureRandom();
+                    String content = new String ( Files.readAllBytes( yamlFile ) );
+                    for( Map.Entry<String, String> entry : filterValues.entrySet()){
+                        File tempDir =  new File(System.getProperty("java.io.tmpdir"), Long.toString(Math.abs(random.nextLong())));
+                        Files.createDirectory(tempDir.toPath());
+                        tempDir.deleteOnExit();
+                        String filteredContent =
+                            Pattern.compile("\\$\\{" + entry.getKey() + "}").matcher(content).replaceAll(entry.getValue());
+                        Path tempYamlFile = Paths.get(tempDir.toURI()).resolve(yamlFile.getFileName());
+                        Files.writeString(tempYamlFile, filteredContent);
+                        yamlFile = tempYamlFile;
+                    }
+                }
                 ClientYamlTestSuite suite = ClientYamlTestSuite.parse(executeableSectionRegistry, api, yamlFile);
                 suites.add(suite);
                 try {
@@ -279,7 +299,6 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
                 });
             } else {
                 path = testRoot.resolve(strPath + ".yml");
-                System.out.println("**************************----->> " + path);
                 assert Files.exists(path);
                 addSuite(testRoot, path, files);
             }

@@ -24,21 +24,11 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
-    // normal tests
-// ./gradlew ':modules:ingest-common:integTestRunner'   --tests "org.elasticsearch.ingest.common.IngestCommonClientYamlTestSuiteIT.test"  -Dtests.timestamp=$(date +%S) --info
-    //compat tests
-// ./gradlew ':modules:ingest-common:integTestRunner'   --tests "org.elasticsearch.ingest.common.IngestCommonRestCompatTestSuiteIT.test"  -Dtests.timestamp=$(date +%S) --info
+
     private static final Logger staticLogger = LogManager.getLogger(AbstractRestCompatYamlTestSuite.class);
 
     public static final String REST_SPEC_COMPAT_ROOT = "tests.rest.spec_root_compat";
 
-    //TODO: fix this comment
-    /**
-     * Property that allows to set the root for the compat rest API tests. This value plus SPEC_PATH and TESTS_PATH is the location
-     * of the compatibility REST API spec and tests. TESTS_COMPAT_PATH is also considered to allow locally defined tests to specifically
-     * test parts of the compatibility. Any tests from TESTS_COMPAT_PATH with the same name will override the test found from
-     * REST_TESTS_COMPAT_ROOT + TESTS_PATH.
-     */
     public static final String REST_TESTS_COMPAT_ROOT = "tests.rest.test_root_compat";
 
     public static final String TESTS_COMPAT_CLASS_PATH = "/rest-api-spec/test-compatibility";
@@ -47,9 +37,9 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
         super(testCandidate);
     }
 
-    public static Iterable<Object[]> createParameters() throws Exception {
+    public static Iterable<Object[]> createParameters(Map<String, String> filterValues) throws Exception {
         List<Object[]> finalTestCandidates = new ArrayList<>();
-        Iterable<Object[]> bwcCandidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestPath());
+        Iterable<Object[]> bwcCandidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestPath(), filterValues);
         Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCandidates = getLocalCompatibilityTests();
 
         for (Object[] candidateArray : bwcCandidates) {
@@ -69,6 +59,10 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
         return finalTestCandidates;
     }
 
+    public static Iterable<Object[]> createParameters() throws Exception {
+        return createParameters(Collections.emptyMap());
+    }
+
     @Override
     protected Path getSpecPath() {
         Path compatSpec = Paths.get(System.getProperty(REST_SPEC_COMPAT_ROOT)).resolve(SPEC_PATH);
@@ -85,9 +79,16 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
             resourceDir = ESClientYamlSuiteTestCase.class.getResource("/").toURI().toASCIIString();
             String parts[] = resourceDir.split(System.getProperty("file.separator"));
             int i = 0;
+
+            ///Users/jakelandis/workspace/8x/elasticsearch-alt1/plugins/discovery-ec2/qa/amazon-ec2/build-idea/resources
+
             for (; i < parts.length - 3; i++) { //intentionally length - 3
                 if ("modules".equals(parts[i]) || "plugins".equals(parts[i])) {
-                    relativeRoot = Paths.get(parts[i], parts[i + 1]);
+                    if ("qa".equals(parts[i + 2])) {
+                        relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2], parts[i + 3]);
+                    } else {
+                        relativeRoot = Paths.get(parts[i], parts[i + 1]);
+                    }
                     break;
                 }
                 if ("x-pack".equals(parts[i]) && "plugin".equals(parts[i + 1])) {
@@ -103,7 +104,7 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
             Objects.requireNonNull(relativeRoot, "Could not find the relative root path from [" + resourceDir + "]");
             Path searchPath = Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(relativeRoot);
             Set<Path> paths = Files.walk(searchPath).filter(p -> p.endsWith(TESTS_PATH)).collect(Collectors.toSet());
-            if(paths.size() > 1){
+            if (paths.size() > 1) {
                 //TODO: clean up this message or figure out how to support this !
                 throw new IllegalStateException("Found multiple path candidates for the compat tests path. This is likely due to multiple nested projects with rest tests. ");
             }
@@ -157,7 +158,7 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
             return Collections.emptyMap();
         }
         Iterable<Object[]> candidates =
-            ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestsCompatPath());
+            ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, getTestsCompatPath(), Collections.emptyMap());
         Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCompatibilityTests = new HashMap<>();
         StreamSupport.stream(candidates.spliterator(), false)
             .flatMap(Arrays::stream).forEach(o -> localCompatibilityTests.put((ClientYamlTestCandidate) o, (ClientYamlTestCandidate) o));
