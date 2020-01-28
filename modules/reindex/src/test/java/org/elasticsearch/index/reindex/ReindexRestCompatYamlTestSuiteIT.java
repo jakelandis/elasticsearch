@@ -17,16 +17,15 @@
  * under the License.
  */
 
-package org.elasticsearch.ingest.useragent;
+package org.elasticsearch.index.reindex;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-public class IngestUserAgentRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
-
-    public IngestUserAgentRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+public class ReindexRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+    public ReindexRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

@@ -28,7 +28,7 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
 // ./gradlew ':modules:ingest-common:integTestRunner'   --tests "org.elasticsearch.ingest.common.IngestCommonClientYamlTestSuiteIT.test"  -Dtests.timestamp=$(date +%S) --info
     //compat tests
 // ./gradlew ':modules:ingest-common:integTestRunner'   --tests "org.elasticsearch.ingest.common.IngestCommonRestCompatTestSuiteIT.test"  -Dtests.timestamp=$(date +%S) --info
-    private static final Logger logger = LogManager.getLogger(AbstractRestCompatYamlTestSuite.class);
+    private static final Logger staticLogger = LogManager.getLogger(AbstractRestCompatYamlTestSuite.class);
 
     public static final String REST_SPEC_COMPAT_ROOT = "tests.rest.spec_root_compat";
 
@@ -56,7 +56,7 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
             List<ClientYamlTestCandidate> testCandidates = new ArrayList<>(1);
             Arrays.stream(candidateArray).map(o -> (ClientYamlTestCandidate) o).forEach(testCandidate -> {
                 if (localCandidates.containsKey(testCandidate)) {
-                    logger.info("Overriding test[{}] from  [{}] with local test.",
+                    staticLogger.info("Overriding test[{}] from  [{}] with local test.",
                         testCandidate.toString(), getTestPath());
                     testCandidate = localCandidates.remove(testCandidate);
                 }
@@ -72,7 +72,7 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
     @Override
     protected Path getSpecPath() {
         Path compatSpec = Paths.get(System.getProperty(REST_SPEC_COMPAT_ROOT)).resolve(SPEC_PATH);
-        logger.info("Reading REST compatible spec from [{}]", compatSpec);
+        staticLogger.info("Reading REST compatible spec from [{}]", compatSpec);
         return compatSpec;
     }
 
@@ -109,11 +109,11 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
             }
             compatTests = paths.iterator().next();
             if (new File(compatTests.toUri()).exists()) {
-                logger.info("Reading REST compatible tests from [{}]", compatTests);
+                staticLogger.info("Reading REST compatible tests from [{}]", compatTests);
                 return compatTests;
             } else {
                 //TODO: make this execute a no-op test to allow this to pass ... this is for new modules that don't have a bwc equivelant
-                logger.info("Can not run REST compatible tests for [{}] since we could not find that module or plugin at [{}]",
+                staticLogger.info("Can not run REST compatible tests for [{}] since we could not find that module or plugin at [{}]",
                     relativeRoot, compatTests);
                 throw new IllegalStateException("TODO: change this to a no-op test so it does not fail !");
             }
