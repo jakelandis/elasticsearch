@@ -18,6 +18,8 @@
  */
 package org.elasticsearch.gradle.test
 
+import org.elasticsearch.gradle.BwcVersions
+import org.elasticsearch.gradle.Version
 import org.elasticsearch.gradle.VersionProperties
 import org.elasticsearch.gradle.info.BuildParams
 import org.elasticsearch.gradle.testclusters.ElasticsearchCluster
@@ -75,11 +77,11 @@ class RestIntegTestTask extends DefaultTask {
             runner.systemProperty('test.clustername', System.getProperty("tests.clustername"))
         }
 
-        File currentCopyTo = new File(project.rootProject.buildDir, "rest-api-current")
+        File currentCopyTo = new File(project.rootProject.buildDir, "rest-spec-api-current")
         runner.nonInputProperties.systemProperty('tests.rest.spec_root', currentCopyTo)
         runner.nonInputProperties.systemProperty('tests.rest.test_root', project.sourceSets.test.output.resourcesDir)
 
-        // copy the current rest spec/tests to a common location (root-project/rest-api-current)
+        // copy the current rest spec to a common location and optionally copy the tests to project resource dir
         Copy copyRestSpec = createCopyRestSpecTask(currentCopyTo)
         // also copy all module and plugin specific rest specs to the same location
         Copy copyModuleRestSpec = createCopyModulesRestSpecTask(currentCopyTo)
@@ -93,19 +95,25 @@ class RestIntegTestTask extends DefaultTask {
         project.sourceSets.test.output.builtBy(copyPluginRestSpec)
         project.sourceSets.test.output.builtBy(copyXpackPluginRestSpec)
 
+        //setup the Rest compatibility test dependencies
         runner.dependsOn(":distribution:bwc:minor:checkoutBwcBranch")
+        BwcVersions bwcVersions = project.rootProject.ext.bwcVersions;
+        List unreleased = bwcVersions.getUnreleased()
+        Version bwcMinorVersion = unreleased.get(unreleased.size() - 2)
+        String bwcMinorBranch = bwcVersions.getBranchFor(bwcMinorVersion, ":distribution:bwc:minor")
+        File bwcMinorCheckoutDir = new File(project.findProject(":distribution:bwc:minor").buildDir, "bwc/checkout-${bwcMinorBranch}")
+        File bwcMinorRestSpecRoot = new File(new File(project.rootProject.buildDir, "rest-spec-api-prior"), bwcMinorCheckoutDir.getName())
+        Copy copyPriorRestSpec = createCopyPriorRestSpecTask(bwcMinorCheckoutDir, new File(bwcMinorRestSpecRoot, "rest-api-spec/api"))
+        project.sourceSets.test.output.builtBy(copyPriorRestSpec)
+        runner.nonInputProperties.systemProperty('tests.rest.spec_root_compat', bwcMinorRestSpecRoot)
+        runner.nonInputProperties.systemProperty('tests.rest.test_root_compat', bwcMinorCheckoutDir)
         runner.doFirst {
-            //copy the bwc:minor version specs to a single directory (root-project/rest-api-prior/checkoutDir) in the root project
-            File checkoutDir = project.findProject(":distribution:bwc:minor").ext.get("checkoutDir")
-            File priorCopyTo = new File(project.rootProject.buildDir, "rest-api-prior/" + checkoutDir.getName())
-            new AntBuilder().copy(todir: new File(priorCopyTo, "rest-api-spec/api")) {
-                fileset(dir: checkoutDir) {
-                    include(name: "**/src/**/rest-api-spec/api/**")
-                    exclude(name: "**/examples/**")
-                }
+            //sanity check before running tests that we have the correct bwc branch
+            String bwcMinorBranchFromOtherProject = project.findProject(":distribution:bwc:minor").ext.get("bwcBranch");
+            if (bwcMinorBranch.equals(bwcMinorBranchFromOtherProject) == false) {
+                throw new IllegalStateException(":distribution:bwc:minor bwcBranch [" + bwcMinorBranchFromOtherProject + "] does not " +
+                    "match the bwcMinor branch used for Rest compatibility testing [" + bwcMinorBranch + "]. This is likely a bug.")
             }
-            runner.nonInputProperties.systemProperty('tests.rest.test_root_compat', checkoutDir)
-            runner.nonInputProperties.systemProperty('tests.rest.spec_root_compat', priorCopyTo)
         }
 
         // this must run after all projects have been configured, so we know any project
@@ -181,6 +189,20 @@ class RestIntegTestTask extends DefaultTask {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    Copy createCopyPriorRestSpecTask(File copyFrom, File copyTo) {
+        return Boilerplate.maybeCreate(project.tasks, 'copyPriorRestSpec', Copy) { Copy copy ->
+            copy.into(copyTo)
+            copy.eachFile {
+                path = name
+            }
+            copy.from({ copyFrom}) {
+                includeEmptyDirs = false
+                include '**/src/**/rest-api-spec/api/**'
+                exclude '**/examples/**'
             }
         }
     }

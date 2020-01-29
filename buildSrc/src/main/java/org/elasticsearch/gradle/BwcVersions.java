@@ -217,12 +217,12 @@ public class BwcVersions {
         }
     }
 
-    private String getBranchFor(Version version) {
+    public String getBranchFor(Version version, String gradleProject) {
         // based on the rules described in this classes javadoc, figure out the branch on which an unreleased version
         // lives.
         // We do this based on the Gradle project path because there's a direct correlation, so we dont have to duplicate
         // the logic from there
-        switch (getGradleProjectPathFor(version)) {
+        switch (gradleProject) {
             case ":distribution":
                 return "master";
             case ":distribution:bwc:minor":
@@ -241,6 +241,9 @@ public class BwcVersions {
             default:
                 throw new IllegalStateException("Unexpected Gradle project name");
         }
+    }
+    private String getBranchFor(Version version) {
+        return getBranchFor(version, getGradleProjectPathFor(version));
     }
 
     public List<Version> getUnreleased() {

@@ -45,7 +45,7 @@ bwcVersions.forPreviousUnreleased { BwcVersions.UnreleasedVersionInfo unreleased
     assemble.enabled = false
 
     File checkoutDir = file("${buildDir}/bwc/checkout-${bwcBranch}")
-    project("${unreleasedVersion.gradleProjectPath}").ext.set("checkoutDir", checkoutDir)
+    project("${unreleasedVersion.gradleProjectPath}").ext.set("bwcBranch", bwcBranch)
 
     final String remote = System.getProperty("bwc.remote", "elastic")
 
