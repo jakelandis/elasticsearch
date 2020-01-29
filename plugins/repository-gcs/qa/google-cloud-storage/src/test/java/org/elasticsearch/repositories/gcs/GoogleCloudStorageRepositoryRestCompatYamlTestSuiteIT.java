@@ -17,16 +17,16 @@
  * under the License.
  */
 
-package org.elasticsearch.cloud.gce;
+package org.elasticsearch.repositories.gcs;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-public class GCEDiscoveryRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+public class GoogleCloudStorageRepositoryRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-    public GCEDiscoveryRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public GoogleCloudStorageRepositoryRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

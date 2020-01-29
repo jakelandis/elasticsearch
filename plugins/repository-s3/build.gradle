@@ -140,6 +140,23 @@ task thirdPartyTest(type: Test) {
   systemProperty 'test.s3.base', s3PermanentBasePath + "_third_party_tests_" + BuildParams.testSeed
 }
 
+Map<String, Object> expansions = [
+  'permanent_bucket'        : s3PermanentBucket,
+  'permanent_base_path'     : s3PermanentBasePath + "_integration_tests",
+  'temporary_bucket'        : s3TemporaryBucket,
+  'temporary_base_path'     : s3TemporaryBasePath + "_integration_tests",
+  'ec2_bucket'              : s3EC2Bucket,
+  'ec2_base_path'           : s3EC2BasePath,
+  'ecs_bucket'              : s3ECSBucket,
+  'ecs_base_path'           : s3ECSBasePath,
+  'disable_chunked_encoding': s3DisableChunkedEncoding,
+]
+
+processTestResources {
+  inputs.properties(expansions)
+  MavenFilteringHack.filter(it, expansions)
+}
+
 if (useFixture) {
   testFixtures.useFixture(':test:fixtures:minio-fixture', 'minio-fixture')
 
@@ -171,6 +188,11 @@ if (useFixture) {
         'repository_s3/40_repository_ec2_credentials/*',
         'repository_s3/50_repository_ecs_credentials/*'
       ].join(",")
+      //copy the filter keys and values for the RestCompat tests since they are sourced from a git branch, not the filtered test resources
+      nonInputProperties.systemProperty "filter_keys", expansions.keySet().collect()
+      expansions.each { k, v ->
+        nonInputProperties.systemProperty k, "${v}"
+      }
     }
   }
   check.dependsOn(integTestMinio)
@@ -184,6 +206,11 @@ if (useFixture) {
 
   integTest.runner {
     systemProperty 'tests.rest.blacklist', 'repository_s3/50_repository_ecs_credentials/*'
+    //copy the filter keys and values for the RestCompat tests since they are sourced from a git branch, not the filtered test resources
+    nonInputProperties.systemProperty "filter_keys", expansions.keySet().collect()
+    expansions.each { k, v ->
+      nonInputProperties.systemProperty k, "${v}"
+    }
   }
 } else {
   integTest.runner {
@@ -193,26 +220,17 @@ if (useFixture) {
         'repository_s3/40_repository_ec2_credentials/*',
         'repository_s3/50_repository_ecs_credentials/*'
       ].join(",")
+
+    //copy the filter keys and values for the RestCompat tests since they are sourced from a git branch, not the filtered test resources
+    nonInputProperties.systemProperty "filter_keys", expansions.keySet().collect()
+    expansions.each { k, v ->
+      nonInputProperties.systemProperty k, "${v}"
+    }
   }
 }
 
 check.dependsOn(thirdPartyTest)
 
-processTestResources {
-  Map<String, Object> expansions = [
-    'permanent_bucket'        : s3PermanentBucket,
-    'permanent_base_path'     : s3PermanentBasePath + "_integration_tests",
-    'temporary_bucket'        : s3TemporaryBucket,
-    'temporary_base_path'     : s3TemporaryBasePath + "_integration_tests",
-    'ec2_bucket'              : s3EC2Bucket,
-    'ec2_base_path'           : s3EC2BasePath,
-    'ecs_bucket'              : s3ECSBucket,
-    'ecs_base_path'           : s3ECSBasePath,
-    'disable_chunked_encoding': s3DisableChunkedEncoding,
-  ]
-  inputs.properties(expansions)
-  MavenFilteringHack.filter(it, expansions)
-}
 
 testFixtures.useFixture(':test:fixtures:s3-fixture')
 
@@ -258,6 +276,11 @@ if (useFixture) {
         'repository_s3/30_repository_temporary_credentials/*',
         'repository_s3/40_repository_ec2_credentials/*'
       ].join(",")
+      //copy the filter keys and values for the RestCompat tests since they are sourced from a git branch, not the filtered test resources
+      nonInputProperties.systemProperty "filter_keys", expansions.keySet().collect()
+      expansions.each { k, v ->
+        nonInputProperties.systemProperty k, "${v}"
+      }
     }
   }
   check.dependsOn(integTestECS)
