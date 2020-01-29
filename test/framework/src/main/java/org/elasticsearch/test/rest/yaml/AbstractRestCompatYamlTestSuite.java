@@ -64,6 +64,17 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
         return createParameters(Collections.emptyMap());
     }
 
+    public static Map<String, String> getFilterValues(){
+        String raWFilterKeys = Objects.requireNonNull(System.getProperty("filter_keys"), "filter_keys can not be null");
+        List<String> filterKeys = Arrays.asList(raWFilterKeys.replace("[", "").replace("]", "").split("\\s*,\\s*"));
+        Map<String, String> filterValues = new HashMap<>();
+        filterKeys.forEach(key -> {
+            filterValues.put(key, Objects.requireNonNull(System.getProperty(key), key + " can not be null"));
+        });
+        return filterValues;
+    }
+
+
     @Override
     protected Path getSpecPath() {
         Path compatSpec = Paths.get(System.getProperty(REST_SPEC_COMPAT_ROOT)).resolve(SPEC_PATH);

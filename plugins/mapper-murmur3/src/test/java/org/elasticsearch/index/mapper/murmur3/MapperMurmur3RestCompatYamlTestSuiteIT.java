@@ -17,25 +17,22 @@
  * under the License.
  */
 
-package org.elasticsearch.discovery.ec2;
+package org.elasticsearch.index.mapper.murmur3;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+public class MapperMurmur3RestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-public class AmazonEC2DiscoveryRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
-
-    public AmazonEC2DiscoveryRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public MapperMurmur3RestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 
     @ParametersFactory
     public static Iterable<Object[]> parameters() throws Exception {
-        return AbstractRestCompatYamlTestSuite.createParameters(AbstractRestCompatYamlTestSuite.getFilterValues());
+        return AbstractRestCompatYamlTestSuite.createParameters();
     }
 }
+

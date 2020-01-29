@@ -17,20 +17,22 @@
  * under the License.
  */
 
-package org.elasticsearch.discovery.ec2;
+package org.elasticsearch.cloud.gce;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class AmazonEC2DiscoveryRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
+public class GCEDiscoveryRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-    public AmazonEC2DiscoveryRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public GCEDiscoveryRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

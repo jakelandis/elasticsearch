@@ -233,9 +233,9 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
             for (Path yamlFile : yamlFiles) {
                 if(filterValues.isEmpty() == false){
                     SecureRandom random = new SecureRandom();
-                    String content = new String ( Files.readAllBytes( yamlFile ) );
-                    for( Map.Entry<String, String> entry : filterValues.entrySet()){
-                        File tempDir =  new File(System.getProperty("java.io.tmpdir"), Long.toString(Math.abs(random.nextLong())));
+                    for (Map.Entry<String, String> entry : filterValues.entrySet()) {
+                        String content = new String(Files.readAllBytes(yamlFile));
+                        File tempDir = new File(System.getProperty("java.io.tmpdir"), Long.toString(Math.abs(random.nextLong())));
                         Files.createDirectory(tempDir.toPath());
                         tempDir.deleteOnExit();
                         String filteredContent =

@@ -17,25 +17,31 @@
  * under the License.
  */
 
-package org.elasticsearch.discovery.ec2;
+package org.elasticsearch.repositories.azure;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+public class AzureStorageRepositoryRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
 
-public class AmazonEC2DiscoveryRestCompatYamlTestSuiteIT extends AbstractRestCompatYamlTestSuite {
-
-    public AmazonEC2DiscoveryRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public AzureStorageRepositoryRestCompatYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 
     @ParametersFactory
     public static Iterable<Object[]> parameters() throws Exception {
         return AbstractRestCompatYamlTestSuite.createParameters(AbstractRestCompatYamlTestSuite.getFilterValues());
+    }
+
+    @Override
+    protected Settings restClientSettings() {
+        // Give more time to repository-azure to complete the snapshot operations
+        return Settings.builder().put(super.restClientSettings())
+            .put(ESRestTestCase.CLIENT_SOCKET_TIMEOUT, "60s")
+            .build();
     }
 }

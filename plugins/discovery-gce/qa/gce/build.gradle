@@ -52,6 +52,13 @@ processTestResources {
 
 integTest {
   dependsOn gceFixture, project(':plugins:discovery-gce').bundlePlugin
+  runner {
+    //copy the filter keys and values for the RestCompat tests since they are sourced from a git branch, not the filtered test resources
+    nonInputProperties.systemProperty "filter_keys", expansions.keySet().collect()
+    expansions.each { k,v ->
+      nonInputProperties.systemProperty k, "${v}"
+    }
+  }
 }
 
 testClusters.integTest {

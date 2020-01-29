@@ -68,8 +68,11 @@ integTest.enabled = false
   tasks.create(name: "integTest${action}", type: RestIntegTestTask) {
     dependsOn fixture, project(':plugins:discovery-ec2').bundlePlugin
     runner {
-      //needed for RestCompat tests since they are running tests from a checked branch, not the filtered test resources
-      nonInputProperties.systemProperty "expected_nodes", "${ec2NumberOfNodes}"
+      //copy the filter keys and values for the RestCompat tests since they are sourced from a git branch, not the filtered test resources
+      nonInputProperties.systemProperty "filter_keys", expansions.keySet().collect()
+      expansions.each { k,v ->
+        nonInputProperties.systemProperty k, "${v}"
+      }
     }
   }
 
