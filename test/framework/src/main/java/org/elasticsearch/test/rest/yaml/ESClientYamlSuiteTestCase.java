@@ -187,13 +187,19 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
     }
 
     protected Path getSpecPath() {
-        Path restSpec = Paths.get(System.getProperty(REST_TESTS_SPEC_ROOT)).resolve(SPEC_PATH);
+        Path restSpec = Paths.get(
+            Objects.requireNonNull(
+                System.getProperty(REST_TESTS_SPEC_ROOT), "System property [" + REST_TESTS_SPEC_ROOT + "] must not be null"))
+            .resolve(SPEC_PATH);
         logger.info("Reading REST spec from [{}]", restSpec);
         return restSpec;
     }
 
     static Path getTestsPath() {
-        Path restTests = Paths.get(System.getProperty(REST_TESTS_TEST_ROOT)).resolve(TESTS_PATH);
+        Path restTests = Paths.get(
+            Objects.requireNonNull(
+                System.getProperty(REST_TESTS_TEST_ROOT), "System property [" + REST_TESTS_TEST_ROOT + "] must not be null"))
+            .resolve(TESTS_PATH);
         staticLogger.info("Reading REST tests from [{}]", restTests);
         return restTests;
     }

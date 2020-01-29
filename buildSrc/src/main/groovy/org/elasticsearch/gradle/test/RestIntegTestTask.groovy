@@ -165,8 +165,9 @@ class RestIntegTestTask extends DefaultTask {
                 includeEmptyDirs = false
                 include 'rest-api-spec/**'
                 filesMatching('rest-api-spec/test/**') { FileCopyDetails details ->
-                    if (includePackaged == false) {
-                        //     runner.nonInputProperties.systemProperty('tests.rest.test_root', copyTo)
+                    if (includePackaged) {
+                        details.copyTo(new File(new File(project.sourceSets.test.output.resourcesDir, "rest-api-spec/test"), details.name))
+                    }else{
                         details.exclude()
                     }
                 }
