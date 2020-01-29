@@ -75,17 +75,16 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
         String resourceDir = null;
         Path relativeRoot = null;
         Path compatTests = null;
+        AtomicBoolean isFromQaProject = new AtomicBoolean(false);
         try {
-            //use this project's resourceDir to figure out which module or plugin we are running.
+            //use this project's resourceDir to figure out which module or plugin we are running and find the correct matching
+            //source location for the compatible tests.
             resourceDir = ESClientYamlSuiteTestCase.class.getResource("/").toURI().toASCIIString();
             String parts[] = resourceDir.split(System.getProperty("file.separator"));
-            int i = 0;
-
-            ///Users/jakelandis/workspace/8x/elasticsearch-alt1/plugins/discovery-ec2/qa/amazon-ec2/build-idea/resources
-
-            for (; i < parts.length - 3; i++) { //intentionally length - 3
+            for (int i = 0; i < parts.length - 4; i++) {
                 if ("modules".equals(parts[i]) || "plugins".equals(parts[i])) {
                     if ("qa".equals(parts[i + 2])) {
+                        isFromQaProject.set(true);
                         relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2], parts[i + 3]);
                     } else {
                         relativeRoot = Paths.get(parts[i], parts[i + 1]);
@@ -93,28 +92,33 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
                     break;
                 }
                 if ("x-pack".equals(parts[i]) && "plugin".equals(parts[i + 1])) {
-                    relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2]);
+                    if ("qa".equals(parts[i + 3])) {
+                        isFromQaProject.set(true);
+                        relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2], parts[i + 3], parts[i + 4]);
+                    } else {
+                        relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2]);
+                    }
                     break;
                 }
                 if ("qa".equals(parts[i]) && "rest-compatibility".equals(parts[i + 1])) {
+                    isFromQaProject.set(true);
                     relativeRoot = Paths.get("rest-api-spec/src/main/resources");
                     break;
                 }
             }
             Objects.requireNonNull(relativeRoot, "Could not find the relative root path from [" + resourceDir + "]");
             Path searchPath = Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(relativeRoot);
-            Set<Path> paths;
-            if (searchPath.endsWith("qa") || searchPath.endsWith("rest-compatibility")) {
-                paths = Files.walk(searchPath).filter(p -> p.endsWith(TESTS_PATH)).collect(Collectors.toSet());
-            } else { //filter out any path with "qa" so parent's of nested "qa" projects can find the correct set of tests
-                paths = Files.walk(searchPath).filter(p -> p.toString().contains("qa") == false)
-                    .filter(p -> p.endsWith(TESTS_PATH)).collect(Collectors.toSet());
-            }
+            Set<Path> paths = Files.walk(searchPath)
+                //filter out any path with "qa" so parent's of nested "qa" projects can find the correct set of tests
+                .filter(p -> isFromQaProject.get() || p.toString().contains("qa") == false)
+                .filter(p -> p.endsWith(TESTS_PATH))
+                .collect(Collectors.toSet());
+
             if (paths.size() > 1) {
                 throw new IllegalStateException("Found multiple path candidates for the compat tests path. " +
                     "Only one level nesting for a project called qa that is under the main plugin or module project is supported. " +
-                    "For example plugin/foo/qa/fooTest and plugin/foo/qa/fooTest2 are supported. " +
-                    "However, plugin/foo/notqa/fooTest is not supported ");
+                    "For example plugin/foo, plugin/foo/qa/fooTest and plugin/foo/qa/fooTest2 are supported as the parent project for " +
+                    "REST tests. However, plugin/foo/notqa/fooTest is not supported ");
             }
             compatTests = paths.iterator().next();
             if (new File(compatTests.toUri()).exists()) {
