@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -100,13 +101,20 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
                     break;
                 }
             }
-
             Objects.requireNonNull(relativeRoot, "Could not find the relative root path from [" + resourceDir + "]");
             Path searchPath = Paths.get(System.getProperty(REST_TESTS_COMPAT_ROOT)).resolve(relativeRoot);
-            Set<Path> paths = Files.walk(searchPath).filter(p -> p.endsWith(TESTS_PATH)).collect(Collectors.toSet());
+            Set<Path> paths;
+            if (searchPath.endsWith("qa") || searchPath.endsWith("rest-compatibility")) {
+                paths = Files.walk(searchPath).filter(p -> p.endsWith(TESTS_PATH)).collect(Collectors.toSet());
+            } else { //filter out any path with "qa" so parent's of nested "qa" projects can find the correct set of tests
+                paths = Files.walk(searchPath).filter(p -> p.toString().contains("qa") == false)
+                    .filter(p -> p.endsWith(TESTS_PATH)).collect(Collectors.toSet());
+            }
             if (paths.size() > 1) {
-                //TODO: clean up this message or figure out how to support this !
-                throw new IllegalStateException("Found multiple path candidates for the compat tests path. This is likely due to multiple nested projects with rest tests. ");
+                throw new IllegalStateException("Found multiple path candidates for the compat tests path. " +
+                    "Only one level nesting for a project called qa that is under the main plugin or module project is supported. " +
+                    "For example plugin/foo/qa/fooTest and plugin/foo/qa/fooTest2 are supported. " +
+                    "However, plugin/foo/notqa/fooTest is not supported ");
             }
             compatTests = paths.iterator().next();
             if (new File(compatTests.toUri()).exists()) {
