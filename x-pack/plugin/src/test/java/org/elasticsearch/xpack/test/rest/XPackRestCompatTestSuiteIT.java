@@ -6,7 +6,6 @@
 package org.elasticsearch.xpack.test.rest;
 
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
-
 import org.apache.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Request;
@@ -18,9 +17,9 @@ import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.plugins.MetaDataUpgrader;
 import org.elasticsearch.test.SecuritySettingsSourceField;
 import org.elasticsearch.test.rest.ESRestTestCase;
+import org.elasticsearch.test.rest.yaml.AbstractRestCompatYamlTestSuite;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestResponse;
-import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 import org.elasticsearch.test.rest.yaml.ObjectPath;
 import org.elasticsearch.xpack.core.ml.MlMetaIndex;
 import org.elasticsearch.xpack.core.ml.integration.MlRestTestStateCleaner;
@@ -52,18 +51,19 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
+//TODO: DRY UP THIS AND XPackRestIT
 /** Runs rest tests against external cluster */
-public class XPackRestIT extends ESClientYamlSuiteTestCase {
+public class XPackRestCompatTestSuiteIT extends AbstractRestCompatYamlTestSuite {
     private static final String BASIC_AUTH_VALUE =
             basicAuthHeaderValue("x_pack_rest_user", SecuritySettingsSourceField.TEST_PASSWORD_SECURE_STRING);
 
-    public XPackRestIT(ClientYamlTestCandidate testCandidate) {
+    public XPackRestCompatTestSuiteIT(ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 
     @ParametersFactory
     public static Iterable<Object[]> parameters() throws Exception {
-        return ESClientYamlSuiteTestCase.createParameters();
+        return AbstractRestCompatYamlTestSuite.createParameters();
     }
 
     @Override
@@ -84,7 +84,7 @@ public class XPackRestIT extends ESClientYamlSuiteTestCase {
     /**
      * Waits for the Security template and the Machine Learning templates to be created by the {@link MetaDataUpgrader}
      */
-    void waitForTemplates() throws Exception {
+    private void waitForTemplates() throws Exception {
         if (installTemplates()) {
             List<String> templates = new ArrayList<>();
             templates.addAll(
@@ -103,7 +103,7 @@ public class XPackRestIT extends ESClientYamlSuiteTestCase {
         }
     }
 
-    void waitForWatcher() throws Exception {
+    private void waitForWatcher() throws Exception {
         // ensure watcher is started, so that a test can stop watcher and everything still works fine
         if (isWatcherTest()) {
             assertBusy(() -> {
@@ -163,7 +163,7 @@ public class XPackRestIT extends ESClientYamlSuiteTestCase {
      * monitoring indices.This is the signal that the local exporter is started and ready
      * for the tests.
      */
-    void enableMonitoring() throws Exception {
+    private void enableMonitoring() throws Exception {
         if (isMonitoringTest()) {
             final ClientYamlTestResponse xpackUsage =
                     callApi("xpack.usage", singletonMap("filter_path", "monitoring.enabled_exporters"), emptyList(), getApiCallHeaders());
@@ -198,7 +198,7 @@ public class XPackRestIT extends ESClientYamlSuiteTestCase {
     /**
      * Disable monitoring
      */
-    void disableMonitoring() throws Exception {
+    private void disableMonitoring() throws Exception {
         if (isMonitoringTest()) {
             final Map<String, Object> settings = new HashMap<>();
             settings.put("xpack.monitoring.collection.enabled", null);

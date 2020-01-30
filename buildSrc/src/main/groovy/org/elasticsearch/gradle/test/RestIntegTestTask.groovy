@@ -210,6 +210,9 @@ class RestIntegTestTask extends DefaultTask {
     Copy createCopyModulesRestSpecTask(File copyTo) {
         return Boilerplate.maybeCreate(project.tasks, 'copyModulesRestSpecs', Copy) { Copy copy ->
             copy.into(new File(copyTo, "rest-api-spec/api"))
+            copy.eachFile {
+                path = name
+            }
             copy.from({ project.findProject(':modules').projectDir }) {
                 includeEmptyDirs = false
                 include '**/src/**/rest-api-spec/api/**'
@@ -221,6 +224,9 @@ class RestIntegTestTask extends DefaultTask {
     Copy createCopyPluginsRestSpecTask(File copyTo) {
         return Boilerplate.maybeCreate(project.tasks, 'copyPluginsRestSpecs', Copy) { Copy copy ->
             copy.into(new File(copyTo, "rest-api-spec/api"))
+            copy.eachFile {
+                path = name
+            }
             copy.from({ project.findProject(':plugins').projectDir }) {
                 includeEmptyDirs = false
                 include '**/src/**/rest-api-spec/api/**'
@@ -231,7 +237,10 @@ class RestIntegTestTask extends DefaultTask {
 
     Copy createCopyXpackPluginsRestSpecTask(File copyTo) {
         return Boilerplate.maybeCreate(project.tasks, 'copyXpackPluginsRestSpecs', Copy) { Copy copy ->
-            copy.into(new File(copyTo, "rest-api-spec/api/x-pack"))
+            copy.into(new File(copyTo, "rest-api-spec/api"))
+            copy.eachFile {
+                path = name
+            }
             copy.from({ project.findProject(':x-pack:plugin').projectDir }) {
                 includeEmptyDirs = false
                 include '**/src/**/rest-api-spec/api/**'

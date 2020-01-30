@@ -93,6 +93,7 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
             resourceDir = ESClientYamlSuiteTestCase.class.getResource("/").toURI().toASCIIString();
             String parts[] = resourceDir.split(System.getProperty("file.separator"));
             for (int i = 0; i < parts.length - 4; i++) {
+                //oss modules and plugins
                 if ("modules".equals(parts[i]) || "plugins".equals(parts[i])) {
                     if ("qa".equals(parts[i + 2])) {
                         isFromQaProject.set(true);
@@ -102,15 +103,20 @@ public class AbstractRestCompatYamlTestSuite extends ESClientYamlSuiteTestCase {
                     }
                     break;
                 }
+                //x-pack plugins
                 if ("x-pack".equals(parts[i]) && "plugin".equals(parts[i + 1])) {
-                    if ("qa".equals(parts[i + 3])) {
+                    if(parts[i + 2].startsWith("build") //x-pack:plugin
+                        && Thread.currentThread().getContextClassLoader().getResource("rest-api-spec/api/xpack.info.json") != null){
+                        relativeRoot = Paths.get("x-pack/plugin/src/test/resources");
+                    }else if ("qa".equals(parts[i + 3])) { //x-pack:plugin:plugin-name:qa
                         isFromQaProject.set(true);
                         relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2], parts[i + 3], parts[i + 4]);
                     } else {
-                        relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2]);
+                        relativeRoot = Paths.get(parts[i], parts[i + 1], parts[i + 2]); //x-pack:plugin:plugin-name
                     }
                     break;
                 }
+                //qa/rest-compatibility
                 if ("qa".equals(parts[i]) && "rest-compatibility".equals(parts[i + 1])) {
                     isFromQaProject.set(true);
                     relativeRoot = Paths.get("rest-api-spec/src/main/resources");
