@@ -3,6 +3,9 @@ apply plugin: 'nebula.maven-base-publish'
 apply plugin: 'nebula.maven-scm'
 apply plugin: 'elasticsearch.rest-resources'
 
+
+import org.elasticsearch.gradle.precommit.ValidateRestSpecTask
+
 test.enabled = false
 jarHell.enabled = false
 
@@ -10,3 +13,5 @@ artifacts {
   restSpecs(new File(projectDir, "src/main/resources/rest-api-spec/api"))
   restTests(new File(projectDir, "src/main/resources/rest-api-spec/test"))
 }
+
+tasks.register('validateSpec', ValidateRestSpecTask) {}
