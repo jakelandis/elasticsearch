@@ -1,3 +1,8 @@
+import org.elasticsearch.gradle.testclusters.RestTestRunnerTask
+
+import java.nio.file.Paths
+
+
 /*
  * Licensed to Elasticsearch under one or more contributor
  * license agreements. See the NOTICE file distributed with
@@ -40,3 +45,73 @@ testClusters.integTest {
   // (this is because the integTest node is not using default distribution, but only the minimal number of required modules)
   module file(project(':modules:lang-mustache').tasks.bundlePlugin.archiveFile)
 }
+
+apply plugin: 'elasticsearch.rest-compat-test'
+
+
+
+//tasks.create("restCompatTests", RestTestRunnerTask) {
+//  mustRunAfter precommit
+//  doFirst {
+//    System.out.println( "******* " +   rootProject.ext.bwcMinorCheckoutDir);
+//    System.out.println(project.getProjectDir())
+//    System.out.println(rootProject.getProjectDir())
+//    String myRelativePath = rootProject.getProjectDir().relativePath(project.getProjectDir());
+//    System.out.println(myRelativePath)
+//    def bwcPath = Paths.get(rootProject.ext.bwcMinorCheckoutDir).resolve(Paths.get(myRelativePath)).toFile()
+//    System.out.println(bwcPath);
+//    File bwcClassPath = new File(bwcPath, "build/resources/test");
+//    System.out.println(bwcClassPath);
+//
+//    System.out.println(project.getConvention().getPlugin(JavaPluginConvention.class)
+//      .getSourceSets().findByName(SourceSet.TEST_SOURCE_SET_NAME))
+//    FileCollection runtimeClasspath = project.getConvention().getPlugin(JavaPluginConvention.class)
+//      .getSourceSets().findByName(SourceSet.TEST_SOURCE_SET_NAME).getRuntimeClasspath();
+//    FileCollection x = runtimeClasspath.filter { f ->
+//      f.path.endsWith("build/resources/test") == false
+//    }
+//    project.getConvention().getPlugin(JavaPluginConvention.class)
+//      .getSourceSets().findByName(SourceSet.TEST_SOURCE_SET_NAME).getRuntimeClasspath().each { f ->
+//      System.out.println("* " + f);
+//    }
+//    x.each { f ->
+//      System.out.println("& " + f)
+//    }
+//
+//
+//    project.getConvention().getPlugin(JavaPluginConvention.class)
+//      .getSourceSets().findByName(SourceSet.TEST_SOURCE_SET_NAME).setRuntimeClasspath(    project.files(x, bwcClassPath));
+//
+//    project.getConvention().getPlugin(JavaPluginConvention.class)
+//      .getSourceSets().findByName(SourceSet.TEST_SOURCE_SET_NAME).getRuntimeClasspath().each { f ->
+//      System.out.println("# " + f);
+//    }
+//
+//  nonInputProperties.systemProperty 'tests.rest.cluster', "${-> testClusters.integTest.getAllHttpSocketURI().join(",")}"
+//    nonInputProperties.systemProperty 'tests.rest.compat', "true"
+//  }
+//  dependsOn ':prepRestCompatTests'
+//}
+
+
+testClusters.restCompatTests {
+  //testDistribution = 'DEFAULT'
+
+  // Needed in order to test ingest pipeline templating:
+  // (this is because the integTest node is not using default distribution, but only the minimal number of required modules)
+  module file(project(':modules:lang-mustache').tasks.bundlePlugin.archiveFile)
+  module(project.file(project.tasks.bundlePlugin.archiveFile))
+  module file(project(':modules:lang-painless').tasks.bundlePlugin.archiveFile)
+}
+restCompatTests{
+//  useCluster testClusters.integTest
+
+}
+
+restCompatTestsRunner {
+
+  //useCluster testClusters.integTest
+  //enabled Boolean.valueOf(System.getProperty("tests.rest.compat.enabled", "false"))
+ // dependsOn bundlePlugin
+}
+

@@ -238,6 +238,9 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
     static Map<String, Set<Path>> loadSuites(String... paths) throws Exception {
         Map<String, Set<Path>> files = new HashMap<>();
         Path root = PathUtils.get(ESClientYamlSuiteTestCase.class.getResource(TESTS_PATH).toURI());
+        System.out.println("**********************************");
+        System.out.println(root.toString());
+        System.out.println("**********************************");
         for (String strPath : paths) {
             Path path = root.resolve(strPath);
             if (Files.isDirectory(path)) {

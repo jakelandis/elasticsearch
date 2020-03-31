@@ -517,3 +517,21 @@ subprojects {
     }
   }
 }
+
+//check out bwcMinor and calls processTestResources on bwcMinor to ensure all tests and APIs are resolved
+tasks.register("prepRestCompatTests", Exec) {
+String bwcMinorCheckoutDir
+  dependsOn ':distribution:bwc:minor:checkoutBwcBranch'
+  doFirst {
+    List compatible = bwcVersions.getIndexCompatible();
+    Version bwcMinorVersion = compatible.get(compatible.size() - 2)
+    String bwcMinorBranch = bwcVersions.getBranchFor(bwcMinorVersion)
+    bwcMinorCheckoutDir = new File(project.findProject(":distribution:bwc:minor").buildDir, "bwc/checkout-" + bwcMinorBranch).absolutePath
+  }
+  commandLine './gradlew', '-p', "${-> bwcMinorCheckoutDir}", 'processTestResources'
+  doLast {
+    project.ext.bwcMinorCheckoutDir = bwcMinorCheckoutDir
+  }
+}
+
+

@@ -18,11 +18,11 @@
  */
 package org.elasticsearch.gradle.test
 
-import org.elasticsearch.gradle.testclusters.ElasticsearchCluster
-import org.elasticsearch.gradle.testclusters.RestTestRunnerTask
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.tasks.testing.Test
+import org.elasticsearch.gradle.test.rest.RestTestUtil
 
 /**
  * A wrapper task around setting up a cluster and running rest tests.
@@ -32,33 +32,8 @@ class RestIntegTestTask extends DefaultTask {
     protected Test runner
 
     RestIntegTestTask() {
-        runner = project.tasks.create("${name}Runner", RestTestRunnerTask.class)
+        runner = RestTestUtil.setupRunner(project, name, null);
         super.dependsOn(runner)
-
-        ElasticsearchCluster cluster = project.testClusters.create(name)
-        runner.useCluster cluster
-
-        runner.include('**/*IT.class')
-        runner.systemProperty('tests.rest.load_packaged', 'false')
-
-        if (System.getProperty("tests.rest.cluster") == null) {
-            if (System.getProperty("tests.cluster") != null || System.getProperty("tests.clustername") != null) {
-                throw new IllegalArgumentException("tests.rest.cluster, tests.cluster, and tests.clustername must all be null or non-null")
-            }
-
-            runner.nonInputProperties.systemProperty('tests.rest.cluster', "${-> cluster.allHttpSocketURI.join(",")}")
-            runner.nonInputProperties.systemProperty('tests.cluster', "${-> cluster.transportPortURI}")
-            runner.nonInputProperties.systemProperty('tests.clustername', "${-> cluster.getName()}")
-        } else {
-            if (System.getProperty("tests.cluster") == null || System.getProperty("tests.clustername") == null) {
-                throw new IllegalArgumentException("tests.rest.cluster, tests.cluster, and tests.clustername must all be null or non-null")
-            }
-            // an external cluster was specified and all responsibility for cluster configuration is taken by the user
-            runner.systemProperty('tests.rest.cluster', System.getProperty("tests.rest.cluster"))
-            runner.systemProperty('test.cluster', System.getProperty("tests.cluster"))
-            runner.systemProperty('test.clustername', System.getProperty("tests.clustername"))
-        }
-
         // this must run after all projects have been configured, so we know any project
         // references can be accessed as a fully configured
         project.gradle.projectsEvaluated {

@@ -68,6 +68,7 @@ class PluginBuildPlugin implements Plugin<Project> {
             project.description = extension1.description
             configurePublishing(project, extension1)
 
+            //BELOW HERE IS THE MAGIC
             project.tasks.integTest.dependsOn(project.tasks.bundlePlugin)
             if (isModule) {
                 project.testClusters.integTest.module(
