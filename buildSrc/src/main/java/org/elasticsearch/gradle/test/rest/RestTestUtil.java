@@ -22,8 +22,8 @@ package org.elasticsearch.gradle.test.rest;
 import org.elasticsearch.gradle.SystemPropertyCommandLineArgumentProvider;
 import org.elasticsearch.gradle.testclusters.ElasticsearchCluster;
 import org.elasticsearch.gradle.testclusters.RestTestRunnerTask;
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
-import org.gradle.api.internal.FactoryNamedDomainObjectContainer;
 
 import java.util.function.Supplier;
 
@@ -40,11 +40,10 @@ public class RestTestUtil {
 
         SystemPropertyCommandLineArgumentProvider runnerNonInputProperties =
             (SystemPropertyCommandLineArgumentProvider) runner.getExtensions().getByName("nonInputProperties");
-        FactoryNamedDomainObjectContainer testClusters =
-            (FactoryNamedDomainObjectContainer) project.getExtensions().getByName("testClusters");
+        NamedDomainObjectContainer<ElasticsearchCluster> testClusters =
+            (NamedDomainObjectContainer<ElasticsearchCluster> ) project.getExtensions().getByName("testClusters");
 
-        ElasticsearchCluster cluster = (ElasticsearchCluster) (testCluster == null ? testClusters.create(baseName)
-            : testCluster);
+        ElasticsearchCluster cluster = testCluster == null ? testClusters.create(baseName)     : testCluster;
 
         runner.useCluster(cluster);
 
