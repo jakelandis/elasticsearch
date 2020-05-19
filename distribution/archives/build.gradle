@@ -18,13 +18,21 @@
  */
 
 import org.elasticsearch.gradle.BuildPlugin
+import org.elasticsearch.gradle.ElasticsearchJavaPlugin
 import org.elasticsearch.gradle.EmptyDirTask
 import org.elasticsearch.gradle.LoggedExec
 import org.elasticsearch.gradle.MavenFilteringHack
 import org.elasticsearch.gradle.VersionProperties
 import org.elasticsearch.gradle.info.BuildParams
+import org.elasticsearch.gradle.info.GlobalBuildInfoPlugin
 import org.elasticsearch.gradle.plugin.PluginBuildPlugin
+import org.elasticsearch.gradle.ExportElasticsearchBuildResourcesTask
+import org.elasticsearch.gradle.precommit.PrecommitTasks
 import org.elasticsearch.gradle.tar.SymbolicLinkPreservingTar
+import org.elasticsearch.gradle.test.rest.RestResourcesPlugin
+import org.elasticsearch.gradle.testclusters.TestClustersPlugin
+import org.gradle.plugins.ide.eclipse.model.EclipseModel
+import org.gradle.plugins.ide.idea.model.IdeaModel
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -325,11 +333,19 @@ subprojects {
  *                            Rest test config                               *
  *****************************************************************************/
 configure(subprojects.findAll { it.name == 'integ-test-zip' }) {
-  apply plugin: 'elasticsearch.standalone-rest-test'
-  apply plugin: 'elasticsearch.rest-test'
-  apply plugin: 'elasticsearch.yaml-test'
+
+
+
+
+  BuildPlugin.configureRepositories(project)
+  apply plugin: 'elasticsearch.yaml-rest-test'
 
   group = "org.elasticsearch.distribution.integ-test-zip"
+
+
+
+    jar.enabled = false
+
 
   restResources {
     restTests {
@@ -337,7 +353,7 @@ configure(subprojects.findAll { it.name == 'integ-test-zip' }) {
     }
   }
 
-  yamlTest {
+  yamlRestTest {
     dependsOn assemble
   }
 

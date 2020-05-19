@@ -50,6 +50,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.elasticsearch.gradle.util.Util.capitalize;
 
@@ -144,14 +146,26 @@ public class DistributionDownloadPlugin implements Plugin<Project> {
         configurations.create(extractedConfigName);
         rootProject.getDependencies().add(downloadConfigName, dependencyNotation(rootProject, distribution));
 
+
         // add task for extraction, delaying resolving config until runtime
         if (distribution.getType() == Type.ARCHIVE || distribution.getType() == Type.INTEG_TEST_ZIP) {
-            Supplier<File> archiveGetter = downloadConfig::getSingleFile;
+            Supplier<File> archiveGetter = () -> {
+                Stream<File> files = downloadConfig.getFiles().stream().filter(f -> f.toString().endsWith("zip") || f.toString().endsWith(".tar.gz")).distinct();
+                assert files.count() == 1;
+                return files.findFirst().get();
+            };
             String extractDir = rootProject.getBuildDir().toPath().resolve("elasticsearch-distros").resolve(extractedConfigName).toString();
             TaskProvider<Sync> extractTask = rootProject.getTasks().register(extractTaskName, Sync.class, syncTask -> {
                 syncTask.dependsOn(downloadConfig);
                 syncTask.into(extractDir);
                 syncTask.from((Callable<FileTree>) () -> {
+
+                    System.out.println("************************1 " + downloadConfig);
+
+                    System.out.println("************************2 " + downloadConfig.getAllDependencies().stream().map(d -> d.getName()).collect(Collectors.joining(",")));
+                    System.out.println("************************3 " + downloadConfig.getFiles().stream().map(d -> d.getName()).collect(Collectors.joining(",")));
+
+
                     File archiveFile = archiveGetter.get();
                     String archivePath = archiveFile.toString();
                     if (archivePath.endsWith(".zip")) {

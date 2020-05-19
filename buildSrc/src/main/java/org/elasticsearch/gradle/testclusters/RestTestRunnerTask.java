@@ -38,6 +38,7 @@ public class RestTestRunnerTask extends Test implements TestClustersAware {
                  * avoid any undesired behavior we simply disable the cache if we detect that this task uses a cluster shared between
                  * multiple tasks.
                  */
+                //TODO: handle the case when both the yaml and non-yaml tests tasks exit
                 t -> getProject().getTasks()
                     .withType(RestTestRunnerTask.class)
                     .stream()

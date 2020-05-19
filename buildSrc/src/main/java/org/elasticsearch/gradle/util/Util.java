@@ -159,7 +159,7 @@ public class Util {
     public static Optional<SourceSet> getYamlTestSourceSet(Project project) {
         return project.getConvention().findPlugin(JavaPluginConvention.class) == null
             ? Optional.empty()
-            : Optional.ofNullable(GradleUtils.getJavaSourceSets(project).findByName("yamlTest"));
+            : Optional.ofNullable(GradleUtils.getJavaSourceSets(project).findByName("yamlRestTest"));
     }
 
     /**

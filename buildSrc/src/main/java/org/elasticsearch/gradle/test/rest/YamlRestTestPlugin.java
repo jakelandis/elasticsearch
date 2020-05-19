@@ -19,6 +19,7 @@
 
 package org.elasticsearch.gradle.test.rest;
 
+import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
 import org.elasticsearch.gradle.plugin.PluginPropertiesExtension;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.testclusters.RestTestRunnerTask;
@@ -36,20 +37,15 @@ import org.gradle.api.tasks.bundling.Zip;
 /**
  * Apply this plugin to run the YAML based REST tests. This will adda
  */
-public class YamlTestPlugin implements Plugin<Project> {
+public class YamlRestTestPlugin implements Plugin<Project> {
 
-    public static final String SOURCE_SET_NAME = "yamlTest";
+    public static final String SOURCE_SET_NAME = "yamlRestTest";
 
     @Override
     public void apply(Project project) {
 
-        if (project.getPluginManager().hasPlugin("elasticsearch.build") == false
-            && project.getPluginManager().hasPlugin("elasticsearch.standalone-rest-test") == false) {
-            throw new InvalidUserDataException(
-                "elasticsearch.build or elasticsearch.standalone-rest-test plugin " + "must be applied before the YAML test plugin"
-            );
-        }
 
+        project.getPluginManager().apply(ElasticsearchJavaPlugin.class);
         // to spin up the external cluster
         project.getPluginManager().apply(TestClustersPlugin.class);
         // to copy around the yaml tests and json spec
@@ -118,7 +114,7 @@ public class YamlTestPlugin implements Plugin<Project> {
         }
 
         // validation of the rest specification is wired to precommit, so ensure that runs first
-        yamlTestTask.mustRunAfter(project.getTasks().getByName("precommit"));
+//        yamlTestTask.mustRunAfter(project.getTasks().getByName("precommit"));
 
         // wire this task into check
         project.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(yamlTestTask));
