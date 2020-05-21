@@ -344,8 +344,6 @@ configure(subprojects.findAll { it.name == 'integ-test-zip' }) {
 
 
 
-    jar.enabled = false
-
 
   restResources {
     restTests {

@@ -80,7 +80,6 @@ public class ElasticsearchJavaPlugin implements Plugin<Project> {
         configureCompile(project);
         configureInputNormalization(project);
         configureTestTasks(project);
-        configureJars(project);
         configureJarManifest(project);
         configureJavadoc(project);
     }
@@ -424,24 +423,22 @@ public class ElasticsearchJavaPlugin implements Plugin<Project> {
             );
         // add license/notice files
         project.afterEvaluate(p -> project.getTasks().withType(Jar.class).configureEach(jarTask -> {
-            if(jarTask.isEnabled()) {
-                File licenseFile = (File) ext.get("licenseFile");
-                File noticeFile = (File) ext.get("noticeFile");
-                if (licenseFile == null || noticeFile == null) {
-                    throw new GradleException("Must specify license and notice file for project");
-                }
-
-                jarTask.metaInf(spec -> {
-                    spec.from(licenseFile.getParent(), from -> {
-                        from.include(licenseFile.getName());
-                        from.rename(s -> "LICENSE.txt");
-                    });
-                    spec.from(noticeFile.getParent(), from -> {
-                        from.include(noticeFile.getName());
-                        from.rename(s -> "NOTICE.txt");
-                    });
-                });
+            File licenseFile = (File) ext.get("licenseFile");
+            File noticeFile = (File) ext.get("noticeFile");
+            if (licenseFile == null || noticeFile == null) {
+                throw new GradleException("Must specify license and notice file for project");
             }
+
+            jarTask.metaInf(spec -> {
+                spec.from(licenseFile.getParent(), from -> {
+                    from.include(licenseFile.getName());
+                    from.rename(s -> "LICENSE.txt");
+                });
+                spec.from(noticeFile.getParent(), from -> {
+                    from.include(noticeFile.getName());
+                    from.rename(s -> "NOTICE.txt");
+                });
+            });
         }));
         project.getPluginManager().withPlugin("com.github.johnrengelman.shadow", p -> {
             project.getTasks()

@@ -110,6 +110,7 @@ class BuildPlugin implements Plugin<Project> {
             )
         }
         project.pluginManager.apply('elasticsearch.java')
+        ElasticsearchJavaPlugin.configureJars(project)
         project.pluginManager.apply('elasticsearch.publish')
 
         // apply global test task failure listener
