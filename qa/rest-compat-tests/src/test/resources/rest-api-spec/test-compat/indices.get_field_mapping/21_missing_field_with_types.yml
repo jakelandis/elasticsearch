@@ -20,4 +20,4 @@
         type: test_type
         fields: not_existent
 
-  - match: { 'test_index.mappings': { '_doc':{}}}
+  - match: { 'test_index.mappings': { '_doc':{}}} 
