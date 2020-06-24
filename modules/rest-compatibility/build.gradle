@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+apply plugin: 'elasticsearch.yaml-rest-test'
+apply plugin: 'elasticsearch.rest-compatibility'
 
 esplugin {
   description 'Adds a compatiblity layer for the prior major versions REST API'
