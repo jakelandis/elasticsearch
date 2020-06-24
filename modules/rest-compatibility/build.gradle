@@ -27,5 +27,19 @@ dependencies {
   compile project(':modules:reindex')
 }
 
+configurations {
+  testArtifacts.extendsFrom testRuntime
+  testArtifacts.extendsFrom testImplementation
+}
+
+task testJar(type: Jar) {
+  appendix 'test'
+  from sourceSets.test.output
+}
+
+artifacts {
+  testArtifacts testJar
+}
+
 integTest.enabled = false
 test.enabled = true

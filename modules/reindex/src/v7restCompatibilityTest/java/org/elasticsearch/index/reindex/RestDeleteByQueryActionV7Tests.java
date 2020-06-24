@@ -19,8 +19,8 @@
 
 package org.elasticsearch.index.reindex;
 
-import org.elasticsearch.compat.FakeCompatRestRequestBuilder;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.compat.FakeCompatRestRequestBuilder;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.search.RestSearchActionV7;
 import org.elasticsearch.test.rest.RestActionTestCase;
