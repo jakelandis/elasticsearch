@@ -32,6 +32,7 @@ public class RestResourcesExtension {
 
     final RestResourcesSpec restApi;
     final RestResourcesSpec restTests;
+    private String sourceSetName = "yamlRestTest";
 
     @Inject
     public RestResourcesExtension(ObjectFactory objects) {
@@ -45,6 +46,14 @@ public class RestResourcesExtension {
 
     void restTests(Action<? super RestResourcesSpec> spec) {
         spec.execute(restTests);
+    }
+
+    public void sourceSetName(String sourceSetName) {
+        this.sourceSetName = sourceSetName;
+    }
+
+    public String getSourceSetName() {
+        return this.sourceSetName;
     }
 
     static class RestResourcesSpec {
