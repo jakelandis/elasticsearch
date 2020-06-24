@@ -19,13 +19,13 @@
 
 package org.elasticsearch.rest.action.document;
 
-import org.elasticsearch.compat.FakeCompatRestRequestBuilder;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestRequest.Method;
+import org.elasticsearch.test.rest.FakeCompatRestRequestBuilder;
 import org.elasticsearch.test.rest.RestActionTestCase;
 import org.junit.Before;
 

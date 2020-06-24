@@ -19,11 +19,11 @@
 
 package org.elasticsearch.rest.action.search;
 
-import org.elasticsearch.compat.FakeCompatRestRequestBuilder;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.test.rest.FakeCompatRestRequestBuilder;
 import org.elasticsearch.test.rest.RestActionTestCase;
 import org.junit.Before;
 

@@ -20,9 +20,9 @@
 package org.elasticsearch.index.reindex;
 
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.compat.FakeCompatRestRequestBuilder;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.search.RestSearchActionV7;
+import org.elasticsearch.test.rest.FakeCompatRestRequestBuilder;
 import org.elasticsearch.test.rest.RestActionTestCase;
 import org.junit.Before;
 
@@ -30,7 +30,7 @@ import java.io.IOException;
 
 import static java.util.Collections.emptyList;
 
-public class RestUpdateByQueryActionTests extends RestActionTestCase {
+public class RestUpdateByQueryActionV7Tests extends RestActionTestCase {
 
     private RestUpdateByQueryAction action;
 

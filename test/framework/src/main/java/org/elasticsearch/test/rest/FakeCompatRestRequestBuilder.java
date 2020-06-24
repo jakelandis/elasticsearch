@@ -17,10 +17,10 @@
  * under the License.
  */
 
-package org.elasticsearch.compat;
+package org.elasticsearch.test.rest;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.test.rest.FakeRestRequest;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.Map;
 import static org.elasticsearch.test.ESTestCase.randomFrom;
 
 public class FakeCompatRestRequestBuilder extends FakeRestRequest.Builder {
-    final String mimeType = randomFrom("application/vnd.elasticsearch+json;compatible-with=7");
+    final String mimeType = randomFrom("application/vnd.elasticsearch+json;compatible-with=" + (Version.CURRENT.major - 1));
     final List<String> contentTypeHeader = Collections.singletonList(mimeType);
 
     public FakeCompatRestRequestBuilder(NamedXContentRegistry xContentRegistry) {

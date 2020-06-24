@@ -21,8 +21,8 @@ package org.elasticsearch.rest.action.admin.indices;
 
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.compat.FakeCompatRestRequestBuilder;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.test.rest.FakeCompatRestRequestBuilder;
 import org.elasticsearch.test.rest.RestActionTestCase;
 import org.junit.Before;
 
