@@ -66,6 +66,7 @@ public class ESClientCompatibleYamlSuiteTestCase extends ESClientYamlSuiteTestCa
             });
             finalTestCandidates.add(testCandidates.toArray());
         }
+        //TODO: throw error if no compatible tests can found
         testOverrides.keySet().forEach(lc -> finalTestCandidates.add(new Object[] { lc }));
         return finalTestCandidates;
     }

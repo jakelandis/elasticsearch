@@ -82,7 +82,7 @@ import java.util.Map;
  */
 public class RestResourcesPlugin implements Plugin<Project> {
 
-    private static final String EXTENSION_NAME = "restResources";
+    public static final String EXTENSION_NAME = "restResources";
 
     @Override
     public void apply(Project project) {

@@ -1,3 +1,5 @@
+import java.util.stream.Collectors
+
 apply plugin: 'elasticsearch.build'
 apply plugin: 'elasticsearch.publish'
 apply plugin: 'elasticsearch.rest-resources'
@@ -18,6 +20,7 @@ artifacts {
   restSpecs(new File(projectDir, "src/main/resources/rest-api-spec/api"))
   restTests(new File(projectDir, "src/main/resources/rest-api-spec/test"))
 }
+
 
 
 //TODO: bake this into the rest-compatibility plugin

@@ -54,13 +54,13 @@ import java.util.stream.Collectors;
  * @see RestResourcesPlugin
  */
 public class CopyRestApiTask extends DefaultTask {
-    private static final String REST_API_PREFIX = "rest-api-spec/api";
-    final ListProperty<String> includeCore = getProject().getObjects().listProperty(String.class);
-    final ListProperty<String> includeXpack = getProject().getObjects().listProperty(String.class);
-    String sourceSetName = "yamlRestTest";
+    public static final String REST_API_PREFIX = "rest-api-spec/api";
+    public final ListProperty<String> includeCore = getProject().getObjects().listProperty(String.class);
+    public final ListProperty<String> includeXpack = getProject().getObjects().listProperty(String.class);
+    public String sourceSetName = "yamlRestTest";
 
-    Configuration coreConfig;
-    Configuration xpackConfig;
+    public Configuration coreConfig;
+    public Configuration xpackConfig;
 
     private final PatternFilterable corePatternSet;
     private final PatternFilterable xpackPatternSet;

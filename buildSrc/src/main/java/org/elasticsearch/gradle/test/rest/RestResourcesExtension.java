@@ -30,8 +30,8 @@ import javax.inject.Inject;
  */
 public class RestResourcesExtension {
 
-    final RestResourcesSpec restApi;
-    final RestResourcesSpec restTests;
+    public final RestResourcesSpec restApi;
+    public final RestResourcesSpec restTests;
     private String sourceSetName = "yamlRestTest";
 
     @Inject
@@ -40,11 +40,11 @@ public class RestResourcesExtension {
         restTests = new RestResourcesSpec(objects);
     }
 
-    void restApi(Action<? super RestResourcesSpec> spec) {
+    public void restApi(Action<? super RestResourcesSpec> spec) {
         spec.execute(restApi);
     }
 
-    void restTests(Action<? super RestResourcesSpec> spec) {
+    public void restTests(Action<? super RestResourcesSpec> spec) {
         spec.execute(restTests);
     }
 
@@ -56,7 +56,7 @@ public class RestResourcesExtension {
         return this.sourceSetName;
     }
 
-    static class RestResourcesSpec {
+    public static class RestResourcesSpec {
 
         private final ListProperty<String> includeCore;
         private final ListProperty<String> includeXpack;
