@@ -1,0 +1,11 @@
+---
+"Return empty object if field doesn't exist, but type and index do":
+  - find:
+      match: { '': {}}
+      replace:
+        match: { 'test_index.mappings': { '_doc':{}}}
+
+
+
+
+#find - replace/add/delete

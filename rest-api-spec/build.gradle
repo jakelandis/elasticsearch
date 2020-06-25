@@ -18,3 +18,16 @@ artifacts {
   restSpecs(new File(projectDir, "src/main/resources/rest-api-spec/api"))
   restTests(new File(projectDir, "src/main/resources/rest-api-spec/test"))
 }
+
+
+//TODO: bake this into the rest-compatibility plugin
+//System.out.println("Copying compat REST resources from: " + new File(project(':distribution:bwc:minor').projectDir, 'build/bwc/checkout-7.x/rest-api-spec/src/main/resources/'));
+//task copyRestTestsResources(type: Copy) {
+//
+//  into project.sourceSets.v7restCompatibilityTest.output.resourcesDir
+//  from new File(project(':distribution:bwc:minor').projectDir, 'build/bwc/checkout-7.x/rest-api-spec/src/main/resources/')
+//  include 'rest-api-spec/**'
+//  dependsOn ':distribution:bwc:minor:checkoutBwcBranch'
+//}
+//
+//v7restCompatibilityTest.dependsOn(copyRestTestsResources)

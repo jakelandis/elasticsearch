@@ -29,6 +29,7 @@ import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
 import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -59,29 +60,38 @@ public class YamlRestTestPlugin implements Plugin<Project> {
         SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         SourceSet yamlTestSourceSet = sourceSets.create(SOURCE_SET_NAME);
 
+        //create the task
+        Task yamlRestTestTask = createTask(SOURCE_SET_NAME, project, yamlTestSourceSet);
+        yamlRestTestTask.dependsOn(project.getTasks().getByName("copyRestApiSpecsTask"));
+
+        // setup IDE
+        GradleUtils.setupIdeForTestSourceSet(project, yamlTestSourceSet);
+
+    }
+
+    public Task createTask(String taskName, Project project, SourceSet sourceSet) {
         // create task - note can not use .register due to the work in RestIntegTestTask's constructor :(
         // see: https://github.com/elastic/elasticsearch/issues/47804
         RestIntegTestTask yamlRestTestTask = project.getTasks()
             .create(
-                SOURCE_SET_NAME,
-                RestIntegTestTask.class,
-                task -> { task.dependsOn(project.getTasks().getByName("copyRestApiSpecsTask")); }
+                taskName,
+                RestIntegTestTask.class
             );
         yamlRestTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         yamlRestTestTask.setDescription("Runs the YAML based REST tests against an external cluster");
 
         // setup task dependency
         if (BuildParams.isInternal()) {
-            project.getDependencies().add(SOURCE_SET_NAME + "Compile", project.project(":test:framework"));
+            project.getDependencies().add(sourceSet.getName() + "Compile", project.project(":test:framework"));
         } else {
             project.getDependencies()
-                .add(SOURCE_SET_NAME + "Compile", "org.elasticsearch.test:framework:" + VersionProperties.getElasticsearch());
+                .add(sourceSet.getName() + "Compile", "org.elasticsearch.test:framework:" + VersionProperties.getElasticsearch());
         }
 
         // setup the runner
         RestTestRunnerTask runner = (RestTestRunnerTask) project.getTasks().getByName(yamlRestTestTask.getName() + "Runner");
-        runner.setTestClassesDirs(yamlTestSourceSet.getOutput().getClassesDirs());
-        runner.setClasspath(yamlTestSourceSet.getRuntimeClasspath());
+        runner.setTestClassesDirs(sourceSet.getOutput().getClassesDirs());
+        runner.setClasspath(sourceSet.getRuntimeClasspath());
 
         // if this a module or plugin, it may have an associated zip file with it's contents, add that to the test cluster
         boolean isModule = project.getPath().startsWith(":modules:");
@@ -110,13 +120,12 @@ public class YamlRestTestPlugin implements Plugin<Project> {
             }
         });
 
-        // setup IDE
-        GradleUtils.setupIdeForTestSourceSet(project, yamlTestSourceSet);
-
         // make the new test run after unit tests
         yamlRestTestTask.mustRunAfter(project.getTasks().named("test"));
 
         // wire this task into check
         project.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(yamlRestTestTask));
+
+        return yamlRestTestTask;
     }
 }

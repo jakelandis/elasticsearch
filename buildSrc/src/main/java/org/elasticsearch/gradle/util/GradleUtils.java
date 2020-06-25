@@ -192,6 +192,27 @@ public abstract class GradleUtils {
         });
     }
 
+    public static void setupIdeForNonTestSourceSet(Project project, SourceSet sourceSet) {
+        // setup IDEs
+        String runtimeClasspathName = sourceSet.getRuntimeClasspathConfigurationName();
+        Configuration runtimeClasspathConfiguration = project.getConfigurations().getByName(runtimeClasspathName);
+        project.getPluginManager().withPlugin("idea", p -> {
+            IdeaModel idea = project.getExtensions().getByType(IdeaModel.class);
+            idea.getModule().setSourceDirs(sourceSet.getJava().getSrcDirs());
+            idea.getModule().getScopes().put("PROVIDED", Map.of("plus", List.of(runtimeClasspathConfiguration)));
+        });
+        project.getPluginManager().withPlugin("eclipse", p -> {
+            EclipseModel eclipse = project.getExtensions().getByType(EclipseModel.class);
+            List<SourceSet> eclipseSourceSets = new ArrayList<>();
+            for (SourceSet old : eclipse.getClasspath().getSourceSets()) {
+                eclipseSourceSets.add(old);
+            }
+            eclipseSourceSets.add(sourceSet);
+            eclipse.getClasspath().setSourceSets(project.getExtensions().getByType(SourceSetContainer.class));
+            eclipse.getClasspath().getPlusConfigurations().add(runtimeClasspathConfiguration);
+        });
+    }
+
     /**
      * Extend the configurations of one source set from another.
      */
