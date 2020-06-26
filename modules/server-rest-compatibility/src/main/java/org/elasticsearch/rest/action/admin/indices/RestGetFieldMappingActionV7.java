@@ -24,7 +24,6 @@ import org.elasticsearch.Version;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.admin.indices.RestGetFieldMappingAction;
 
 import java.io.IOException;
 import java.util.List;

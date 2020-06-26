@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package rest.action.search;
+package org.elasticsearch.rest.action.search;
 
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;

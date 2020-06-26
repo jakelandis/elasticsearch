@@ -26,7 +26,6 @@ import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.admin.indices.RestPutMappingAction;
 
 import java.io.IOException;
 import java.util.List;

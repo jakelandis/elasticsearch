@@ -35,6 +35,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.bundling.Zip;
 
 import java.io.File;
 import java.util.Map;
@@ -92,6 +93,11 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
             RestTestRunnerTask runner = (RestTestRunnerTask) project.getTasks().getByName(compatYamlTestTaskName + "Runner");
             //TODO: support a pre-fix with the copy
             runner.systemProperty("tests.rest.tests.path.prefix", "/" + COMPATIBLE_VERSION);
+
+            //add dependency on server-rest-compatibility
+            restCompatibilityTestTask.dependsOn(":modules:server-rest-compatibility:bundlePlugin");
+            Zip bundle = (Zip) project.findProject(":modules:server-rest-compatibility").getTasks().getByName("bundlePlugin");
+            runner.getClusters().forEach(c -> c.module(bundle.getArchiveFile()));
 
 
             File checkoutDir = (File) project.findProject(":distribution:bwc:minor").getExtensions().getExtraProperties().get("checkoutDir");

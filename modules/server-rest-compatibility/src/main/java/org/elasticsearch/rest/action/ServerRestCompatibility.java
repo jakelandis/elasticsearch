@@ -42,14 +42,13 @@ import org.elasticsearch.rest.action.document.RestTermVectorsActionV7;
 import org.elasticsearch.rest.action.document.RestUpdateActionV7;
 import org.elasticsearch.rest.action.search.RestMultiSearchActionV7;
 import org.elasticsearch.rest.action.search.RestSearchActionV7;
-import org.elasticsearch.script.mustache.RestMultiSearchTemplateActionV7;
-import org.elasticsearch.script.mustache.RestSearchTemplateActionV7;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class RestCompatPlugin extends Plugin implements ActionPlugin {
+//TODO: move this to the v7restCompatSourceSet ... but need to make sure that the compile is wired in correctly ... which it is not . 
+public class ServerRestCompatibility extends Plugin implements ActionPlugin {
 
     @Override
     public List<RestHandler> getRestHandlers(
@@ -72,8 +71,6 @@ public class RestCompatPlugin extends Plugin implements ActionPlugin {
                 new RestMultiTermVectorsActionV7(),
                 new RestSearchActionV7(),
                 new RestMultiSearchActionV7(settings),
-                new RestSearchTemplateActionV7(),
-                new RestMultiSearchTemplateActionV7(settings),
                 new RestDeleteActionV7(),
                 new RestUpdateActionV7(),
                 new RestGetFieldMappingActionV7(),
@@ -84,6 +81,7 @@ public class RestCompatPlugin extends Plugin implements ActionPlugin {
         return Collections.emptyList();
     }
 
+    //TODO: centralize this validation
     private List<RestHandler> validatedList(RestHandler ... handlers){
         List<RestHandler> handlers1 = List.of(handlers);
         for (RestHandler handler : handlers) {

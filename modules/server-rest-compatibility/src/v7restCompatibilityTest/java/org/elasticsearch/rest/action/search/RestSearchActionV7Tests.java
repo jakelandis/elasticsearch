@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package rest.action.search;
+package org.elasticsearch.rest.action.search;
 
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.test.rest.FakeCompatRestRequestBuilder;
