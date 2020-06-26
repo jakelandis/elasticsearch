@@ -65,9 +65,7 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
         //compat code depend on main code
         GradleUtils.extendSourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME, SOURCE_SET_NAME);
 
-        //TODO: nuke rest-compatiblity module
-        Dependency restCompatDependency = project.getDependencies().project(Map.of("path", ":modules:rest-compatibility")); //TOOD: protect with BuildParams.isInternal
-        project.getDependencies().add(restCompatCompileConfig.getName(), restCompatDependency);
+
 
         GradleUtils.addTestSourceSet(project, TEST_SOURCE_SET_NAME);
         //tests need access to compat and main code
@@ -76,15 +74,11 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
         Configuration restCompatTestCompileConfig = project.getConfigurations().getByName(restCompatTestSourceSet.getCompileClasspathConfigurationName());
         if (BuildParams.isInternal()) {
             Dependency testFrameworkDependency = project.getDependencies().project(Map.of("path", ":test:framework"));
-            Dependency restCompatTestDependency = project.getDependencies().project(Map.of("path", ":modules:rest-compatibility", "configuration", "testArtifacts"));
             project.getDependencies().add(restCompatTestCompileConfig.getName(), testFrameworkDependency);
-            project.getDependencies().add(restCompatTestCompileConfig.getName(), restCompatDependency);
-            project.getDependencies().add(restCompatTestCompileConfig.getName(), restCompatTestDependency);
         } else {
 
             project.getDependencies().add(restCompatTestCompileConfig.getName(),
                 "org.elasticsearch.test:framework:" + VersionProperties.getElasticsearch());
-            //TODO: nuke modules:rest-compatibility
 
         }
 

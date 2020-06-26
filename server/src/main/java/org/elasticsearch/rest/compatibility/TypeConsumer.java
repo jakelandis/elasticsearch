@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.compat;
+package org.elasticsearch.rest.compatibility;
 
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.rest.RestRequest;
@@ -25,6 +25,9 @@ import org.elasticsearch.rest.RestRequest;
 import java.util.Set;
 import java.util.function.Function;
 
+/**
+ * Consumes the type parameter if one exists. TODO: is the best place for this ?
+ */
 public class TypeConsumer implements Function<String, Boolean> {
 
     private final RestRequest request;

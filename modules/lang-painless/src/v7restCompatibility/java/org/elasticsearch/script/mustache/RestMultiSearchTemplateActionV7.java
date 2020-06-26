@@ -20,7 +20,7 @@
 package org.elasticsearch.script.mustache;
 
 import org.apache.logging.log4j.LogManager;
-import org.elasticsearch.compat.TypeConsumer;
+import org.elasticsearch.rest.compatibility.TypeConsumer;
 import org.elasticsearch.Version;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.logging.DeprecationLogger;
