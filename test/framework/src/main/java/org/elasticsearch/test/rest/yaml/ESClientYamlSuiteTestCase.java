@@ -22,6 +22,8 @@ package org.elasticsearch.test.rest.yaml;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import org.apache.http.HttpHost;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.TimeUnits;
 import org.elasticsearch.Version;
 import org.elasticsearch.client.Node;
@@ -68,6 +70,7 @@ import java.util.Set;
 @TimeoutSuite(millis = 30 * TimeUnits.MINUTE)
 public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
 
+    private static final Logger logger = LogManager.getLogger(ESClientYamlSuiteTestCase.class);
     /**
      * Property that allows to control which REST tests get run. Supports comma separated list of tests
      * or directories that contain tests e.g. -Dtests.rest.suite=index,get,create/10_with_id
@@ -260,6 +263,7 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
     /** Add a single suite file to the set of suites. */
     private static void addSuite(Path root, Path file, Map<String, Set<Path>> files) {
         String groupName = root.relativize(file.getParent()).toString();
+        logger.info("Adding YAML REST test file [{}] to group [{}]", file, groupName); //TODO: make debug
         Set<Path> filesSet = files.get(groupName);
         if (filesSet == null) {
             filesSet = new HashSet<>();

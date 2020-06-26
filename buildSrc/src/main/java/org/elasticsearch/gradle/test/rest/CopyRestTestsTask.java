@@ -56,6 +56,7 @@ public class CopyRestTestsTask extends DefaultTask {
     public final ListProperty<String> includeXpack = getProject().getObjects().listProperty(String.class);
 
     public String sourceSetName;
+    public String copyToPrefix;
     public Configuration coreConfig;
     public Configuration xpackConfig;
 
@@ -88,6 +89,12 @@ public class CopyRestTestsTask extends DefaultTask {
         return sourceSetName;
     }
 
+    @org.gradle.api.tasks.Optional
+    @Input
+    String getCopyToPrefix() {
+        return copyToPrefix;
+    }
+
     @SkipWhenEmpty
     @InputFiles
     public FileTree getInputDir() {
@@ -117,7 +124,7 @@ public class CopyRestTestsTask extends DefaultTask {
             getSourceSet().orElseThrow(() -> new IllegalArgumentException("could not find source set [" + sourceSetName + "]"))
                 .getOutput()
                 .getResourcesDir(),
-            REST_TEST_PREFIX
+            "/" + copyToPrefix + "/" + REST_TEST_PREFIX
         );
     }
 

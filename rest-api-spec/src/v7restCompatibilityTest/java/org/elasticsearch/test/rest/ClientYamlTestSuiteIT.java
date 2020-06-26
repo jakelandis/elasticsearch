@@ -19,19 +19,12 @@
 
 package org.elasticsearch.test.rest;
 
-import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ESClientCompatibleYamlSuiteTestCase;
-import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 
 /** Rest integration test. Runs against a cluster started by {@code gradle integTest} */
 public class ClientYamlTestSuiteIT extends ESClientCompatibleYamlSuiteTestCase {
     public ClientYamlTestSuiteIT(ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
-    }
-
-    @ParametersFactory
-    public static Iterable<Object[]> parameters() throws Exception {
-        return createParameters();
     }
 }

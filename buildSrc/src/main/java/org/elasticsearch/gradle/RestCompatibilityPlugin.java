@@ -97,14 +97,14 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
             restCompatibilityTestTask.dependsOn(":distribution:bwc:minor:checkoutBwcBranch");
             RestTestRunnerTask runner = (RestTestRunnerTask) project.getTasks().getByName(compatYamlTestTaskName + "Runner");
             //TODO: support a pre-fix with the copy
-        //    runner.systemProperty("tests.rest.tests.path.prefix", "/" + COMPATIBLE_VERSION);
+            runner.systemProperty("tests.rest.tests.path.prefix", "/" + COMPATIBLE_VERSION);
 
 
             File checkoutDir = (File) project.findProject(":distribution:bwc:minor").getExtensions().getExtraProperties().get("checkoutDir");
             String rootDir = project.getRootDir().getAbsolutePath();
             String projectDir = project.getProjectDir().getAbsolutePath();
             File compatProjectDir = new File(checkoutDir, projectDir.replace(rootDir, ""));
-            //rest-api-spec has the api and tests under main not test
+            //rest-api-spec has the api and tests under then main folder
             AtomicReference<String> restResourceParent = new AtomicReference<>(YamlRestTestPlugin.SOURCE_SET_NAME);
             if (":rest-api-spec".equals(project.getPath())) {
                 restResourceParent.set("main");
@@ -125,6 +125,7 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
                 .register(COMPATIBLE_VERSION + "copyYamlTestsTask", CopyRestTestsTask.class, task -> {
                     task.includeCore.set(extension.restTests.getIncludeCore());
                     task.includeXpack.set(extension.restTests.getIncludeXpack());
+                    task.copyToPrefix = COMPATIBLE_VERSION;
                     if (project.getPath().contains("x-pack")) {
                         task.xpackConfig = compatTestConfig;
                     } else {
@@ -139,6 +140,7 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
                 .register(COMPATIBLE_VERSION + "copyYamlApiTask", CopyRestApiTask.class, task -> {
                     task.includeCore.set(extension.restTests.getIncludeCore());
                     task.includeXpack.set(extension.restTests.getIncludeXpack());
+                    task.copyToPrefix = COMPATIBLE_VERSION;
                     if (project.getPath().contains("x-pack")) {
                         task.xpackConfig = compatApiConfig;
                     } else {

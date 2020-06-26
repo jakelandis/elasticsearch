@@ -221,7 +221,8 @@ public abstract class GradleUtils {
             SourceSet::getCompileConfigurationName,
             SourceSet::getImplementationConfigurationName,
             SourceSet::getRuntimeConfigurationName,
-            SourceSet::getRuntimeOnlyConfigurationName
+            SourceSet::getRuntimeOnlyConfigurationName,
+            SourceSet::getCompileOnlyConfigurationName
         );
         SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         SourceSet parent = sourceSets.getByName(parentSourceSetName);

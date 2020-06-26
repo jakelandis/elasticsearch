@@ -53,7 +53,7 @@ public class AbstractCompatRestTest extends ESClientYamlSuiteTestCase {
     public static Iterable<Object[]> createParameters() throws Exception {
         List<Object[]> finalTestCandidates = new ArrayList<>();
         Iterable<Object[]> bwcCandidates = ESClientYamlSuiteTestCase.createParameters();
-        Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCandidates = getLocalCompatibilityTests();
+        Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCandidates = getTestOverrides();
 
         for (Object[] candidateArray : bwcCandidates) {
             List<ClientYamlTestCandidate> testCandidates = new ArrayList<>(1);
@@ -103,12 +103,22 @@ public class AbstractCompatRestTest extends ESClientYamlSuiteTestCase {
         return "application/vnd.elasticsearch+json;compatible-with=" + Version.minimumRestCompatibilityVersion().major;
     }
 
-    private static Map<ClientYamlTestCandidate, ClientYamlTestCandidate> getLocalCompatibilityTests() throws Exception {
-        Iterable<Object[]> candidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, COMPAT_TESTS_PATH);
+    private static Map<ClientYamlTestCandidate, ClientYamlTestCandidate> getTestOverrides() throws Exception {
+        //TODO: create new format for overrides that makes it easy to identify what to override
+        //  Iterable<Object[]> candidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, OVERRIDE_TESTS_PATH);
         Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCompatibilityTests = new HashMap<>();
-        StreamSupport.stream(candidates.spliterator(), false)
-            .flatMap(Arrays::stream)
-            .forEach(o -> localCompatibilityTests.put((ClientYamlTestCandidate) o, (ClientYamlTestCandidate) o));
+//        StreamSupport.stream(candidates.spliterator(), false)
+//            .flatMap(Arrays::stream)
+//            .forEach(o -> localCompatibilityTests.put((ClientYamlTestCandidate) o, (ClientYamlTestCandidate) o));
         return localCompatibilityTests;
     }
+
+//    private static Map<ClientYamlTestCandidate, ClientYamlTestCandidate> getLocalCompatibilityTests() throws Exception {
+//        Iterable<Object[]> candidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY);
+//        Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCompatibilityTests = new HashMap<>();
+//        StreamSupport.stream(candidates.spliterator(), false)
+//            .flatMap(Arrays::stream)
+//            .forEach(o -> localCompatibilityTests.put((ClientYamlTestCandidate) o, (ClientYamlTestCandidate) o));
+//        return localCompatibilityTests;
+//    }
 }

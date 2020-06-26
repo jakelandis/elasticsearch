@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
  */
 public class CopyRestApiTask extends DefaultTask {
     public static final String REST_API_PREFIX = "rest-api-spec/api";
+    public String copyToPrefix;
     public final ListProperty<String> includeCore = getProject().getObjects().listProperty(String.class);
     public final ListProperty<String> includeXpack = getProject().getObjects().listProperty(String.class);
     public String sourceSetName = "yamlRestTest";
@@ -91,6 +92,12 @@ public class CopyRestApiTask extends DefaultTask {
         return sourceSetName;
     }
 
+    @org.gradle.api.tasks.Optional
+    @Input
+    String getCopyToPrefix() {
+        return copyToPrefix;
+    }
+
     @SkipWhenEmpty
     @InputFiles
     public FileTree getInputDir() {
@@ -123,7 +130,7 @@ public class CopyRestApiTask extends DefaultTask {
             getSourceSet().orElseThrow(() -> new IllegalArgumentException("could not find source set [" + sourceSetName + "]"))
                 .getOutput()
                 .getResourcesDir(),
-            REST_API_PREFIX
+            "/" + copyToPrefix + "/" + REST_API_PREFIX
         );
     }
 

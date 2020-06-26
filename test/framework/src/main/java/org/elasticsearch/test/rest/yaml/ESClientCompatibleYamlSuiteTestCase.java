@@ -41,33 +41,34 @@ import java.util.stream.StreamSupport;
 public class ESClientCompatibleYamlSuiteTestCase extends ESClientYamlSuiteTestCase {
     protected ESClientCompatibleYamlSuiteTestCase(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
+        //TODO: use reflections to ensure children don't re-define @ParamtersFactory method
     }
 
-    private static final Logger staticLogger = LogManager.getLogger(ESClientCompatibleYamlSuiteTestCase.class);
-
-    public static final String OVERRIDE_TESTS_PATH = "/rest-api-spec/override/test";
+//    private static final Logger staticLogger = LogManager.getLogger(ESClientCompatibleYamlSuiteTestCase.class);
+//
+//    public static final String OVERRIDE_TESTS_PATH = "/rest-api-spec/override/test";
 
     @ParametersFactory
     public static Iterable<Object[]> createParameters() throws Exception {
         List<Object[]> finalTestCandidates = new ArrayList<>();
         Iterable<Object[]> bwcCandidates = ESClientYamlSuiteTestCase.createParameters();
-        Map<ClientYamlTestCandidate, ClientYamlTestCandidate> testOverrides = getTestOverrides();
+//        Map<ClientYamlTestCandidate, ClientYamlTestCandidate> testOverrides = getTestOverrides();
 
         for (Object[] candidateArray : bwcCandidates) {
             List<ClientYamlTestCandidate> testCandidates = new ArrayList<>(1);
             Arrays.stream(candidateArray).map(o -> (ClientYamlTestCandidate) o).forEach(testCandidate -> {
-                if (testOverrides.containsKey(testCandidate)) {
-                    staticLogger.info("Overriding test [{}] with local test.", testCandidate.toString());
-                    //todo: merge such that only override parts
-                    testCandidate = testOverrides.remove(testCandidate);
-                }
+//                if (testOverrides.containsKey(testCandidate)) {
+//                    staticLogger.info("Overriding test [{}] with local test.", testCandidate.toString());
+//                    //todo: merge such that only override parts
+//                    testCandidate = testOverrides.remove(testCandidate);
+//                }
                 mutateTestCandidate(testCandidate);
                 testCandidates.add(testCandidate);
             });
             finalTestCandidates.add(testCandidates.toArray());
         }
         //TODO: throw error if no compatible tests can found
-        testOverrides.keySet().forEach(lc -> finalTestCandidates.add(new Object[] { lc }));
+//        testOverrides.keySet().forEach(lc -> finalTestCandidates.add(new Object[] { lc }));
         return finalTestCandidates;
     }
 
@@ -103,13 +104,13 @@ public class ESClientCompatibleYamlSuiteTestCase extends ESClientYamlSuiteTestCa
         return "application/vnd.elasticsearch+json;compatible-with=" + Version.minimumRestCompatibilityVersion().major;
     }
 
-    private static Map<ClientYamlTestCandidate, ClientYamlTestCandidate> getTestOverrides() throws Exception {
-        //TODO: create new format for overrides that makes it easy to identify what to override
-      //  Iterable<Object[]> candidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, OVERRIDE_TESTS_PATH);
-        Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCompatibilityTests = new HashMap<>();
-//        StreamSupport.stream(candidates.spliterator(), false)
-//            .flatMap(Arrays::stream)
-//            .forEach(o -> localCompatibilityTests.put((ClientYamlTestCandidate) o, (ClientYamlTestCandidate) o));
-        return localCompatibilityTests;
-    }
+//    private static Map<ClientYamlTestCandidate, ClientYamlTestCandidate> getTestOverrides() throws Exception {
+//        //TODO: create new format for overrides that makes it easy to identify what to override
+//      //  Iterable<Object[]> candidates = ESClientYamlSuiteTestCase.createParameters(ExecutableSection.XCONTENT_REGISTRY, OVERRIDE_TESTS_PATH);
+//        Map<ClientYamlTestCandidate, ClientYamlTestCandidate> localCompatibilityTests = new HashMap<>();
+////        StreamSupport.stream(candidates.spliterator(), false)
+////            .flatMap(Arrays::stream)
+////            .forEach(o -> localCompatibilityTests.put((ClientYamlTestCandidate) o, (ClientYamlTestCandidate) o));
+//        return localCompatibilityTests;
+//    }
 }
