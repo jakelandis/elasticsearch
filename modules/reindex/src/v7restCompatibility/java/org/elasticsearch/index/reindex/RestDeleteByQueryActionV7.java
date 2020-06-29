@@ -24,7 +24,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.search.RestSearchActionV7;
+//import org.elasticsearch.rest.action.search.RestSearchActionV7;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,7 +52,7 @@ public class RestDeleteByQueryActionV7 extends RestDeleteByQueryAction {
     @Override
     public RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         if (request.hasParam("type")) {
-            deprecationLogger.deprecate("search_with_types", RestSearchActionV7.TYPES_DEPRECATION_MESSAGE);
+          //  deprecationLogger.deprecate("search_with_types", RestSearchActionV7.TYPES_DEPRECATION_MESSAGE);
             request.param("type");
         }
         return super.prepareRequest(request, client);

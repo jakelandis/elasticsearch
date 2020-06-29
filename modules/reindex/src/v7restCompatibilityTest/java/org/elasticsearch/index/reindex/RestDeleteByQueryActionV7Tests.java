@@ -21,7 +21,7 @@ package org.elasticsearch.index.reindex;
 
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.search.RestSearchActionV7;
+//import org.elasticsearch.rest.action.search.RestSearchActionV7;
 import org.elasticsearch.test.rest.FakeCompatRestRequestBuilder;
 import org.elasticsearch.test.rest.RestActionTestCase;
 import org.junit.Before;
@@ -52,7 +52,7 @@ public class RestDeleteByQueryActionV7Tests extends RestActionTestCase {
 
         // RestDeleteByQueryAction itself doesn't check for a deprecated type usage
         // checking here for a deprecation from its internal search request
-        assertWarnings(RestSearchActionV7.TYPES_DEPRECATION_MESSAGE);
+      //  assertWarnings(RestSearchActionV7.TYPES_DEPRECATION_MESSAGE);
     }
 
     public void testParseEmpty() throws IOException {

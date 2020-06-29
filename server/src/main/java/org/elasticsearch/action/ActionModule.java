@@ -383,14 +383,19 @@ import org.elasticsearch.rest.action.search.RestExplainAction;
 import org.elasticsearch.rest.action.search.RestMultiSearchAction;
 import org.elasticsearch.rest.action.search.RestSearchAction;
 import org.elasticsearch.rest.action.search.RestSearchScrollAction;
+import org.elasticsearch.rest.compatibility.CompatibleRestActions;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.usage.UsageService;
 
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -811,10 +816,20 @@ public class ActionModule extends AbstractModule {
         registerHandler.accept(new RestTemplatesAction());
         for (ActionPlugin plugin : actionPlugins) {
             for (RestHandler handler : plugin.getRestHandlers(settings, restController, clusterSettings, indexScopedSettings,
-                    settingsFilter, indexNameExpressionResolver, nodesInCluster)) {
+                settingsFilter, indexNameExpressionResolver, nodesInCluster)) {
                 registerHandler.accept(handler);
             }
         }
+
+        for (CompatibleRestActions compatibleRestAction : ServiceLoader.load(CompatibleRestActions.class)) {
+            for (RestHandler handler : compatibleRestAction.getRestHandlers(settings, restController, clusterSettings, indexScopedSettings,
+                settingsFilter, indexNameExpressionResolver, nodesInCluster)) {
+                registerHandler.accept(handler);
+            }
+        }
+
+
+
         registerHandler.accept(new RestCatAction(catActions));
     }
 

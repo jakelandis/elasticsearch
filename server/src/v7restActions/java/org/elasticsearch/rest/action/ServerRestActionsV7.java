@@ -26,8 +26,6 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
-import org.elasticsearch.plugins.ActionPlugin;
-import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.action.admin.indices.RestCreateIndexActionV7;
@@ -42,13 +40,13 @@ import org.elasticsearch.rest.action.document.RestTermVectorsActionV7;
 import org.elasticsearch.rest.action.document.RestUpdateActionV7;
 import org.elasticsearch.rest.action.search.RestMultiSearchActionV7;
 import org.elasticsearch.rest.action.search.RestSearchActionV7;
+import org.elasticsearch.rest.compatibility.CompatibleRestActions;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-//TODO: move this to the v7restCompatSourceSet ... but need to make sure that the compile is wired in correctly ... which it is not . 
-public class ServerRestCompatibility extends Plugin implements ActionPlugin {
+public class ServerRestActionsV7 implements CompatibleRestActions {
 
     @Override
     public List<RestHandler> getRestHandlers(

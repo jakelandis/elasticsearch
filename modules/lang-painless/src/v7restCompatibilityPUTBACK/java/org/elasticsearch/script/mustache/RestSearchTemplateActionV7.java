@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.elasticsearch.Version;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.logging.DeprecationLogger;
+import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.search.RestSearchActionV7;
 
@@ -38,9 +39,9 @@ public class RestSearchTemplateActionV7 extends RestSearchTemplateAction {
     );
 
     @Override
-    public List<Route> routes() {
+    public List<RestHandler.Route> routes() {
         return List.of(
-            new Route(GET, "/_search/template"),
+            new RestHandler.Route(GET, "/_search/template"),
             new Route(POST, "/_search/template"),
             new Route(GET, "/{index}/_search/template"),
             new Route(POST, "/{index}/_search/template"),

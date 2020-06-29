@@ -27,6 +27,7 @@ import org.elasticsearch.gradle.test.rest.RestResourcesPlugin;
 import org.elasticsearch.gradle.test.rest.YamlRestTestPlugin;
 import org.elasticsearch.gradle.testclusters.RestTestRunnerTask;
 import org.elasticsearch.gradle.util.GradleUtils;
+import org.elasticsearch.gradle.util.Util;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -35,6 +36,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Zip;
 
 import java.io.File;
@@ -47,12 +49,13 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
 
     private final String COMPATIBLE_VERSION = "v" + (VersionProperties.getElasticsearchVersion().getMajor() - 1);
     // private final String CURRENT_VERSION = "v" + (VersionProperties.getElasticsearchVersion().getMajor());
-    private final String SOURCE_SET_NAME = COMPATIBLE_VERSION + "restCompatibility";
-    private final String TEST_SOURCE_SET_NAME = COMPATIBLE_VERSION + "restCompatibilityTest";
+    private final String SOURCE_SET_NAME = COMPATIBLE_VERSION + "restActions";
+    private final String TEST_SOURCE_SET_NAME = COMPATIBLE_VERSION + "restActionsTest";
 
     @Override
     public void apply(Project project) {
 
+        project.getPluginManager().apply(ElasticsearchJavaPlugin.class);
 
         // create rest-compatibility source set
         final SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
@@ -63,9 +66,9 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
         restCompatSourceSet.setCompileClasspath(restCompatCompileConfig);
         restCompatSourceSet.setRuntimeClasspath(project.getObjects().fileCollection().from(restCompatSourceSet.getOutput(), restCompatRuntimeConfig));
 
+
         //compat code depend on main code
         GradleUtils.extendSourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME, SOURCE_SET_NAME);
-
 
 
         GradleUtils.addTestSourceSet(project, TEST_SOURCE_SET_NAME);
@@ -73,15 +76,13 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
         GradleUtils.extendSourceSet(project, SOURCE_SET_NAME, TEST_SOURCE_SET_NAME);
         SourceSet restCompatTestSourceSet = sourceSets.getByName(TEST_SOURCE_SET_NAME);
         Configuration restCompatTestCompileConfig = project.getConfigurations().getByName(restCompatTestSourceSet.getCompileClasspathConfigurationName());
-        if (BuildParams.isInternal()) {
-            Dependency testFrameworkDependency = project.getDependencies().project(Map.of("path", ":test:framework"));
-            project.getDependencies().add(restCompatTestCompileConfig.getName(), testFrameworkDependency);
-        } else {
+        Dependency testFrameworkDependency = project.getDependencies().project(Map.of("path", ":test:framework"));
+        project.getDependencies().add(restCompatTestCompileConfig.getName(), testFrameworkDependency);
 
-            project.getDependencies().add(restCompatTestCompileConfig.getName(),
-                "org.elasticsearch.test:framework:" + VersionProperties.getElasticsearch());
-
-        }
+        //include output in jar
+        Jar jarTask = (Jar) project.getTasks().getByName("jar");
+        jarTask.from(restCompatSourceSet.getOutput());
+        jarTask.dependsOn(restCompatCompileConfig);
 
         //required so that the checkoutDir extension is populated
         project.evaluationDependsOn(":distribution:bwc");
@@ -91,13 +92,7 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
             Task restCompatibilityTestTask = yamlRestTestPlugin.createTask(compatYamlTestTaskName, project, restCompatTestSourceSet);
             restCompatibilityTestTask.dependsOn(":distribution:bwc:minor:checkoutBwcBranch");
             RestTestRunnerTask runner = (RestTestRunnerTask) project.getTasks().getByName(compatYamlTestTaskName + "Runner");
-            //TODO: support a pre-fix with the copy
             runner.systemProperty("tests.rest.tests.path.prefix", "/" + COMPATIBLE_VERSION);
-
-            //add dependency on server-rest-compatibility
-            restCompatibilityTestTask.dependsOn(":modules:server-rest-compatibility:bundlePlugin");
-            Zip bundle = (Zip) project.findProject(":modules:server-rest-compatibility").getTasks().getByName("bundlePlugin");
-            runner.getClusters().forEach(c -> c.module(bundle.getArchiveFile()));
 
 
             File checkoutDir = (File) project.findProject(":distribution:bwc:minor").getExtensions().getExtraProperties().get("checkoutDir");
