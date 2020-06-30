@@ -47,14 +47,16 @@ import java.util.stream.Collectors;
 
 public class RestCompatibilityPlugin implements Plugin<Project> {
 
-    private final String COMPATIBLE_VERSION = "v" + (VersionProperties.getElasticsearchVersion().getMajor() - 1);
-    // private final String CURRENT_VERSION = "v" + (VersionProperties.getElasticsearchVersion().getMajor());
-    private final String SOURCE_SET_NAME = COMPATIBLE_VERSION + "restActions";
-    private final String TEST_SOURCE_SET_NAME = COMPATIBLE_VERSION + "restActionsTest";
+    public static final String COMPATIBLE_VERSION = "v" + (VersionProperties.getElasticsearchVersion().getMajor() - 1);
+    public static final String SOURCE_SET_NAME = COMPATIBLE_VERSION + "restActions";
+    public static final String TEST_SOURCE_SET_NAME = COMPATIBLE_VERSION + "restActionsTest";
 
     @Override
     public void apply(Project project) {
-
+        if(BuildParams.isInternal() == false){
+            //TODO: support this for plugin development
+            throw new IllegalStateException("Rest Compatibility is not supported for plugin development");
+        }
         project.getPluginManager().apply(ElasticsearchJavaPlugin.class);
 
         // create rest-compatibility source set
@@ -86,68 +88,6 @@ public class RestCompatibilityPlugin implements Plugin<Project> {
 
         //required so that the checkoutDir extension is populated
         project.evaluationDependsOn(":distribution:bwc");
-
-        project.getPlugins().withType(YamlRestTestPlugin.class, yamlRestTestPlugin -> {
-            String compatYamlTestTaskName = COMPATIBLE_VERSION + YamlRestTestPlugin.SOURCE_SET_NAME;
-            Task restCompatibilityTestTask = yamlRestTestPlugin.createTask(compatYamlTestTaskName, project, restCompatTestSourceSet);
-            restCompatibilityTestTask.dependsOn(":distribution:bwc:minor:checkoutBwcBranch");
-            RestTestRunnerTask runner = (RestTestRunnerTask) project.getTasks().getByName(compatYamlTestTaskName + "Runner");
-            runner.systemProperty("tests.rest.tests.path.prefix", "/" + COMPATIBLE_VERSION);
-
-
-            File checkoutDir = (File) project.findProject(":distribution:bwc:minor").getExtensions().getExtraProperties().get("checkoutDir");
-            String rootDir = project.getRootDir().getAbsolutePath();
-            String projectDir = project.getProjectDir().getAbsolutePath();
-            File compatProjectDir = new File(checkoutDir, projectDir.replace(rootDir, ""));
-            //rest-api-spec has the api and tests under then main folder
-            AtomicReference<String> restResourceParent = new AtomicReference<>(YamlRestTestPlugin.SOURCE_SET_NAME);
-            if (":rest-api-spec".equals(project.getPath())) {
-                restResourceParent.set("main");
-            }
-
-            Configuration compatApiConfig = project.getConfigurations().create("compatApiConfig");
-            project.getDependencies().add(compatApiConfig.getName(),
-                project.files(new File(compatProjectDir, "/src/" + restResourceParent.get() + "/resources/" + CopyRestApiTask.REST_API_PREFIX)));
-            //TODO: ensure the core is always copied by adding core to the dependency here
-
-            Configuration compatTestConfig = project.getConfigurations().create("compatTestConfig");
-            project.getDependencies().add(compatTestConfig.getName(),
-                project.files(new File(compatProjectDir, "/src/" + restResourceParent.get() + "/resources/" + CopyRestTestsTask.REST_TEST_PREFIX)));
-
-
-            RestResourcesExtension extension = project.getExtensions().getByType(RestResourcesExtension.class);
-            Provider<CopyRestTestsTask> copyRestYamlTestTask = project.getTasks()
-                .register(COMPATIBLE_VERSION + "copyYamlTestsTask", CopyRestTestsTask.class, task -> {
-                    task.includeCore.set(extension.restTests.getIncludeCore());
-                    task.includeXpack.set(extension.restTests.getIncludeXpack());
-                    task.copyToPrefix = COMPATIBLE_VERSION;
-                    if (project.getPath().contains("x-pack")) {
-                        task.xpackConfig = compatTestConfig;
-                    } else {
-                        task.coreConfig = compatTestConfig;
-                    }
-                    task.sourceSetName = restCompatTestSourceSet.getName();
-                    task.dependsOn(compatTestConfig);
-                });
-
-
-            Provider<CopyRestApiTask> copyRestYamlApiTask = project.getTasks()
-                .register(COMPATIBLE_VERSION + "copyYamlApiTask", CopyRestApiTask.class, task -> {
-                    task.includeCore.set(extension.restTests.getIncludeCore());
-                    task.includeXpack.set(extension.restTests.getIncludeXpack());
-                    task.copyToPrefix = COMPATIBLE_VERSION;
-                    if (project.getPath().contains("x-pack")) {
-                        task.xpackConfig = compatApiConfig;
-                    } else {
-                        task.coreConfig = compatApiConfig;
-                    }
-                    task.sourceSetName = restCompatTestSourceSet.getName();
-                    task.dependsOn(compatTestConfig);
-                });
-
-            runner.dependsOn(copyRestYamlApiTask);
-            runner.dependsOn(copyRestYamlTestTask);
-        });
 
         GradleUtils.setupIdeForNonTestSourceSet(project, restCompatSourceSet);
         GradleUtils.setupIdeForTestSourceSet(project, restCompatTestSourceSet);

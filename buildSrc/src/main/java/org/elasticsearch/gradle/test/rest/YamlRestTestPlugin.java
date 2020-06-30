@@ -20,9 +20,11 @@
 package org.elasticsearch.gradle.test.rest;
 
 import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
+import org.elasticsearch.gradle.RestCompatibilityPlugin;
 import org.elasticsearch.gradle.VersionProperties;
 import org.elasticsearch.gradle.info.BuildParams;
 import org.elasticsearch.gradle.plugin.PluginPropertiesExtension;
+import org.elasticsearch.gradle.test.ErrorReportingTestListener;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.testclusters.RestTestRunnerTask;
 import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
@@ -30,10 +32,17 @@ import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.bundling.Zip;
+
+import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Apply this plugin to run the YAML based REST tests.
@@ -67,9 +76,12 @@ public class YamlRestTestPlugin implements Plugin<Project> {
         // setup IDE
         GradleUtils.setupIdeForTestSourceSet(project, yamlTestSourceSet);
 
+        // add compatible support
+        maybeAddCompatibleSupport(project, yamlTestSourceSet);
+
     }
 
-    public Task createTask(String taskName, Project project, SourceSet sourceSet) {
+    private Task createTask(String taskName, Project project, SourceSet sourceSet) {
         // create task - note can not use .register due to the work in RestIntegTestTask's constructor :(
         // see: https://github.com/elastic/elasticsearch/issues/47804
         RestIntegTestTask yamlRestTestTask = project.getTasks()
@@ -127,5 +139,71 @@ public class YamlRestTestPlugin implements Plugin<Project> {
         project.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(yamlRestTestTask));
 
         return yamlRestTestTask;
+    }
+
+    private void maybeAddCompatibleSupport(Project project, SourceSet sourceSet){
+
+        project.getPlugins().withType(RestCompatibilityPlugin.class, restCompatibilityPlugin -> {
+            String compatYamlTestTaskName = RestCompatibilityPlugin.COMPATIBLE_VERSION + YamlRestTestPlugin.SOURCE_SET_NAME;
+            Task restCompatibilityTestTask = createTask(compatYamlTestTaskName, project, sourceSet);
+            restCompatibilityTestTask.dependsOn(":distribution:bwc:minor:checkoutBwcBranch");
+            RestTestRunnerTask runner = (RestTestRunnerTask) project.getTasks().getByName(compatYamlTestTaskName + "Runner");
+            runner.systemProperty("tests.rest.tests.path.prefix", "/" + RestCompatibilityPlugin.COMPATIBLE_VERSION);
+            runner.systemProperty("tests.rest.tests.compat", Boolean.TRUE.toString());
+
+            File checkoutDir = (File) project.findProject(":distribution:bwc:minor").getExtensions().getExtraProperties().get("checkoutDir");
+            String rootDir = project.getRootDir().getAbsolutePath();
+            String projectDir = project.getProjectDir().getAbsolutePath();
+            File compatProjectDir = new File(checkoutDir, projectDir.replace(rootDir, ""));
+            //rest-api-spec has the api and tests under then main folder
+            AtomicReference<String> restResourceParent = new AtomicReference<>(YamlRestTestPlugin.SOURCE_SET_NAME);
+            if (":rest-api-spec".equals(project.getPath())) {
+                restResourceParent.set("main");
+            }
+
+            Configuration compatApiConfig = project.getConfigurations().create("compatApiConfig");
+            project.getDependencies().add(compatApiConfig.getName(),
+                project.files(new File(compatProjectDir, "/src/" + restResourceParent.get() + "/resources/" + CopyRestApiTask.REST_API_PREFIX)));
+            //TODO: ensure the core is always copied by adding core to the dependency here
+
+            Configuration compatTestConfig = project.getConfigurations().create("compatTestConfig");
+            project.getDependencies().add(compatTestConfig.getName(),
+                project.files(new File(compatProjectDir, "/src/" + restResourceParent.get() + "/resources/" + CopyRestTestsTask.REST_TEST_PREFIX)));
+
+
+            //copy the compatible api and tasks
+            RestResourcesExtension extension = project.getExtensions().getByType(RestResourcesExtension.class);
+            Provider<CopyRestTestsTask> copyRestYamlTestTask = project.getTasks()
+                .register(RestCompatibilityPlugin.COMPATIBLE_VERSION + "copyYamlTestsTask", CopyRestTestsTask.class, task -> {
+                    task.includeCore.set(extension.restTests.getIncludeCore());
+                    task.includeXpack.set(extension.restTests.getIncludeXpack());
+                    task.copyToPrefix = RestCompatibilityPlugin.COMPATIBLE_VERSION;
+                    if (project.getPath().contains("x-pack")) {
+                        task.xpackConfig = compatTestConfig;
+                    } else {
+                        task.coreConfig = compatTestConfig;
+                    }
+                    task.sourceSetName = sourceSet.getName();
+                    task.dependsOn(compatTestConfig);
+                });
+
+
+            Provider<CopyRestApiTask> copyRestYamlApiTask = project.getTasks()
+                .register(RestCompatibilityPlugin.COMPATIBLE_VERSION + "copyYamlApiTask", CopyRestApiTask.class, task -> {
+                    task.includeCore.set(extension.restTests.getIncludeCore());
+                    task.includeXpack.set(extension.restTests.getIncludeXpack());
+                    task.copyToPrefix = RestCompatibilityPlugin.COMPATIBLE_VERSION;
+                    if (project.getPath().contains("x-pack")) {
+                        task.xpackConfig = compatApiConfig;
+                    } else {
+                        task.coreConfig = compatApiConfig;
+                    }
+                    task.sourceSetName = sourceSet.getName();
+                    task.dependsOn(compatTestConfig);
+                });
+
+            runner.dependsOn(copyRestYamlApiTask);
+            runner.dependsOn(copyRestYamlTestTask);
+        });
     }
 }

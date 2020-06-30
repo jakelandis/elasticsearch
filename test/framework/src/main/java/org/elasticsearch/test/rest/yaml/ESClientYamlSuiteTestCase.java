@@ -20,6 +20,7 @@
 package org.elasticsearch.test.rest.yaml;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import org.apache.http.HttpHost;
 import org.apache.logging.log4j.LogManager;
@@ -38,11 +39,13 @@ import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.core.internal.io.IOUtils;
+import org.elasticsearch.rest.CompatibleConstants;
 import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.test.rest.yaml.restspec.ClientYamlSuiteRestApi;
 import org.elasticsearch.test.rest.yaml.restspec.ClientYamlSuiteRestSpec;
 import org.elasticsearch.test.rest.yaml.section.ClientYamlTestSection;
 import org.elasticsearch.test.rest.yaml.section.ClientYamlTestSuite;
+import org.elasticsearch.test.rest.yaml.section.DoSection;
 import org.elasticsearch.test.rest.yaml.section.ExecutableSection;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -60,6 +63,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Runs a suite of yaml tests shared with all the official Elasticsearch
@@ -185,7 +189,11 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      * defined in {@link ExecutableSection}.
      */
     public static Iterable<Object[]> createParameters() throws Exception {
-        return createParameters(ExecutableSection.XCONTENT_REGISTRY);
+        if(Boolean.parseBoolean(System.getProperty("tests.rest.tests.compat", Boolean.FALSE.toString()))){
+            return createCompatParameters();
+        }else{
+            return createParameters(ExecutableSection.XCONTENT_REGISTRY);
+        }
     }
 
     /**
@@ -443,4 +451,58 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
         // the yaml test suite. In the mean time we should delete data streams manually after each test.
         return false; //TODO PG temporary fix to allow compat testing
     }
+
+    /************** compat below ***/
+
+
+    public static Iterable<Object[]> createCompatParameters() throws Exception {
+        List<Object[]> finalTestCandidates = new ArrayList<>();
+        Iterable<Object[]> bwcCandidates = createParameters(ExecutableSection.XCONTENT_REGISTRY);
+
+        for (Object[] candidateArray : bwcCandidates) {
+            List<ClientYamlTestCandidate> testCandidates = new ArrayList<>(1);
+            Arrays.stream(candidateArray).map(o -> (ClientYamlTestCandidate) o).forEach(testCandidate -> {
+
+                mutateTestCandidate(testCandidate);
+                testCandidates.add(testCandidate);
+            });
+            finalTestCandidates.add(testCandidates.toArray());
+        }
+        //TODO: throw error if no compatible tests can found
+//        testOverrides.keySet().forEach(lc -> finalTestCandidates.add(new Object[] { lc }));
+        return finalTestCandidates;
+    }
+
+    private static void mutateTestCandidate(ClientYamlTestCandidate testCandidate) {
+        testCandidate.getSetupSection().getExecutableSections().stream().filter(s -> s instanceof DoSection).forEach(updateDoSection());
+        testCandidate.getTestSection().getExecutableSections().stream().filter(s -> s instanceof DoSection).forEach(updateDoSection());
+    }
+
+    private static Consumer<? super ExecutableSection> updateDoSection() {
+        return ds -> {
+            DoSection doSection = (DoSection) ds;
+            // TODO: be more selective here
+            doSection.setIgnoreWarnings(true);
+
+            String compatibleHeader = createCompatibleHeader();
+            // TODO for cat apis accept headers would break tests which expect txt response
+            if (doSection.getApiCallSection().getApi().startsWith("cat") == false) {
+                doSection.getApiCallSection()
+                    .addHeaders(
+                        Map.of(
+                            CompatibleConstants.COMPATIBLE_ACCEPT_HEADER,
+                            compatibleHeader,
+                            CompatibleConstants.COMPATIBLE_CONTENT_TYPE_HEADER,
+                            compatibleHeader
+                        )
+                    );
+            }
+
+        };
+    }
+
+    private static String createCompatibleHeader() {
+        return "application/vnd.elasticsearch+json;compatible-with=" + Version.minimumRestCompatibilityVersion().major;
+    }
+
 }
