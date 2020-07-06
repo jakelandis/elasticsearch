@@ -17,6 +17,7 @@
  * under the License.
  */
 apply plugin: 'elasticsearch.rest-resources'
+apply plugin: 'elasticsearch.yaml-rest-test'
 
 esplugin {
   description 'The Mapper Size plugin allows document to record their uncompressed size at index time.'

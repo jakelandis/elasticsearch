@@ -19,6 +19,7 @@ import org.elasticsearch.gradle.info.BuildParams
  * under the License.
  */
 apply plugin: 'elasticsearch.rest-resources'
+apply plugin: 'elasticsearch.yaml-rest-test'
 
 esplugin {
   description 'Ingest processor that uses Apache Tika to extract contents'

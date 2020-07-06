@@ -17,6 +17,7 @@
  * under the License.
  */
 apply plugin: 'elasticsearch.rest-resources'
+apply plugin: 'elasticsearch.yaml-rest-test'
 
 esplugin {
   description 'The Japanese (kuromoji) Analysis plugin integrates Lucene kuromoji analysis module into elasticsearch.'
@@ -37,3 +38,4 @@ tasks.named("dependencyLicenses").configure {
   mapping from: /lucene-.*/, to: 'lucene'
 }
 
+integTest.enabled = false
