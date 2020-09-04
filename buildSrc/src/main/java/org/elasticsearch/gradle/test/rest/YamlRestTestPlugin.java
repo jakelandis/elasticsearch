@@ -31,8 +31,8 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
 import static org.elasticsearch.gradle.test.rest.RestTestUtil.setupDependencies;
-import static org.elasticsearch.gradle.test.rest.RestTestUtil.setupRunnerTask;
-import static org.elasticsearch.gradle.test.rest.RestTestUtil.setupTask;
+import static org.elasticsearch.gradle.test.rest.RestTestUtil.configureTask;
+import static org.elasticsearch.gradle.test.rest.RestTestUtil.createTask;
 
 /**
  * Apply this plugin to run the YAML based REST tests.
@@ -54,10 +54,10 @@ public class YamlRestTestPlugin implements Plugin<Project> {
         SourceSet yamlTestSourceSet = sourceSets.create(SOURCE_SET_NAME);
 
         // setup the yamlRestTest task
-        RestIntegTestTask yamlRestTestTask = setupTask(project, SOURCE_SET_NAME);
+        RestIntegTestTask yamlRestTestTask = createTask(project, SOURCE_SET_NAME);
 
         // setup the runner task
-        setupRunnerTask(project, yamlRestTestTask, yamlTestSourceSet);
+        configureTask(project, yamlRestTestTask, yamlTestSourceSet);
 
         // setup the dependencies
         setupDependencies(project, yamlTestSourceSet);

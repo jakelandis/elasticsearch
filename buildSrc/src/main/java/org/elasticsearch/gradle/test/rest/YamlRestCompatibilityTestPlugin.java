@@ -20,16 +20,20 @@
 package org.elasticsearch.gradle.test.rest;
 
 import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
+import org.elasticsearch.gradle.plugin.PluginPropertiesExtension;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
 import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
+import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.Zip;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,24 +79,20 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
 
             SourceSetContainer sourceSets = thisProject.getExtensions().getByType(SourceSetContainer.class);
             SourceSet thisYamlTestSourceSet = sourceSets.create(taskAndSourceSetName);
+
             RestIntegTestTask thisTestTask = thisProject.getTasks().create(taskAndSourceSetName, RestIntegTestTask.class);
             thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
             thisTestTask.setDescription("Runs the tests from " + projectToTest.getPath() + " from the prior version against a cluster of the current version");
 
-            // thisTestTask.systemProperty("rest.test.prefix", "/" + taskAndSourceSetName);
+            thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
+            thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), projectToTest);
 
             thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
-
             thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
-
-
-            thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
-
-            thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath().plus(projectToTestSourceSet.getRuntimeClasspath()
-                    .filter(f -> f.getAbsoluteFile().toPath().endsWith(Path.of("resources", YamlRestTestPlugin.SOURCE_SET_NAME)) == false)));
+            thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath().plus(
+                projectToTestSourceSet.getOutput().getClassesDirs()));
 
             // setup the copy for the rest resources
-
             TaskProvider<Copy> thisCopyTestsTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
             thisCopyTestsTask.configure(copy -> {
                 copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
@@ -101,11 +101,18 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
             });
 
             thisTestTask.dependsOn(thisCopyTestsTask);
+            //TODO: copy test cluster configuration from original task to new task
 
 
-            thisTestTask.doFirst(t -> {
-                thisTestTask.getClasspath().forEach(f -> System.out.println("********* -> " + f));
-            });
+//            thisTestTask.doFirst(t -> {
+//                //adding classpath as doFirst to avoid resolving the configuration
+//                thisTestTask.getClasspath().forEach(f -> System.out.println("********* -> " + f));
+//            });
+
+
+            RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
+            RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
+
 
         });
 
