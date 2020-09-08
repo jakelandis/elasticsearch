@@ -100,6 +100,10 @@ public class LazyPropertyMap<K, V> extends AbstractLazyPropertyCollection implem
         return previous == null ? null : previous.getValue();
     }
 
+    public void putAll(LazyPropertyMap<K, V> propertyMap) {
+        this.delegate.putAll(propertyMap.delegate);
+    }
+
     @Override
     public V remove(Object key) {
         PropertyMapEntry<K, V> previous = delegate.remove(key);

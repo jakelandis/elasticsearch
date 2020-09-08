@@ -39,6 +39,7 @@ testClusters.all {
   module ':modules:lang-painless'
   // Whitelist reindexing from the local node so we can test reindex-from-remote.
   setting 'reindex.remote.whitelist', '127.0.0.1:*'
+  environment 'foo', 'bar'
 }
 
 test {

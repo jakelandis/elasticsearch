@@ -19,6 +19,7 @@
 package org.elasticsearch.gradle.testclusters;
 
 import org.elasticsearch.gradle.FileSupplier;
+import org.elasticsearch.gradle.LazyPropertyMap;
 import org.elasticsearch.gradle.PropertyNormalization;
 import org.elasticsearch.gradle.ReaperService;
 import org.elasticsearch.gradle.http.WaitForHttpResource;
@@ -208,6 +209,11 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
     }
 
     @Override
+    public void settings(LazyPropertyMap<String, CharSequence> settings) {
+        nodes.all(each -> each.settings(settings));
+    }
+
+    @Override
     public void systemProperty(String key, String value) {
         nodes.all(each -> each.systemProperty(key, value));
     }
@@ -235,6 +241,11 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
     @Override
     public void environment(String key, Supplier<CharSequence> valueSupplier, PropertyNormalization normalization) {
         nodes.all(each -> each.environment(key, valueSupplier, normalization));
+    }
+
+    @Override
+    public void environment(LazyPropertyMap<String, CharSequence> environment) {
+        nodes.all(each -> each.environment(environment));
     }
 
     @Override

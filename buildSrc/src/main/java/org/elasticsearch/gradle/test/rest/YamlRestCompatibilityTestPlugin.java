@@ -22,6 +22,7 @@ package org.elasticsearch.gradle.test.rest;
 import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
+import org.elasticsearch.gradle.testclusters.TestClustersAware;
 import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -103,6 +104,7 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
             thisTestTask.dependsOn(thisCopyTestsTask);
             //TODO: copy test cluster configuration from original task to new task
 
+            thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
             //TODO: wire these into check
 
 //            thisTestTask.doFirst(t -> {

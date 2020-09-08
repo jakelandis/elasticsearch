@@ -297,6 +297,11 @@ public class ElasticsearchNode implements TestClusterConfiguration {
         plugin(maybeCreatePluginOrModuleDependency(pluginProjectPath));
     }
 
+    @Internal
+    public List<Provider<RegularFile>> getPluginsRaw() {
+        return plugins.stream().map(fileProvider -> project.getLayout().file(fileProvider)).collect(Collectors.toList());
+    }
+
     @Override
     public void module(Provider<RegularFile> module) {
         checkFrozen();
@@ -306,6 +311,11 @@ public class ElasticsearchNode implements TestClusterConfiguration {
     @Override
     public void module(String moduleProjectPath) {
         module(maybeCreatePluginOrModuleDependency(moduleProjectPath));
+    }
+
+    @Internal
+    public List<Provider<RegularFile>> getModulesRaw() {
+        return modules.stream().map(fileProvider -> project.getLayout().file(fileProvider)).collect(Collectors.toList());
     }
 
     @Override
@@ -364,6 +374,16 @@ public class ElasticsearchNode implements TestClusterConfiguration {
     }
 
     @Override
+    public void settings(LazyPropertyMap<String, CharSequence> settings) {
+        this.settings.putAll(settings);
+    }
+
+    @Internal
+    public LazyPropertyMap<String, CharSequence> getSettingsRaw(){
+        return settings;
+    }
+
+    @Override
     public void systemProperty(String key, String value) {
         systemProperties.put(key, value);
     }
@@ -391,6 +411,16 @@ public class ElasticsearchNode implements TestClusterConfiguration {
     @Override
     public void environment(String key, Supplier<CharSequence> valueSupplier, PropertyNormalization normalization) {
         environment.put(key, valueSupplier, normalization);
+    }
+
+    @Override
+    public void environment(LazyPropertyMap<String, CharSequence> environment) {
+        this.environment.putAll(environment);
+    }
+
+    @Internal
+    public LazyPropertyMap<String, CharSequence> getEnvironmentRaw(){
+        return environment;
     }
 
     public void jvmArgs(String... values) {
