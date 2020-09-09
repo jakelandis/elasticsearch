@@ -52,6 +52,7 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
         thisProject.getPluginManager().apply(RestTestBasePlugin.class);
         thisProject.getPluginManager().apply(RestResourcesPlugin.class);
 
+        //TODO: pass these in via config, so that i can break this up into multiple gradle projects
         Set<String> prefixes = Set.of(":modules:", ":plugins:", ":x-pack:plugin", ":rest-api-spec");
         Map<Project, SourceSet> projectsToTest = new HashMap<>();
         //find the projects within the prefixes that have yaml rest tests
@@ -105,11 +106,10 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
             //TODO: copy test cluster configuration from original task to new task
 
             thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
-            //TODO: wire these into check
 
-//            thisTestTask.doFirst(t -> {
-//                thisTestTask.getClasspath().forEach(f -> System.out.println("********* -> " + f));
-//            });
+
+            // wire this task into check
+            thisProject.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(thisTestTask));
 
         });
     }

@@ -18,10 +18,8 @@
  */
 package org.elasticsearch.gradle.testclusters;
 
-import org.elasticsearch.gradle.LazyPropertyMap;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.tasks.Nested;
 
 import java.util.Collection;
@@ -64,22 +62,16 @@ public interface TestClustersAware extends Task {
             assert thisNodeIterator.hasNext(); //should never happen
             ElasticsearchNode thisNode = thisNodeIterator.next();
             ElasticsearchNode thatNode = thatNodeIterator.next();
+            //copy the module and plugins
+            thatNode.getModulesRaw().forEach(module -> thisNode.module(module));
+            thatNode.getPluginsRaw().forEach(plugin -> thisNode.plugin(plugin));
             //copy the lazy maps
             thisNode.environment(thatNode.getEnvironmentRaw());
             thisNode.settings(thatNode.getSettingsRaw());
+            //TODO: finish these out!
 
-            //module and plugins
-            thatNode.getModulesRaw().forEach(module -> thisNode.module(module));
-            thatNode.getPluginsRaw().forEach(plugin -> thisNode.plugin(plugin));
 
         }
-
-
-
-
-
-
-
 
     }
 
