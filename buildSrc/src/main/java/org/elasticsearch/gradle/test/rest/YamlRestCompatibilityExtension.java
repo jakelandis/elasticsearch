@@ -26,21 +26,21 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
 
 public class YamlRestCompatibilityExtension {
 
     final IncludeExclude gradleProject;
     final IncludeExclude tests;
-    //TODO: make this configurable
-    List<Version> versions = Collections.singletonList(BuildParams.getBwcVersions().getLatestMinor());
+    final ListProperty<Version> versions ;
 
 
     @Inject
     public YamlRestCompatibilityExtension(ObjectFactory objects) {
         gradleProject = new IncludeExclude(objects);
         tests = new IncludeExclude(objects);
+        versions = objects.listProperty(Version.class);
+        //TODO: support configurable versions
+        versions.add(BuildParams.getBwcVersions().getLatestMinor());
     }
 
     void gradleProject(Action<? super IncludeExclude> includeExclude) {
@@ -50,6 +50,8 @@ public class YamlRestCompatibilityExtension {
     void tests(Action<? super IncludeExclude> includeExclude) {
         includeExclude.execute(tests);
     }
+
+
 
     static class IncludeExclude {
 

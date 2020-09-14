@@ -20,6 +20,7 @@
 package org.elasticsearch.gradle.test.rest;
 
 import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
+import org.elasticsearch.gradle.info.BuildParams;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
 import org.elasticsearch.gradle.testclusters.TestClustersAware;
@@ -55,7 +56,6 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
         YamlRestCompatibilityExtension extension = thisProject.getExtensions().create(EXTENSION_NAME, YamlRestCompatibilityExtension.class);
 
 
-
         // ensure that this project evaluates after all other projects and if those projects have yaml tests add them to cithin the includes that have yaml rest tests
         Map<Project, SourceSet> projectsWithYamlTests = new HashMap<>();
         thisProject.getRootProject().getAllprojects().stream()
@@ -81,7 +81,9 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
             List<String> excludes = extension.gradleProject.getExclude().get();
 
             //create a task for each configured version
-            extension.versions.forEach(version -> {
+            extension.versions.get().forEach(version -> {
+                // TODO: support arbitrary versions
+                assert BuildParams.getBwcVersions().getUnreleased().get(1).equals(version) : "bwc minor is the only supported version";
                 projectsWithYamlTests.entrySet().stream()
                     .filter(entry -> includes.stream().anyMatch(include -> entry.getKey().getPath().startsWith(include)))
                     .filter(entry -> excludes.stream().noneMatch(exclude -> entry.getKey().getPath().startsWith(exclude)))
@@ -118,6 +120,7 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                             copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
                             copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath());
                             copy.dependsOn(projectToTest.getTasks().getByName("copyYamlTestsTask"), projectToTest.getTasks().getByName("copyRestApiSpecsTask"));
+                            copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch"); //TODO: support arbitrary versions
                         });
 
                         thisTestTask.dependsOn(thisCopyTestsTask);
