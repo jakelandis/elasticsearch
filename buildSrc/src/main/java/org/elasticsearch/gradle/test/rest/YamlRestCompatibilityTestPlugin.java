@@ -24,6 +24,7 @@ import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
 import org.elasticsearch.gradle.testclusters.TestClustersAware;
 import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
+import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -33,37 +34,33 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
  * Apply this plugin to run the YAML based REST compatible tests. These tests are sourced from the prior version but executed against
  * the current version of the server with the headers injected to enable compatibility. This is not a general purpose plugin and should
- * only be applied to a single project.
+ * only be applied to a single project or a similar group of projects with the same parent.
  */
 public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
 
     private static final String EXTENSION_NAME = "yamlRestCompatibility";
-    private static final String EXCLUDE_IF_PATH_INCLUDES = System.getProperty("test.rest.compatibility.exclude.path", ":rest-compatibility");
+    // The parent of a group of projects that that apply this plugin.
+    // Exclude the follow path(s) from being depended up for evaluation to avoid circular evaluation dependencies,
+    private static final String COMPAT_EVAL_EXCLUDE = System.getProperty("test.rest.compatibility.exclude.path", ":rest-compatibility");
 
     @Override
     public void apply(Project thisProject) {
         YamlRestCompatibilityExtension extension = thisProject.getExtensions().create(EXTENSION_NAME, YamlRestCompatibilityExtension.class);
 
-        thisProject.getPluginManager().apply(ElasticsearchJavaPlugin.class);
-        thisProject.getPluginManager().apply(TestClustersPlugin.class);
-        thisProject.getPluginManager().apply(RestTestBasePlugin.class);
-        thisProject.getPluginManager().apply(RestResourcesPlugin.class);
 
+
+        // ensure that this project evaluates after all other projects and if those projects have yaml tests add them to cithin the includes that have yaml rest tests
         Map<Project, SourceSet> projectsWithYamlTests = new HashMap<>();
-        //find the projects within the includes that have yaml rest tests
         thisProject.getRootProject().getAllprojects().stream()
-            .filter(p -> thisProject.equals(p) == false) //exclude this project to avoid circular dependency
-            .filter(p -> p.getPath().contains(EXCLUDE_IF_PATH_INCLUDES) == false) //exclude paths that contain this to also avoid circular
+            .filter(p -> thisProject.equals(p) == false)
+            .filter(p -> p.getPath().contains(COMPAT_EVAL_EXCLUDE) == false)
             .forEach(candidateProject -> {
                 thisProject.evaluationDependsOn(candidateProject.getPath());
                 candidateProject.getPluginManager().withPlugin("elasticsearch.yaml-rest-test", plugin -> {
@@ -75,6 +72,11 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
 
         //do this after evaluation to ensure that we can read from the extension
         thisProject.afterEvaluate(p -> {
+            thisProject.getPluginManager().apply(ElasticsearchJavaPlugin.class);
+            thisProject.getPluginManager().apply(TestClustersPlugin.class);
+            thisProject.getPluginManager().apply(RestTestBasePlugin.class);
+            thisProject.getPluginManager().apply(RestResourcesPlugin.class);
+
             List<String> includes = extension.gradleProject.getInclude().get();
             List<String> excludes = extension.gradleProject.getExclude().get();
 
@@ -87,7 +89,7 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                         Project projectToTest = entry.getKey();
                         SourceSet projectToTestSourceSet = entry.getValue();
                         //for each project, create unique tasks and source sets
-                        String taskAndSourceSetName = "yamlRestCompatibilityTest" + projectToTest.getPath().replace(":", "#") + "#" + version.toString();
+                        String taskAndSourceSetName = "yamlRestCompatibilityTest#" + version.toString() + projectToTest.getPath().replace(":", "#");
 
                         // create source set
                         SourceSetContainer sourceSets = thisProject.getExtensions().getByType(SourceSetContainer.class);
@@ -96,13 +98,13 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                         //create the test task
                         RestIntegTestTask thisTestTask = thisProject.getTasks().create(taskAndSourceSetName, RestIntegTestTask.class);
                         thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-                        thisTestTask.setDescription("Runs the tests from " + projectToTest.getPath() + " from the tests from " + version.toString() + " against the current version");
+                        thisTestTask.setDescription("Runs the " + version.toString() + " tests from " + projectToTest.getPath() + " against the current version");
 
                         // configure the test task
                         thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
                         thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
                         thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath()
-                            .plus(projectToTestSourceSet.getOutput().getClassesDirs()));
+                            .plus(projectToTestSourceSet.getOutput().getClassesDirs())); //add the class path for this test
                         RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
                         RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
 

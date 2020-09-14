@@ -1,3 +1,4 @@
+//apply plugin: 'elasticsearch.yaml-rest-test'
 apply plugin: 'elasticsearch.yaml-rest-compatibility-test'
 
 yamlRestCompatibility {
@@ -7,3 +8,15 @@ yamlRestCompatibility {
 }
 
 
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
+  }
+}
+
+apply plugin: "com.dorongold.task-tree"
