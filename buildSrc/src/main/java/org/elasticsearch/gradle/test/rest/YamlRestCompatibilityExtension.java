@@ -19,16 +19,22 @@
 
 package org.elasticsearch.gradle.test.rest;
 
+import org.elasticsearch.gradle.Version;
+import org.elasticsearch.gradle.info.BuildParams;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 
 import javax.inject.Inject;
+import java.util.Collections;
+import java.util.List;
 
 public class YamlRestCompatibilityExtension {
 
     final IncludeExclude gradleProject;
     final IncludeExclude tests;
+    //TODO: make this configurable
+    List<Version> versions = Collections.singletonList(BuildParams.getBwcVersions().getLatestMinor());
 
 
     @Inject

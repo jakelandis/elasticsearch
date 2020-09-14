@@ -280,6 +280,10 @@ public class BwcVersions {
         return unmodifiableList(unreleased.stream().sorted().distinct().collect(Collectors.toList()));
     }
 
+    public Version getLatestMinor(){
+        return groupByMajor.get(currentVersion.getMajor() -1).stream().max(Version::compareTo).orElse(null);
+    }
+
     private Version getLatestInMinor(int major, int minor) {
         return groupByMajor.get(major).stream().filter(v -> v.getMinor() == minor).max(Version::compareTo).orElse(null);
     }
