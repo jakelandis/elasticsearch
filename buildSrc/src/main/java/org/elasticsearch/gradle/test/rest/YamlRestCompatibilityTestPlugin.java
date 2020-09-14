@@ -96,7 +96,7 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                         //create the test task
                         RestIntegTestTask thisTestTask = thisProject.getTasks().create(taskAndSourceSetName, RestIntegTestTask.class);
                         thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-                        thisTestTask.setDescription("Runs the tests from " + projectToTest.getPath() + " from the prior version against a cluster of the current version");
+                        thisTestTask.setDescription("Runs the tests from " + projectToTest.getPath() + " from the tests from " + version.toString() + " against the current version");
 
                         // configure the test task
                         thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
