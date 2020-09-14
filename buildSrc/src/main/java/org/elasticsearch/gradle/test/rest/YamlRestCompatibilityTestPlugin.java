@@ -33,8 +33,11 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -44,73 +47,87 @@ import java.util.Set;
  */
 public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
 
+    private static final String EXTENSION_NAME = "yamlRestCompatibility";
+    private static final String EXCLUDE_IF_PATH_INCLUDES = System.getProperty("test.rest.compatibility.exclude.path",":rest-compatibility");
+
     @Override
     public void apply(Project thisProject) {
+        YamlRestCompatibilityExtension extension = thisProject.getExtensions().create(EXTENSION_NAME, YamlRestCompatibilityExtension.class);
 
         thisProject.getPluginManager().apply(ElasticsearchJavaPlugin.class);
         thisProject.getPluginManager().apply(TestClustersPlugin.class);
         thisProject.getPluginManager().apply(RestTestBasePlugin.class);
         thisProject.getPluginManager().apply(RestResourcesPlugin.class);
 
-        //TODO: pass these in via config, so that i can break this up into multiple gradle projects
-        Set<String> prefixes = Set.of(":modules:", ":plugins:", ":x-pack:plugin", ":rest-api-spec");
-        Map<Project, SourceSet> projectsToTest = new HashMap<>();
-        //find the projects within the prefixes that have yaml rest tests
+        Map<Project, SourceSet> projectsWithYamlTests = new HashMap<>();
+        //find the projects within the includes that have yaml rest tests
         thisProject.getRootProject().getAllprojects().stream()
-            .filter(p -> prefixes.stream().anyMatch(prefix -> p.getPath().startsWith(prefix)))
-            .filter(p -> thisProject.equals(p) == false)
+            .filter(p -> thisProject.equals(p) == false) //exclude this project to avoid circular dependency
+            .filter(p -> p.getPath().contains(EXCLUDE_IF_PATH_INCLUDES) == false) //exclude paths that contain this to also avoid circular
             .forEach(candidateProject -> {
                 thisProject.evaluationDependsOn(candidateProject.getPath());
                 candidateProject.getPluginManager().withPlugin("elasticsearch.yaml-rest-test", plugin -> {
                     SourceSetContainer sourceSets = candidateProject.getExtensions().getByType(SourceSetContainer.class);
                     SourceSet yamlTestSourceSet = sourceSets.getByName(YamlRestTestPlugin.SOURCE_SET_NAME);
-                    projectsToTest.put(candidateProject, yamlTestSourceSet);
+                    projectsWithYamlTests.put(candidateProject, yamlTestSourceSet);
                 });
             });
 
-        projectsToTest.forEach((projectToTest, projectToTestSourceSet) -> {
+        //do this after evaluation to ensure that we can read from the extension
+        thisProject.afterEvaluate(p -> {
+            List<String> includes = extension.gradleProject.getInclude().get();
+            List<String> excludes = extension.gradleProject.getExclude().get();
 
-            //for each project, create unique tasks and source sets
-            String taskAndSourceSetName = "yamlRestCompatibilityTest" + projectToTest.getPath().replace(":", "#");
+            projectsWithYamlTests.entrySet().stream()
+                .filter(entry -> includes.stream().anyMatch(include -> entry.getKey().getPath().startsWith(include)))
+                .filter(entry -> excludes.stream().noneMatch(exclude -> entry.getKey().getPath().startsWith(exclude)))
+                .forEach(entry -> {
+                    System.out.println("including: " + entry.getKey().getPath());
+                    Project projectToTest = entry.getKey();
+                    SourceSet projectToTestSourceSet = entry.getValue();
+                    //for each project, create unique tasks and source sets
+                    String taskAndSourceSetName = "yamlRestCompatibilityTest" + projectToTest.getPath().replace(":", "#");
 
-            // create source set
-            SourceSetContainer sourceSets = thisProject.getExtensions().getByType(SourceSetContainer.class);
-            SourceSet thisYamlTestSourceSet = sourceSets.create(taskAndSourceSetName);
+                    // create source set
+                    SourceSetContainer sourceSets = thisProject.getExtensions().getByType(SourceSetContainer.class);
+                    SourceSet thisYamlTestSourceSet = sourceSets.create(taskAndSourceSetName);
 
-            //create the test task
-            RestIntegTestTask thisTestTask = thisProject.getTasks().create(taskAndSourceSetName, RestIntegTestTask.class);
-            thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-            thisTestTask.setDescription("Runs the tests from " + projectToTest.getPath() + " from the prior version against a cluster of the current version");
+                    //create the test task
+                    RestIntegTestTask thisTestTask = thisProject.getTasks().create(taskAndSourceSetName, RestIntegTestTask.class);
+                    thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+                    thisTestTask.setDescription("Runs the tests from " + projectToTest.getPath() + " from the prior version against a cluster of the current version");
 
-            // configure the test task
-            thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
-            thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
-            thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath()
-                .plus(projectToTestSourceSet.getOutput().getClassesDirs()));
-            RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
-            RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
+                    // configure the test task
+                    thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
+                    thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
+                    thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath()
+                        .plus(projectToTestSourceSet.getOutput().getClassesDirs()));
+                    RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
+                    RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
 
-            //set up dependencies
-            thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
-            thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), projectToTest);
+                    //set up dependencies
+                    thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
+                    thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), projectToTest);
 
-            // copy the rest resources
-            TaskProvider<Copy> thisCopyTestsTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
-            thisCopyTestsTask.configure(copy -> {
-                copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
-                copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath());
-                copy.dependsOn(projectToTest.getTasks().getByName("copyYamlTestsTask"), projectToTest.getTasks().getByName("copyRestApiSpecsTask"));
-            });
+                    // copy the rest resources
+                    TaskProvider<Copy> thisCopyTestsTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
+                    thisCopyTestsTask.configure(copy -> {
+                        copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
+                        copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath());
+                        copy.dependsOn(projectToTest.getTasks().getByName("copyYamlTestsTask"), projectToTest.getTasks().getByName("copyRestApiSpecsTask"));
+                    });
 
-            thisTestTask.dependsOn(thisCopyTestsTask);
-            //TODO: copy test cluster configuration from original task to new task
+                    thisTestTask.dependsOn(thisCopyTestsTask);
+                    //TODO: copy test cluster configuration from original task to new task
 
-            thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
+                    thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
 
 
-            // wire this task into check
-            thisProject.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(thisTestTask));
+                    // wire this task into check
+                    thisProject.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(thisTestTask));
 
+                });
         });
+
     }
 }
