@@ -27,8 +27,6 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.concurrent.locks.Lock;
 
 public class YamlRestCompatibilityExtension {
 

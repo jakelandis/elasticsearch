@@ -1,6 +1,7 @@
 apply plugin: 'elasticsearch.yaml-rest-compatibility-test'
 
 yamlRestCompatibility {
+  enabled false
   gradleProject {
     include ':modules'
   }
