@@ -69,7 +69,7 @@ public class RestTestUtil {
         project.getPluginManager().withPlugin("elasticsearch.esplugin", plugin -> {
             Zip bundle = (Zip) project.getTasks().getByName("bundlePlugin");
             testTask.dependsOn(bundle);
-            if (project.getPath().startsWith(":modules:")) {
+            if (project.getPath().contains("modules:")) {
                 testTask.getClusters().forEach(c -> c.module(bundle.getArchiveFile()));
             } else {
                 testTask.getClusters().forEach(c -> c.plugin(project.getObjects().fileProperty().value(bundle.getArchiveFile())));
