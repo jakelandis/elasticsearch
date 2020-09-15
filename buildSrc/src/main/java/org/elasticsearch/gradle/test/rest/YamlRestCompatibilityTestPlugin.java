@@ -25,7 +25,6 @@ import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
 import org.elasticsearch.gradle.testclusters.TestClustersAware;
 import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
-import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -34,33 +33,41 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 
 /**
  * Apply this plugin to run the YAML based REST compatible tests. These tests are sourced from the prior version but executed against
  * the current version of the server with the headers injected to enable compatibility. This is not a general purpose plugin and should
- * only be applied to a single project or a similar group of projects with the same parent.
+ * only be applied to a single project or a similar group of projects with the same parent project.
  */
 public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
 
     private static final String EXTENSION_NAME = "yamlRestCompatibility";
     // The parent of a group of projects that that apply this plugin.
     // Exclude the follow path(s) from being depended up for evaluation to avoid circular evaluation dependencies,
-    private static final String COMPAT_EVAL_EXCLUDE = System.getProperty("test.rest.compatibility.exclude.path", ":rest-compatibility");
+    private static final String COMPAT_TESTS_PARENT = ":rest-compatibility:qa";
+
+    private static final Path RELATIVE_API_PATH = Path.of("rest-api-spec/api");
+    private static final Path RELATIVE_TEST_PATH = Path.of("rest-api-spec/test");
 
     @Override
     public void apply(Project thisProject) {
+        if (BuildParams.isInternal() == false) {
+            throw new IllegalStateException("Compatibility testing is not supported externally");
+        }
         YamlRestCompatibilityExtension extension = thisProject.getExtensions().create(EXTENSION_NAME, YamlRestCompatibilityExtension.class);
 
-
-        // ensure that this project evaluates after all other projects and if those projects have yaml tests add them to cithin the includes that have yaml rest tests
+        // ensure that this project evaluates after all other projects and if those projects have yaml tests add them to cithin the include that have yaml rest tests
         Map<Project, SourceSet> projectsWithYamlTests = new HashMap<>();
         thisProject.getRootProject().getAllprojects().stream()
             .filter(p -> thisProject.equals(p) == false)
-            .filter(p -> p.getPath().contains(COMPAT_EVAL_EXCLUDE) == false)
+            .filter(p -> p.getPath().contains(COMPAT_TESTS_PARENT) == false)
             .forEach(candidateProject -> {
                 thisProject.evaluationDependsOn(candidateProject.getPath());
                 candidateProject.getPluginManager().withPlugin("elasticsearch.yaml-rest-test", plugin -> {
@@ -70,6 +77,8 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                 });
             });
 
+
+
         //do this after evaluation to ensure that we can read from the extension
         thisProject.afterEvaluate(p -> {
             thisProject.getPluginManager().apply(ElasticsearchJavaPlugin.class);
@@ -77,16 +86,33 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
             thisProject.getPluginManager().apply(RestTestBasePlugin.class);
             thisProject.getPluginManager().apply(RestResourcesPlugin.class);
 
-            List<String> includes = extension.gradleProject.getInclude().get();
-            List<String> excludes = extension.gradleProject.getExclude().get();
+            List<String> include = extension.gradleProject.getInclude().get();
+            List<String> exclude = extension.gradleProject.getExclude().get();
+            List<String> includeOnly = extension.gradleProject.getIncludeOnly().get();
+            List<String> excludeOnly = extension.gradleProject.getExcludeOnly().get();
+
+
+            System.out.println("************ " + thisProject.getPath());
+            //pick the approriate predicate
+            Predicate<Map.Entry<Project, SourceSet>> includePredicate = entry ->
+                includeOnly.isEmpty() == false
+                    ? includeOnly.stream().anyMatch(i -> entry.getKey().getPath().equalsIgnoreCase(i))
+                    : include.stream().anyMatch(i -> entry.getKey().getPath().startsWith(i));
+
+            Predicate<Map.Entry<Project, SourceSet>> excludePredicate =
+                excludeOnly.isEmpty() == false
+                    ? entry -> exclude.stream().noneMatch(e -> entry.getKey().getPath().equalsIgnoreCase(e))
+                    : entry -> exclude.stream().noneMatch(e -> entry.getKey().getPath().startsWith(e));
 
             //create a task for each configured version
             extension.versions.get().forEach(version -> {
                 // TODO: support arbitrary versions
                 assert BuildParams.getBwcVersions().getUnreleased().get(1).equals(version) : "bwc minor is the only supported version";
+                projectsWithYamlTests.entrySet().stream().forEach( e ->           System.out.println("************ " + e.getKey().getPath()));
+
                 projectsWithYamlTests.entrySet().stream()
-                    .filter(entry -> includes.stream().anyMatch(include -> entry.getKey().getPath().startsWith(include)))
-                    .filter(entry -> excludes.stream().noneMatch(exclude -> entry.getKey().getPath().startsWith(exclude)))
+                    .filter(includePredicate)
+                    .filter(excludePredicate)
                     .forEach(entry -> {
                         Project projectToTest = entry.getKey();
                         SourceSet projectToTestSourceSet = entry.getValue();
@@ -106,29 +132,68 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                         thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
                         thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
                         thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath()
-                            .plus(projectToTestSourceSet.getOutput().getClassesDirs())); //add the class path for this test
+                            .plus(projectToTestSourceSet.getOutput().getClassesDirs())); //only add the java classes to the classpath
                         RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
                         RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
 
                         //set up dependencies
                         thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
                         thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), projectToTest);
+                        final Path checkoutDir = thisProject.findProject(":distribution:bwc:minor").getBuildDir().toPath()
+                            .resolve("bwc").resolve("checkout-" + version.getMajor() + ".x");
 
-                        // copy the rest resources
-                        TaskProvider<Copy> thisCopyTestsTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
-                        thisCopyTestsTask.configure(copy -> {
-                            copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
-                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath());
-                            copy.dependsOn(projectToTest.getTasks().getByName("copyYamlTestsTask"), projectToTest.getTasks().getByName("copyRestApiSpecsTask"));
-                            copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch"); //TODO: support arbitrary versions
+                        // copy the APIs
+                        TaskProvider<Copy> thisCopyApiTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyAPIs", Copy.class);
+                        thisCopyApiTask.configure(copy -> {
+                            // copy core apis
+                            copy.from(checkoutDir.resolve("rest-api-spec/src/main/resources").resolve(RELATIVE_API_PATH));
+
+                            //copy xpack api's
+                            if (projectToTest.getPath().startsWith(":x-pack")) {
+                                copy.from(checkoutDir.resolve("x-pack/plugin/src/test/resources/rest-api-spec/src/main/resources")
+                                    .resolve(RELATIVE_API_PATH));
+                            }
+
+                            // copy any module or plugin api's
+                            if (projectToTest.getPath().startsWith(":modules")
+                                || projectToTest.getPath().startsWith(":plugins")
+                                || projectToTest.getPath().startsWith(":x-pack:plugin")) {
+                                copy.from(checkoutDir.resolve(projectToTest.getPath().replaceFirst(":", "").replace(":", File.separator))
+                                    .resolve("src/yamlRestTest/resources").resolve(RELATIVE_API_PATH));
+                            }
+
+
+                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath().resolve(RELATIVE_API_PATH));
+                            copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch");
                         });
 
-                        thisTestTask.dependsOn(thisCopyTestsTask);
+                        // copy the tests as needed
+                        TaskProvider<Copy> thisCopyTestTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
+                        thisCopyTestTask.configure(copy -> {
+
+                            //copy core tests
 
 
+                            // copy module or plugin tests
+                            if (projectToTest.getPath().startsWith(":modules")
+                                || projectToTest.getPath().startsWith(":plugins")
+                                || projectToTest.getPath().startsWith(":x-pack:plugin")) {
+                                copy.from(checkoutDir
+                                    .resolve(projectToTest.getPath().replaceFirst(":", "").replace(":", File.separator))
+                                    .resolve("src/yamlRestTest/resources").resolve(RELATIVE_TEST_PATH));
+                            }
+
+
+                            //copy xpack tests
+
+
+                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath().resolve(RELATIVE_TEST_PATH));
+                            copy.dependsOn(thisCopyApiTask);
+                        });
+
+
+                        thisTestTask.dependsOn(thisCopyTestTask);
                         thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
-
-
                         // wire this task into check
                         thisProject.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(thisTestTask));
 
@@ -137,4 +202,6 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
         });
 
     }
+
+
 }

@@ -470,7 +470,7 @@ configure(subprojects.findAll { ['archives', 'packages'].contains(it.name) }) {
 }
 
 /**
- * Build some variables that are replaced in the packages. This includes both
+ * Build some variables that are replaced in the packages. This include both
  * scripts like bin/elasticsearch and bin/elasticsearch-plugin that a user might run and also
  * scripts like postinst which are run as part of the installation.
  *

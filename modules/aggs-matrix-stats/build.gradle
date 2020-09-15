@@ -19,7 +19,7 @@
 apply plugin: 'elasticsearch.yaml-rest-test'
 
 esplugin {
-  description 'Adds aggregations whose input are a list of numeric fields and output includes a matrix.'
+  description 'Adds aggregations whose input are a list of numeric fields and output include a matrix.'
   classname 'org.elasticsearch.search.aggregations.matrix.MatrixAggregationPlugin'
 }
 

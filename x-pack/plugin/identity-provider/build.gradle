@@ -165,7 +165,7 @@ thirdPartyAudit {
         // [missing classes] Http Client cache has optional ehcache support
         'net.sf.ehcache.Ehcache',
         'net.sf.ehcache.Element',
-        // [missing classes] SLF4j includes an optional class that depends on an extension class (!)
+        // [missing classes] SLF4j include an optional class that depends on an extension class (!)
         'org.slf4j.ext.EventData',
         // Bouncycastle is an optional dependency for apache directory, cryptacular and opensaml packages. We
         // acknowledge them here instead of adding bouncy castle as a compileOnly dependency

@@ -1,0 +1,8 @@
+apply plugin: 'elasticsearch.yaml-rest-compatibility-test'
+
+yamlRestCompatibility {
+  gradleProject {
+    includeOnly ":x-pack:plugin"
+  }
+}
+

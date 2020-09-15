@@ -26,12 +26,14 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 
 import javax.inject.Inject;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 public class YamlRestCompatibilityExtension {
 
     final IncludeExclude gradleProject;
     final IncludeExclude tests;
-    final ListProperty<Version> versions ;
+    final ListProperty<Version> versions;
 
 
     @Inject
@@ -52,24 +54,53 @@ public class YamlRestCompatibilityExtension {
     }
 
 
-
     static class IncludeExclude {
 
         private final ListProperty<String> include;
         private final ListProperty<String> exclude;
+        private final ListProperty<String> includeOnly;
+        private final ListProperty<String> excludeOnly;
+        private ListProperty<String> activeInclude = null;
+        private ListProperty<String> activeExclude = null;
+
 
         IncludeExclude(ObjectFactory objects) {
             include = objects.listProperty(String.class);
             exclude = objects.listProperty(String.class);
+            includeOnly = objects.listProperty(String.class);
+            excludeOnly = objects.listProperty(String.class);
         }
 
-        public void include(String... include) {
+        public synchronized void include(String... include) {
+            if (this.includeOnly == activeInclude) {
+                throw new IllegalStateException("either include or includeOnly may be defined, but not both");
+            }
             this.include.addAll(include);
+            activeInclude = this.include;
         }
 
-        public void exclude(String... exclude) {
-
+        public synchronized void exclude(String... exclude) {
+            if (this.excludeOnly == activeExclude) {
+                throw new IllegalStateException("either exclude or excludeOnly may be defined, but not both");
+            }
             this.exclude.addAll(exclude);
+            activeExclude = this.exclude;
+        }
+
+        public synchronized void includeOnly(String... includeOnly) {
+            if (this.include == activeInclude) {
+                throw new IllegalStateException("either include or includeOnly may be defined, but not both");
+            }
+            this.includeOnly.addAll(includeOnly);
+            activeInclude = this.includeOnly;
+        }
+
+        public synchronized void excludeOnly(String... excludeOnly) {
+            if (this.exclude == activeExclude) {
+                throw new IllegalStateException("either exclude or excludeOnly may be defined, but not both");
+            }
+            this.excludeOnly.addAll(excludeOnly);
+            this.activeExclude = this.excludeOnly;
         }
 
         public ListProperty<String> getInclude() {
@@ -79,6 +110,16 @@ public class YamlRestCompatibilityExtension {
         public ListProperty<String> getExclude() {
             return exclude;
         }
+
+        public ListProperty<String> getIncludeOnly() {
+            return includeOnly;
+        }
+
+        public ListProperty<String> getExcludeOnly() {
+            return excludeOnly;
+        }
     }
+
+
 }
 
