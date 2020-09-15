@@ -24,6 +24,7 @@ import org.elasticsearch.gradle.info.BuildParams;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -34,6 +35,7 @@ public class YamlRestCompatibilityExtension {
     final IncludeExclude gradleProject;
     final IncludeExclude tests;
     final ListProperty<Version> versions;
+    final Property<Boolean> enabled;
 
 
     @Inject
@@ -41,8 +43,10 @@ public class YamlRestCompatibilityExtension {
         gradleProject = new IncludeExclude(objects);
         tests = new IncludeExclude(objects);
         versions = objects.listProperty(Version.class);
+        enabled = objects.property(Boolean.class);
         //TODO: support configurable versions
         versions.add(BuildParams.getBwcVersions().getLatestMinor());
+        enabled.value(true);
     }
 
     void gradleProject(Action<? super IncludeExclude> includeExclude) {
@@ -53,6 +57,9 @@ public class YamlRestCompatibilityExtension {
         includeExclude.execute(tests);
     }
 
+    void enabled(boolean enabled){
+        this.enabled.value(enabled);
+    }
 
     static class IncludeExclude {
 
