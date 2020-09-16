@@ -76,6 +76,7 @@ public abstract class MonitoringIntegTestCase extends ESIntegTestCase {
 
     @Override
     protected Set<String> excludeTemplates() {
+        foo
         return new HashSet<>(monitoringTemplateNames());
     }
 
