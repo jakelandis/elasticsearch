@@ -19,7 +19,6 @@
 package org.elasticsearch.gradle.testclusters;
 
 import org.elasticsearch.gradle.FileSupplier;
-import org.elasticsearch.gradle.LazyPropertyMap;
 import org.elasticsearch.gradle.PropertyNormalization;
 import org.elasticsearch.gradle.ReaperService;
 import org.elasticsearch.gradle.http.WaitForHttpResource;
@@ -65,6 +64,7 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
     private final Project project;
     private final ReaperService reaper;
     private int nodeIndex = 0;
+    private final ElasticsearchClusterConfig config = new ElasticsearchClusterConfig();
 
     public ElasticsearchCluster(String path, String clusterName, Project project, ReaperService reaper, File workingDirBase) {
         this.path = path;
@@ -81,6 +81,7 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
     }
 
     public void setNumberOfNodes(int numberOfNodes) {
+        config.setNumberOfNodes(numberOfNodes);
         checkFrozen();
 
         if (numberOfNodes < 1) {
@@ -120,136 +121,151 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
 
     @Override
     public void setVersion(String version) {
+        config.setVersion(version);
         nodes.all(each -> each.setVersion(version));
     }
 
     @Override
     public void setVersions(List<String> version) {
+        config.setVersions(version);
         nodes.all(each -> each.setVersions(version));
     }
 
     @Override
     public void setTestDistribution(TestDistribution distribution) {
+        config.setTestDistribution(distribution);
         nodes.all(each -> each.setTestDistribution(distribution));
     }
 
     @Override
     public void plugin(Provider<RegularFile> plugin) {
+        config.plugin(plugin);
         nodes.all(each -> each.plugin(plugin));
     }
 
     @Override
     public void plugin(String pluginProjectPath) {
+        config.plugin(pluginProjectPath);
         nodes.all(each -> each.plugin(pluginProjectPath));
     }
 
     @Override
     public void module(Provider<RegularFile> module) {
+        config.module(module);
         nodes.all(each -> each.module(module));
     }
 
     @Override
     public void module(String moduleProjectPath) {
+        config.module(moduleProjectPath);
         nodes.all(each -> each.module(moduleProjectPath));
     }
 
     @Override
     public void keystore(String key, String value) {
+        config.keystore(key, value);
         nodes.all(each -> each.keystore(key, value));
     }
 
     @Override
     public void keystore(String key, Supplier<CharSequence> valueSupplier) {
+        config.keystore(key, valueSupplier);
         nodes.all(each -> each.keystore(key, valueSupplier));
     }
 
     @Override
     public void keystore(String key, File value) {
+        config.keystore(key, value);
         nodes.all(each -> each.keystore(key, value));
     }
 
     @Override
     public void keystore(String key, File value, PropertyNormalization normalization) {
+        config.keystore(key, value, normalization);
         nodes.all(each -> each.keystore(key, value, normalization));
     }
 
     @Override
     public void keystore(String key, FileSupplier valueSupplier) {
+        config.keystore(key, valueSupplier);
         nodes.all(each -> each.keystore(key, valueSupplier));
     }
 
     @Override
     public void keystorePassword(String password) {
+        config.keystorePassword(password);
         nodes.all(each -> each.keystorePassword(password));
     }
 
     @Override
     public void cliSetup(String binTool, CharSequence... args) {
+        config.cliSetup(binTool, args);
         nodes.all(each -> each.cliSetup(binTool, args));
     }
 
     @Override
     public void setting(String key, String value) {
+        config.setting(key, value);
         nodes.all(each -> each.setting(key, value));
     }
 
     @Override
     public void setting(String key, String value, PropertyNormalization normalization) {
+        config.setting(key, value, normalization);
         nodes.all(each -> each.setting(key, value, normalization));
     }
 
     @Override
     public void setting(String key, Supplier<CharSequence> valueSupplier) {
+        config.setting(key, valueSupplier);
         nodes.all(each -> each.setting(key, valueSupplier));
     }
 
     @Override
     public void setting(String key, Supplier<CharSequence> valueSupplier, PropertyNormalization normalization) {
+        config.setting(key, valueSupplier, normalization);
         nodes.all(each -> each.setting(key, valueSupplier, normalization));
     }
 
     @Override
-    public void settings(LazyPropertyMap<String, CharSequence> settings) {
-        nodes.all(each -> each.settings(settings));
-    }
-
-    @Override
     public void systemProperty(String key, String value) {
+        config.setting(key, value);
         nodes.all(each -> each.systemProperty(key, value));
     }
 
     @Override
     public void systemProperty(String key, Supplier<CharSequence> valueSupplier) {
+        config.systemProperty(key, valueSupplier);
         nodes.all(each -> each.systemProperty(key, valueSupplier));
     }
 
     @Override
     public void systemProperty(String key, Supplier<CharSequence> valueSupplier, PropertyNormalization normalization) {
+        config.systemProperty(key, valueSupplier, normalization);
         nodes.all(each -> each.systemProperty(key, valueSupplier, normalization));
     }
 
     @Override
     public void environment(String key, String value) {
+        config.environment(key, value);
         nodes.all(each -> each.environment(key, value));
     }
 
     @Override
     public void environment(String key, Supplier<CharSequence> valueSupplier) {
+        config.environment(key, valueSupplier);
         nodes.all(each -> each.environment(key, valueSupplier));
     }
 
     @Override
     public void environment(String key, Supplier<CharSequence> valueSupplier, PropertyNormalization normalization) {
+        config.environment(key, valueSupplier, normalization);
         nodes.all(each -> each.environment(key, valueSupplier, normalization));
     }
 
     @Override
-    public void environment(LazyPropertyMap<String, CharSequence> environment) {
-        nodes.all(each -> each.environment(environment));
-    }
-
-    @Override
     public void jvmArgs(String... values) {
+        config.jvmArgs(values);
         nodes.all(each -> each.jvmArgs(values));
     }
 
@@ -341,21 +357,25 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
 
     @Override
     public void extraConfigFile(String destination, File from) {
+        config.extraConfigFile(destination, from);
         nodes.all(node -> node.extraConfigFile(destination, from));
     }
 
     @Override
     public void extraConfigFile(String destination, File from, PropertyNormalization normalization) {
+        config.extraConfigFile(destination, from, normalization);
         nodes.all(node -> node.extraConfigFile(destination, from, normalization));
     }
 
     @Override
     public void extraJarFile(File from) {
+        config.extraJarFile(from);
         nodes.all(node -> node.extraJarFile(from));
     }
 
     @Override
     public void user(Map<String, String> userSpec) {
+        config.user(userSpec);
         nodes.all(node -> node.user(userSpec));
     }
 
@@ -412,6 +432,7 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
 
     @Override
     public void setNameCustomization(Function<String, String> nameCustomization) {
+        config.setNameCustomization(nameCustomization);
         nodes.all(each -> each.setNameCustomization(nameCustomization));
     }
 
@@ -478,5 +499,10 @@ public class ElasticsearchCluster implements TestClusterConfiguration, Named {
     @Override
     public String toString() {
         return "cluster{" + path + ":" + clusterName + "}";
+    }
+
+    @Internal
+    public ElasticsearchClusterConfig getConfig(){
+        return config;
     }
 }

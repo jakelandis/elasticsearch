@@ -23,8 +23,10 @@ import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
 import org.elasticsearch.gradle.info.BuildParams;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
+import org.elasticsearch.gradle.testclusters.ElasticsearchCluster;
 import org.elasticsearch.gradle.testclusters.TestClustersAware;
 import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -128,6 +130,16 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                         thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
                         thisTestTask.setDescription("Runs the " + version.toString() + " tests from " + projectToTest.getPath() + " against the current version");
 
+                        //get the test cluster config from the project we are testing
+
+                        ((NamedDomainObjectContainer<ElasticsearchCluster>)
+                            (projectToTest.getExtensions().getByName(TestClustersPlugin.EXTENSION_NAME)))
+                            .getByName("yamlRestTest").getConfig().copyToCluster(thisTestTask.getClusters().iterator().next());
+
+
+
+                        thisTestTask.getClusters().iterator().next()
+
                         // configure the test task
                         thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
                         thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
@@ -206,8 +218,9 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
 //                        //TODO: make the cluster clone or not clone configuraable.
 //end bwc
 
+
                         // clone the test cluster configuration from the current project
-                        thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
+                    //    thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
                         // wire this task into check
                         thisProject.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(thisTestTask));
 

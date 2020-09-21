@@ -23,7 +23,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.tasks.Nested;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 public interface TestClustersAware extends Task {
@@ -41,39 +40,6 @@ public interface TestClustersAware extends Task {
         getClusters().add(cluster);
     }
 
-    default void withClusterConfig(TestClustersAware task) {
-        this.getProject().evaluationDependsOn(task.getProject().getPath());
-        if (task.getClusters().size() != 1 || this.getClusters().size() != 1) {
-            throw new TestClustersException("Task " + getPath() + " can't copy configuration from " + task.getPath()
-                + " both tasks must have only 1 test cluster");
-        }
-
-
-        ElasticsearchCluster thatCluster = task.getClusters().iterator().next();
-        ElasticsearchCluster thisCluster = this.getClusters().iterator().next();
-
-
-        if (thisCluster.getNumberOfNodes() != thatCluster.getNumberOfNodes()) {
-            thisCluster.setNumberOfNodes(thatCluster.getNumberOfNodes());
-        }
-        Iterator<ElasticsearchNode> thatNodeIterator = thatCluster.getNodes().iterator();
-        Iterator<ElasticsearchNode> thisNodeIterator = thisCluster.getNodes().iterator();
-        while (thatNodeIterator.hasNext()) {
-            assert thisNodeIterator.hasNext(); //should never happen
-            ElasticsearchNode thisNode = thisNodeIterator.next();
-            ElasticsearchNode thatNode = thatNodeIterator.next();
-            //copy the module and plugins
-            thatNode.getModulesRaw().forEach(module -> thisNode.module(module));
-            thatNode.getPluginsRaw().forEach(plugin -> thisNode.plugin(plugin));
-            //copy the lazy maps
-            thisNode.environment(thatNode.getEnvironmentRaw());
-            thisNode.settings(thatNode.getSettingsRaw());
-            //TODO: finish these out!
-
-
-        }
-
-    }
 
     default void beforeStart() {
     }

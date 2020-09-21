@@ -19,7 +19,6 @@
 package org.elasticsearch.gradle.testclusters;
 
 import org.elasticsearch.gradle.FileSupplier;
-import org.elasticsearch.gradle.LazyPropertyMap;
 import org.elasticsearch.gradle.PropertyNormalization;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logging;
@@ -74,8 +73,6 @@ public interface TestClusterConfiguration {
 
     void setting(String key, Supplier<CharSequence> valueSupplier, PropertyNormalization normalization);
 
-    void settings(LazyPropertyMap<String, CharSequence> settings);
-
     void systemProperty(String key, String value);
 
     void systemProperty(String key, Supplier<CharSequence> valueSupplier);
@@ -87,8 +84,6 @@ public interface TestClusterConfiguration {
     void environment(String key, Supplier<CharSequence> valueSupplier);
 
     void environment(String key, Supplier<CharSequence> valueSupplier, PropertyNormalization normalization);
-
-    void environment(LazyPropertyMap<String, CharSequence> environment);
 
     void jvmArgs(String... values);
 
