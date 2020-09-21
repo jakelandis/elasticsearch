@@ -136,59 +136,75 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                         RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
                         RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
 
+
+
+                        // copy the rest resources
+                        TaskProvider<Copy> thisCopyTestsTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
+                        thisCopyTestsTask.configure(copy -> {
+                            copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
+                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath());
+                            copy.dependsOn(projectToTest.getTasks().getByName("copyYamlTestsTask"), projectToTest.getTasks().getByName("copyRestApiSpecsTask"));
+                            copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch"); //TODO: support arbitrary versions
+                        });
+
+                        thisTestTask.dependsOn(thisCopyTestsTask);
+
+
                         //set up dependencies
                         thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
                         thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), projectToTest);
-                        final Path checkoutDir = thisProject.findProject(":distribution:bwc:minor").getBuildDir().toPath()
-                            .resolve("bwc").resolve("checkout-" + version.getMajor() + ".x");
-
-                        // copy the APIs
-                        TaskProvider<Copy> thisCopyApiTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyAPIs", Copy.class);
-                        thisCopyApiTask.configure(copy -> {
-                            // copy core apis
-                            copy.from(checkoutDir.resolve("rest-api-spec/src/main/resources").resolve(RELATIVE_API_PATH));
-
-                            //copy xpack api's
-                            if (projectToTest.getPath().startsWith(":x-pack")) {
-                                copy.from(checkoutDir.resolve("x-pack/plugin/src/test/resources").resolve(RELATIVE_API_PATH));
-                            }
-
-                            // copy any module or plugin api's
-                            if (projectToTest.getPath().startsWith(":modules")
-                                || projectToTest.getPath().startsWith(":plugins")
-                                || projectToTest.getPath().startsWith(":x-pack:plugin:")) { // trailing colon intentional to disambiguate
-                                copy.from(checkoutDir.resolve(projectToTest.getPath().replaceFirst(":", "").replace(":", File.separator))
-                                    .resolve("src/yamlRestTest/resources").resolve(RELATIVE_API_PATH));
-                            }
-                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath().resolve(RELATIVE_API_PATH));
-                            copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch");
-                        });
-
-                        // copy the tests as needed
-                        TaskProvider<Copy> thisCopyTestTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
-                        thisCopyTestTask.configure(copy -> {
-                            //copy core tests
-                            if (projectToTest.getPath().equalsIgnoreCase(":rest-api-spec")) {
-                                copy.from(checkoutDir.resolve("rest-api-spec/src/main/resources").resolve(RELATIVE_TEST_PATH));
-                            }
-                            // copy module or plugin tests
-                            if (projectToTest.getPath().startsWith(":modules")
-                                || projectToTest.getPath().startsWith(":plugins")
-                                || projectToTest.getPath().startsWith(":x-pack:plugin:")) { // trailing colon intentional to disambiguate
-                                copy.from(checkoutDir
-                                    .resolve(projectToTest.getPath().replaceFirst(":", "").replace(":", File.separator))
-                                    .resolve("src/yamlRestTest/resources").resolve(RELATIVE_TEST_PATH));
-                            }
-                            //copy xpack tests
-                            if (projectToTest.getPath().equalsIgnoreCase(":x-pack:plugin")) {
-                                copy.from(checkoutDir.resolve("x-pack/plugin/src/test/resources").resolve(RELATIVE_TEST_PATH));
-                            }
-                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath().resolve(RELATIVE_TEST_PATH));
-                            copy.dependsOn(thisCopyApiTask);
-                        });
-
-                        thisTestTask.dependsOn(thisCopyTestTask);
-                        //TODO: make the cluster clone or not clone configuraable.
+//                        start bwc
+//                        final Path checkoutDir = thisProject.findProject(":distribution:bwc:minor").getBuildDir().toPath()
+//                            .resolve("bwc").resolve("checkout-" + version.getMajor() + ".x");
+//
+//                        // copy the APIs
+//                        TaskProvider<Copy> thisCopyApiTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyAPIs", Copy.class);
+//                        thisCopyApiTask.configure(copy -> {
+//                            // copy core apis
+//                            copy.from(checkoutDir.resolve("rest-api-spec/src/main/resources").resolve(RELATIVE_API_PATH));
+//
+//                            //copy xpack api's
+//                            if (projectToTest.getPath().startsWith(":x-pack")) {
+//                                copy.from(checkoutDir.resolve("x-pack/plugin/src/test/resources").resolve(RELATIVE_API_PATH));
+//                            }
+//
+//                            // copy any module or plugin api's
+//                            if (projectToTest.getPath().startsWith(":modules")
+//                                || projectToTest.getPath().startsWith(":plugins")
+//                                || projectToTest.getPath().startsWith(":x-pack:plugin:")) { // trailing colon intentional to disambiguate
+//                                copy.from(checkoutDir.resolve(projectToTest.getPath().replaceFirst(":", "").replace(":", File.separator))
+//                                    .resolve("src/yamlRestTest/resources").resolve(RELATIVE_API_PATH));
+//                            }
+//                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath().resolve(RELATIVE_API_PATH));
+//                            copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch");
+//                        });
+//
+//                        // copy the tests as needed
+//                        TaskProvider<Copy> thisCopyTestTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
+//                        thisCopyTestTask.configure(copy -> {
+//                            //copy core tests
+//                            if (projectToTest.getPath().equalsIgnoreCase(":rest-api-spec")) {
+//                                copy.from(checkoutDir.resolve("rest-api-spec/src/main/resources").resolve(RELATIVE_TEST_PATH));
+//                            }
+//                            // copy module or plugin tests
+//                            if (projectToTest.getPath().startsWith(":modules")
+//                                || projectToTest.getPath().startsWith(":plugins")
+//                                || projectToTest.getPath().startsWith(":x-pack:plugin:")) { // trailing colon intentional to disambiguate
+//                                copy.from(checkoutDir
+//                                    .resolve(projectToTest.getPath().replaceFirst(":", "").replace(":", File.separator))
+//                                    .resolve("src/yamlRestTest/resources").resolve(RELATIVE_TEST_PATH));
+//                            }
+//                            //copy xpack tests
+//                            if (projectToTest.getPath().equalsIgnoreCase(":x-pack:plugin")) {
+//                                copy.from(checkoutDir.resolve("x-pack/plugin/src/test/resources").resolve(RELATIVE_TEST_PATH));
+//                            }
+//                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath().resolve(RELATIVE_TEST_PATH));
+//                            copy.dependsOn(thisCopyApiTask);
+//                        });
+//
+//                        thisTestTask.dependsOn(thisCopyTestTask);
+//                        //TODO: make the cluster clone or not clone configuraable.
+//end bwc
 
                         // clone the test cluster configuration from the current project
                         thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
