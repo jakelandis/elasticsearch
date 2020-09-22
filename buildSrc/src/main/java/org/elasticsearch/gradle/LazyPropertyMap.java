@@ -30,7 +30,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class LazyPropertyMap<K, V> extends AbstractLazyPropertyCollection implements Map<K, V> {
+public class LazyPropertyMap<K, V> extends AbstractLazyPropertyCollection implements Map<K, V>, Cloneable {
 
     private final Map<K, PropertyMapEntry<K, V>> delegate = new LinkedHashMap<>();
     private final BiFunction<K, V, ?> normalizationMapper;
@@ -47,6 +47,8 @@ public class LazyPropertyMap<K, V> extends AbstractLazyPropertyCollection implem
         super(name, owner);
         this.normalizationMapper = normalizationMapper;
     }
+
+
 
     @Override
     public int size() {

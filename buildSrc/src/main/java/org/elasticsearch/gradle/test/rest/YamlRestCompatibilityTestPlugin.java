@@ -20,12 +20,15 @@
 package org.elasticsearch.gradle.test.rest;
 
 import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
+import org.elasticsearch.gradle.Version;
 import org.elasticsearch.gradle.info.BuildParams;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
 import org.elasticsearch.gradle.testclusters.ElasticsearchCluster;
+import org.elasticsearch.gradle.testclusters.ElasticsearchNode;
 import org.elasticsearch.gradle.testclusters.TestClustersAware;
 import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
+import org.elasticsearch.gradle.testclusters.TestDistribution;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -37,7 +40,9 @@ import org.gradle.api.tasks.TaskProvider;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -109,62 +114,75 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                     .noneMatch(e -> entry.getKey().getPath().startsWith(e));
 
             //create a task for each configured version
-            extension.versions.get().forEach(version -> {
-                // TODO: support arbitrary versions
+            for (Version version : extension.versions.get()) {// TODO: support arbitrary versions
                 assert BuildParams.getBwcVersions().getUnreleased().get(1).equals(version) : "bwc minor is the only supported version";
-                projectsWithYamlTests.entrySet().stream()
-                    .filter(includePredicate)
-                    .filter(excludePredicate)
-                    .forEach(entry -> {
-                        Project projectToTest = entry.getKey();
-                        SourceSet projectToTestSourceSet = entry.getValue();
-                        //for each project, create unique tasks and source sets
-                        String taskAndSourceSetName = "yamlRestCompatibilityTest#" + version.toString() + projectToTest.getPath().replace(":", "#");
+                for (Map.Entry<Project, SourceSet> entry : projectsWithYamlTests.entrySet()) {
+                    if (includePredicate.test(entry)) {
+                        if (excludePredicate.test(entry)) {
+                            Project projectToTest = entry.getKey();
+                            SourceSet projectToTestSourceSet = entry.getValue();
+                            //for each project, create unique tasks and source sets
+                            String taskAndSourceSetName = "yamlRestCompatibilityTest#" + version.toString() + projectToTest.getPath().replace(":", "#");
 
-                        // create source set
-                        SourceSetContainer sourceSets = thisProject.getExtensions().getByType(SourceSetContainer.class);
-                        SourceSet thisYamlTestSourceSet = sourceSets.create(taskAndSourceSetName);
+                            // create source set
+                            SourceSetContainer sourceSets = thisProject.getExtensions().getByType(SourceSetContainer.class);
+                            SourceSet thisYamlTestSourceSet = sourceSets.create(taskAndSourceSetName);
 
-                        //create the test task
-                        RestIntegTestTask thisTestTask = thisProject.getTasks().create(taskAndSourceSetName, RestIntegTestTask.class);
-                        thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-                        thisTestTask.setDescription("Runs the " + version.toString() + " tests from " + projectToTest.getPath() + " against the current version");
+                            //create the test task
+                            RestIntegTestTask thisTestTask = thisProject.getTasks().create(taskAndSourceSetName, RestIntegTestTask.class);
+                            thisTestTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+                            thisTestTask.setDescription("Runs the " + version.toString() + " tests from " + projectToTest.getPath() + " against the current version");
 
-                        //get the test cluster config from the project we are testing
+                            //get the test cluster config from the project we are testing
+                            ElasticsearchCluster copyCluster = ((NamedDomainObjectContainer<ElasticsearchCluster>)
+                                (projectToTest.getExtensions().getByName(TestClustersPlugin.EXTENSION_NAME)))
+                                .getByName("yamlRestTest");
 
-                        ((NamedDomainObjectContainer<ElasticsearchCluster>)
-                            (projectToTest.getExtensions().getByName(TestClustersPlugin.EXTENSION_NAME)))
-                            .getByName("yamlRestTest").getConfig().copyToCluster(thisTestTask.getClusters().iterator().next());
+                            ElasticsearchCluster keepCluster = thisTestTask.getClusters().iterator().next();
+                            if(copyCluster.getNumberOfNodes() != keepCluster.getNumberOfNodes()) {
+                                keepCluster.setNumberOfNodes(copyCluster.getNumberOfNodes());
+                            }
+                            List<ElasticsearchNode> nodes = new ArrayList<>(copyCluster.getNumberOfNodes());
 
+                            Iterator<ElasticsearchNode> keepIterator = keepCluster.getNodes().iterator();
+                            Iterator<ElasticsearchNode> copyIterator = copyCluster.getNodes().iterator();
+                            while (keepIterator.hasNext() && copyIterator.hasNext()){
+                                nodes.add(new ElasticsearchNode(keepIterator.next(), copyIterator.next()));
+                            }
+                            //assert parallel arrays
+                            assert keepIterator.hasNext() == false && copyIterator.hasNext() == false;
 
-
-                        thisTestTask.getClusters().iterator().next()
-
-                        // configure the test task
-                        thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
-                        thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
-                        thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath()
-                            .plus(projectToTestSourceSet.getOutput().getClassesDirs())); //only add the java classes to the classpath
-                        RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
-                        RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
-
-
-
-                        // copy the rest resources
-                        TaskProvider<Copy> thisCopyTestsTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
-                        thisCopyTestsTask.configure(copy -> {
-                            copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
-                            copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath());
-                            copy.dependsOn(projectToTest.getTasks().getByName("copyYamlTestsTask"), projectToTest.getTasks().getByName("copyRestApiSpecsTask"));
-                            copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch"); //TODO: support arbitrary versions
-                        });
-
-                        thisTestTask.dependsOn(thisCopyTestsTask);
+//                            nodes.forEach( node -> {
+//                                node.setTestDistribution(TestDistribution.DEFAULT);
+//                            });
+                            keepCluster.getNodes().clear();
+                            keepCluster.getNodes().addAll(nodes);
 
 
-                        //set up dependencies
-                        thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
-                        thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), projectToTest);
+                            // configure the test task
+                            thisTestTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
+                            thisTestTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
+                            thisTestTask.setClasspath(thisYamlTestSourceSet.getRuntimeClasspath()
+                                .plus(projectToTestSourceSet.getOutput().getClassesDirs())); //only add the java classes to the classpath
+                            RestTestUtil.addPluginOrModuleToTestCluster(projectToTest, thisTestTask);
+                            RestTestUtil.addPluginDependency(projectToTest, thisTestTask);
+
+
+                            // copy the rest resources
+                            TaskProvider<Copy> thisCopyTestsTask = thisProject.getTasks().register(taskAndSourceSetName + "#copyTests", Copy.class);
+                            thisCopyTestsTask.configure(copy -> {
+                                copy.from(projectToTestSourceSet.getOutput().getResourcesDir().toPath()); //TODO: change to the real deal, yo!
+                                copy.into(thisYamlTestSourceSet.getOutput().getResourcesDir().toPath());
+                                copy.dependsOn(projectToTest.getTasks().getByName("copyYamlTestsTask"), projectToTest.getTasks().getByName("copyRestApiSpecsTask"));
+                                copy.dependsOn(":distribution:bwc:minor:checkoutBwcBranch"); //TODO: support arbitrary versions
+                            });
+
+                            thisTestTask.dependsOn(thisCopyTestsTask);
+
+
+                            //set up dependencies
+                            thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), thisProject.project(":test:framework"));
+                            thisProject.getDependencies().add(thisYamlTestSourceSet.getImplementationConfigurationName(), projectToTest);
 //                        start bwc
 //                        final Path checkoutDir = thisProject.findProject(":distribution:bwc:minor").getBuildDir().toPath()
 //                            .resolve("bwc").resolve("checkout-" + version.getMajor() + ".x");
@@ -219,13 +237,15 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
 //end bwc
 
 
-                        // clone the test cluster configuration from the current project
-                    //    thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
-                        // wire this task into check
-                        thisProject.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(thisTestTask));
+                            // clone the test cluster configuration from the current project
+                            //    thisTestTask.withClusterConfig((TestClustersAware) projectToTest.getTasks().getByName(YamlRestTestPlugin.SOURCE_SET_NAME));
+                            // wire this task into check
+                            thisProject.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(thisTestTask));
 
-                    });
-            });
+                        }
+                    }
+                }
+            }
         });
 
     }

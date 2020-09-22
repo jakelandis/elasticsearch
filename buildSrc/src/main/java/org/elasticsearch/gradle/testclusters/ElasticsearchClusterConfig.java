@@ -27,8 +27,10 @@ import org.gradle.api.provider.Provider;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -40,12 +42,12 @@ import java.util.function.Supplier;
 public class ElasticsearchClusterConfig implements TestClusterConfiguration {
 
     private int numberOfNodes = -1;
-    private List<String> versions;
+    private Set<String> versions = new HashSet<>();
     private TestDistribution testDistribution;
-    private Provider<RegularFile> plugin;
-    private String pluginProjectPath;
-    private Provider<RegularFile> module;
-    private String moduleProjectPath;
+    private Set<Provider<RegularFile>> plugins1 = new HashSet<>();
+    private Set<String> plugins2 = new HashSet<>();
+    private Set<Provider<RegularFile>> modules1 = new HashSet<>();
+    private Set<String> modules2 = new HashSet<>();
     private Pair<String, String> keystore1;
     private Pair<String, Supplier<CharSequence>> keystore2;
     private Pair<String, File> keystore3;
@@ -69,7 +71,6 @@ public class ElasticsearchClusterConfig implements TestClusterConfiguration {
     private File extraJarFile;
     private Map<String, String> user;
     private Function<String, String> nameCustomization;
-    private final Lock lock = new ReentrantLock();
 
     /**
      * Copies itself to a test cluster iff the values have been set.
@@ -83,18 +84,15 @@ public class ElasticsearchClusterConfig implements TestClusterConfiguration {
         if (this.testDistribution != null) {
             cluster.setTestDistribution(this.testDistribution);
         }
-        if (this.plugin != null) {
-            cluster.plugin(this.plugin);
-        }
-        if (this.pluginProjectPath != null) {
-            cluster.plugin(this.pluginProjectPath);
-        }
-        if (this.module != null) {
-            cluster.module(this.module);
-        }
-        if (this.moduleProjectPath != null) {
-            cluster.module(this.moduleProjectPath);
-        }
+
+        this.plugins1.forEach(cluster::plugin);
+        this.plugins2.forEach(cluster::plugin);
+
+        this.modules1.forEach(cluster::module);
+        this.modules2.forEach(cluster::module);
+
+        this.versions.forEach(cluster::setVersion);
+
         if (this.keystore1 != null) {
             cluster.keystore(keystore1.getLeft(), keystore1.getRight());
         }
@@ -172,26 +170,12 @@ public class ElasticsearchClusterConfig implements TestClusterConfiguration {
 
     @Override
     public void setVersion(String version) {
-        lock.lock();
-        try {
-            if (this.versions == null) {
-                this.versions = new ArrayList<>();
-            }
-            this.versions.clear();
-            this.versions.add(version);
-        } finally {
-            lock.unlock();
-        }
+        this.versions.add(version);
     }
 
     @Override
     public void setVersions(List<String> versions) {
-        lock.lock();
-        try {
-            this.versions = versions;
-        } finally {
-            lock.unlock();
-        }
+        this.versions.addAll(versions);
     }
 
     @Override
@@ -201,22 +185,22 @@ public class ElasticsearchClusterConfig implements TestClusterConfiguration {
 
     @Override
     public void plugin(Provider<RegularFile> plugin) {
-        this.plugin = plugin;
+        this.plugins1.add(plugin);
     }
 
     @Override
     public void plugin(String pluginProjectPath) {
-        this.pluginProjectPath = pluginProjectPath;
+        this.plugins2.add(pluginProjectPath);
     }
 
     @Override
     public void module(Provider<RegularFile> module) {
-        this.module = module;
+        this.modules1.add(module);
     }
 
     @Override
     public void module(String moduleProjectPath) {
-        this.moduleProjectPath = moduleProjectPath;
+        this.modules2.add(moduleProjectPath);
     }
 
     @Override
