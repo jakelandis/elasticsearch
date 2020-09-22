@@ -1,9 +1,10 @@
 apply plugin: 'elasticsearch.yaml-rest-compatibility-test'
 
 yamlRestCompatibility {
-  enabled false
+  //enabled false
   gradleProject {
     include ':plugins'
+    exclude ':plugins:discovery-ec2:qa:amazon-ec2', ':plugins:discovery-gce:qa:gce', ':plugins:repository-azure', ':plugins:repository-gcs',  ':plugins:repository-s3'
   }
 }
 

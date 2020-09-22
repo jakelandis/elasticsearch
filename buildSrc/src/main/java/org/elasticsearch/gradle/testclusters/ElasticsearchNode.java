@@ -168,8 +168,8 @@ public class ElasticsearchNode implements TestClusterConfiguration {
     }
 
     /**
-     * Copy and merge constructor. The project specific specific configuration is pulled from the keep node. The user specific configuration
-     * is pulled from copy node. The copy node should be fully configured prior to calling this.
+     * Copy and merge constructor. The project specific configuration is pulled from the 'keep' node. The user specific configuration
+     * is pulled from 'copy' node. The copy node should be fully configured prior to calling this.
      */
     public ElasticsearchNode(ElasticsearchNode keep, ElasticsearchNode copy) {
         this(keep.path, keep.name, keep.project, keep.reaper, keep.workingDirBase, copy);
@@ -504,7 +504,7 @@ public class ElasticsearchNode implements TestClusterConfiguration {
                 logToProcessStdout("installing " + plugins.size() + " plugins in a single transaction");
                 final String[] arguments = Stream.concat(
                     Stream.of("install", "--batch"),
-                    plugins.stream().map(Provider::get).map(p -> p.toURI().toString())
+                    plugins.stream().map(Provider::get).distinct().map(p -> p.toURI().toString())
                 ).toArray(String[]::new);
                 runElasticsearchBinScript("elasticsearch-plugin", arguments);
             } else {
