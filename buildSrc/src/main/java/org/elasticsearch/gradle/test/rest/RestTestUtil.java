@@ -23,6 +23,9 @@ import org.elasticsearch.gradle.VersionProperties;
 import org.elasticsearch.gradle.info.BuildParams;
 import org.elasticsearch.gradle.plugin.PluginPropertiesExtension;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
+import org.elasticsearch.gradle.testclusters.ElasticsearchCluster;
+import org.elasticsearch.gradle.testclusters.TestClustersPlugin;
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.tasks.SourceSet;
@@ -49,6 +52,16 @@ public class RestTestUtil {
         // make the new test run after unit tests
         testTask.mustRunAfter(project.getTasks().named("test"));
         return testTask;
+    }
+
+
+    static ElasticsearchCluster createTestCluster(Project project, SourceSet sourceSet) {
+        // eagerly create the testCluster container so it is easily available for configuration
+        @SuppressWarnings("unchecked")
+        NamedDomainObjectContainer<ElasticsearchCluster> testClusters = (NamedDomainObjectContainer<ElasticsearchCluster>) project
+            .getExtensions()
+            .getByName(TestClustersPlugin.EXTENSION_NAME);
+        return testClusters.create(sourceSet.getName());
     }
 
     /**

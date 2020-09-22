@@ -271,6 +271,7 @@ public class ElasticsearchNode implements TestClusterConfiguration {
         distro.setVersion(version);
         distro.setArchitecture(Architecture.current());
         setDistributionType(distro, testDistribution);
+        System.out.println("*****************2 adding distribution: " + distro.getName() );
         distributions.add(distro);
     }
 
@@ -1331,8 +1332,11 @@ public class ElasticsearchNode implements TestClusterConfiguration {
 
     private List<FileTree> getDistributionFiles(Action<PatternFilterable> patternFilter) {
         List<FileTree> files = new ArrayList<>();
+        System.out.println("******************* getDistributionFiles!");
         for (ElasticsearchDistribution distribution : distributions) {
-            files.add(distribution.getExtracted().getAsFileTree().matching(patternFilter));
+            FileTree a = distribution.getExtracted().getAsFileTree().matching(patternFilter);
+            a.getFiles().forEach(f -> System.out.println("----> " + f));
+            files.add(a);
         }
         return files;
     }
