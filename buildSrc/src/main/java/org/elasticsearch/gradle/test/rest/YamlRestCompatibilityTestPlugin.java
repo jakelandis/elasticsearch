@@ -161,11 +161,9 @@ public class YamlRestCompatibilityTestPlugin implements Plugin<Project> {
                             nodes.forEach(node -> {
                                 node.setTestDistribution(TestDistribution.DEFAULT);
                             });
-
                             // swap out the nodes with the cloned nodes
                             keepCluster.getNodes().clear();
                             keepCluster.getNodes().addAll(nodes);
-
                             // configure the test task
                             testTask.dependsOn(projectToTest.getTasks().getByName(projectToTestSourceSet.getCompileJavaTaskName()));
                             testTask.setTestClassesDirs(projectToTestSourceSet.getOutput().getClassesDirs());
