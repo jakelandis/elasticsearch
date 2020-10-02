@@ -1,0 +1,7 @@
+"Action to list contexts":
+  - match:
+      - index: 1
+        replace: {
+          contexts.22: script_heuristic
+        }
+
