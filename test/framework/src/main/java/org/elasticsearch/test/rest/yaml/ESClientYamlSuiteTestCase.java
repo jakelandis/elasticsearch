@@ -218,7 +218,7 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
                     try (XContentParser parser = YamlXContent.yamlXContent.createParser(NamedXContentRegistry.EMPTY,
                         LoggingDeprecationHandler.INSTANCE, Files.newInputStream(compatPath))) {
 
-                        CompatYamlTestParser.parse(parser);
+                        Map<CompatYamlTestParser.MutationSection, Set<CompatYamlTestParser.Mutation>> a = CompatYamlTestParser.parse(parser);
                     } catch(Exception e) {
                          e.printStackTrace();
                     }
