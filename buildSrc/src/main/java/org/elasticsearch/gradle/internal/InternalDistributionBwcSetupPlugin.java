@@ -84,6 +84,7 @@ public class InternalDistributionBwcSetupPlugin implements Plugin<Project> {
         project.getPlugins().apply(LifecycleBasePlugin.class);
 
         TaskProvider<Task> buildBwcTaskProvider = project.getTasks().register("buildBwc");
+        createSourceConfig(project, checkoutDir.get());
         List<DistributionProject> distributionProjects = resolveArchiveProjects(checkoutDir.get(), bwcVersion.get());
 
         for (DistributionProject distributionProject : distributionProjects) {
@@ -109,6 +110,16 @@ public class InternalDistributionBwcSetupPlugin implements Plugin<Project> {
         );
 
         createBuildBwcTask(bwcSetupExtension, project, bwcVersion, "jdbc", jdbcProjectDir, jdbcProjectArtifact, buildBwcTaskProvider);
+    }
+
+    private void createSourceConfig(Project project, File checkoutDir) {
+        String sourceConfiguration = "source";
+        project.getConfigurations().create(sourceConfiguration);
+        project.getArtifacts().add(sourceConfiguration, checkoutDir, artifact -> {
+            artifact.setName("bwcSource");
+            artifact.builtBy(project.getTasks().getByName("checkoutBwcBranch"));
+            artifact.setType("directory");
+        });
     }
 
     private void registerBwcArtifacts(Project bwcProject, DistributionProject distributionProject) {
