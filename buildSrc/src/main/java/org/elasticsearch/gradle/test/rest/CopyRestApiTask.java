@@ -159,6 +159,11 @@ public class CopyRestApiTask extends DefaultTask {
                 c.from(coreConfig.getAsFileTree());
                 c.into(getOutputDir());
                 c.include(corePatternSet.getIncludes());
+                c.eachFile( file -> {
+                    if(file.getRelativePath().getFile(getOutputDir()).exists()){
+                        file.exclude();
+                    }
+                });
             });
         } else {
             getLogger().debug(
@@ -186,6 +191,11 @@ public class CopyRestApiTask extends DefaultTask {
                 c.from(xpackConfig.getSingleFile());
                 c.into(getOutputDir());
                 c.include(xpackPatternSet.getIncludes());
+                c.eachFile( file -> {
+                    if(file.getRelativePath().getFile(getOutputDir()).exists()){
+                        file.exclude();
+                    }
+                });
             });
         }
         // TODO: once https://github.com/elastic/elasticsearch/pull/62968 lands ensure that this uses `getFileSystemOperations()`
@@ -194,6 +204,11 @@ public class CopyRestApiTask extends DefaultTask {
             getFileSystemOperations().copy(c -> {
                 c.from(additionalConfig.getAsFileTree());
                 c.into(getOutputDir());
+                c.eachFile( file -> {
+                    if(file.getRelativePath().getFile(getOutputDir()).exists()){
+                        file.exclude();
+                    }
+                });
             });
         }
     }

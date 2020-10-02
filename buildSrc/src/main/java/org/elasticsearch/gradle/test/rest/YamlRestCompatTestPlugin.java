@@ -20,6 +20,7 @@
 package org.elasticsearch.gradle.test.rest;
 
 import org.elasticsearch.gradle.ElasticsearchJavaPlugin;
+import org.elasticsearch.gradle.SystemPropertyCommandLineArgumentProvider;
 import org.elasticsearch.gradle.VersionProperties;
 import org.elasticsearch.gradle.test.RestIntegTestTask;
 import org.elasticsearch.gradle.test.RestTestBasePlugin;
@@ -49,9 +50,9 @@ import static org.elasticsearch.gradle.test.rest.RestTestUtil.setupDependencies;
 public class YamlRestCompatTestPlugin implements Plugin<Project> {
 
     public static final String SOURCE_SET_NAME = "yamlRestCompatTest";
+    public static final String REST_TESTS_COMPAT = "tests.rest.compat";
     private static final Path RELATIVE_API_PATH = Path.of("rest-api-spec/api");
     private static final Path RELATIVE_TEST_PATH = Path.of("rest-api-spec/test");
-
     @Override
     public void apply(Project project) {
 
@@ -170,6 +171,10 @@ public class YamlRestCompatTestPlugin implements Plugin<Project> {
             // run compatibility tests after "normal" tests
             testTask.mustRunAfter(project.getTasks().named(YamlRestTestPlugin.SOURCE_SET_NAME));
             testTask.dependsOn(copyCompatYamlTestTask);
+
+            SystemPropertyCommandLineArgumentProvider runnerNonInputProperties =
+                (SystemPropertyCommandLineArgumentProvider) testTask.getExtensions().getByName("nonInputProperties");
+            runnerNonInputProperties.systemProperty(REST_TESTS_COMPAT, true);
         });
 
         // setup the dependencies

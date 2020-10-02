@@ -89,6 +89,12 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      */
     private static final String REST_TESTS_VALIDATE_SPEC = "tests.rest.validate_spec";
 
+    /**
+     * Property the states this a REST compatible test. REST compatible tests need to inject the compatibility header, ignore deprecation
+     * warnings, and support test overrides
+     */
+    public static final String REST_TESTS_COMPAT = "tests.rest.compat";
+
     private static final String TESTS_PATH = "/rest-api-spec/test";
     private static final String SPEC_PATH = "/rest-api-spec/api";
 

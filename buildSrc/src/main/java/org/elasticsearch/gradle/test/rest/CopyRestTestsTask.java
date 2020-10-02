@@ -150,6 +150,11 @@ public class CopyRestTestsTask extends DefaultTask {
                     c.from(coreConfig.getAsFileTree());
                     c.into(getOutputDir());
                     c.include(corePatternSet.getIncludes());
+                    c.eachFile( file -> {
+                        if(file.getRelativePath().getFile(getOutputDir()).exists()){
+                            file.exclude();
+                        }
+                    });
                 });
             } else {
                 getLogger().debug(
@@ -174,6 +179,12 @@ public class CopyRestTestsTask extends DefaultTask {
                 c.from(xpackConfig.getAsFileTree());
                 c.into(getOutputDir());
                 c.include(xpackPatternSet.getIncludes());
+                c.eachFile( file -> {
+                    if(file.getRelativePath().getFile(getOutputDir()).exists()){
+                        file.exclude();
+                    }
+                });
+
             });
         }
         // copy any additional config
@@ -181,6 +192,11 @@ public class CopyRestTestsTask extends DefaultTask {
             getFileSystemOperations().copy(c -> {
                 c.from(additionalConfig.getAsFileTree());
                 c.into(getOutputDir());
+                c.eachFile( file -> {
+                    if(file.getRelativePath().getFile(getOutputDir()).exists()){
+                        file.exclude();
+                    }
+                });
             });
         }
     }
