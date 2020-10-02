@@ -201,7 +201,7 @@ public class CopyRestApiTask extends DefaultTask {
         // copy any additional config
         if (additionalConfig != null) {
             getFileSystemOperations().copy(c -> {
-                c.from(additionalConfig.getAsFileTree());
+                c.from(additionalConfigToFileTree.apply(additionalConfig));
                 c.into(getOutputDir());
             });
         }
