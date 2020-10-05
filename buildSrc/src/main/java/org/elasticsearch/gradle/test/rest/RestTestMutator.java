@@ -33,9 +33,9 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class RestTestMutationParser {
+public class RestTestMutator {
 
-    public static Set<RestTestMutation> parse(ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
+    public static Set<RestTestMutation> parseMutateInstructions(ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
         Set<RestTestMutation> mutations = new HashSet<>(1);
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
@@ -56,8 +56,14 @@ public class RestTestMutationParser {
                             Iterator<Map.Entry<String, JsonNode>> replacementMap = replacementIterator.next().fields();
                             while (replacementMap.hasNext()) {
                                 Map.Entry<String, JsonNode> mutation = replacementMap.next();
+                                String[] sectionTypeWithIndex = mutation.getKey().split("\\.");
+                                int index = 0;
+                                String sectionType = sectionTypeWithIndex[0];
+                                if (sectionTypeWithIndex.length == 2) {
+                                    index = Integer.parseInt(sectionTypeWithIndex[1]);
+                                }
                                 mutations.add(new RestTestMutation(
-                                    testName, action, RestTestMutation.SectionType.fromString(mutation.getKey()), 0, mutation.getValue()));
+                                    testName, action, RestTestMutation.SectionType.fromString(sectionType), index, mutation.getValue()));
                             }
                         }
                     }
@@ -65,5 +71,47 @@ public class RestTestMutationParser {
             }
         }
         return mutations;
+    }
+
+    public static JsonNode mutateTest(Set<RestTestMutation> mutations, ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
+        YAMLParser yamlParser = yaml.createParser(file);
+        List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
+        for (ObjectNode test : tests) {
+            Iterator<Map.Entry<String, JsonNode>> iterator = test.fields();
+            while (iterator.hasNext()) {
+                Map.Entry<String, JsonNode> root = iterator.next();
+                String testName = root.getKey();
+                System.out.println("************* " + testName + " ******************** ");
+                Iterator<JsonNode> childIt = root.getValue().iterator();
+                while (childIt.hasNext()) {
+
+                    print(childIt.next());
+                }
+
+            }
+        }
+
+        for (RestTestMutation mutation : mutations) {
+            System.out.println("************ --> " + mutation);
+        }
+
+
+        return null;
+    }
+
+    private static void print(final JsonNode node) throws IOException {
+        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = node.fields();
+
+        while (fieldsIterator.hasNext()) {
+            Map.Entry<String, JsonNode> field = fieldsIterator.next();
+            final String key = field.getKey();
+            System.out.println("Key: " + key);
+            final JsonNode value = field.getValue();
+            if (value.isContainerNode()) {
+                print(value); // RECURSIVE CALL
+            } else {
+                System.out.println("Value: " + value);
+            }
+        }
     }
 }

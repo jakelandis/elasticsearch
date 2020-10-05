@@ -28,6 +28,7 @@ import org.gradle.api.file.FileTree;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -38,7 +39,10 @@ import org.gradle.internal.Factory;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MutateCompatTestTask extends DefaultTask {
 
@@ -69,12 +73,22 @@ public class MutateCompatTestTask extends DefaultTask {
         return sourceSetName;
     }
 
+    @Internal
+    public File getInputDir(){
+        return getSourceSet()
+            .orElseThrow(() -> new IllegalArgumentException("could not find source set [" + sourceSetName + "]"))
+            .getOutput().getResourcesDir();
+    }
+
     @SkipWhenEmpty
     @InputFiles
-    public FileTree getInputDir() {
-        return getProject().files(getSourceSet()
-            .orElseThrow(() -> new IllegalArgumentException("could not find source set [" + sourceSetName + "]"))
-            .getOutput().getResourcesDir()).getAsFileTree().matching(compatPatternSet);
+    public FileTree getInputFiles() {
+        return getProject().files(getInputDir()).getAsFileTree().matching(compatPatternSet);
+    }
+
+    @Internal
+    public FileTree getTestFiles(){
+        return getProject().files(getInputDir()).getAsFileTree().matching(testPatternSet);
     }
 
     private Optional<SourceSet> getSourceSet() {
@@ -86,10 +100,13 @@ public class MutateCompatTestTask extends DefaultTask {
 
     @TaskAction
     void mutate() throws IOException {
-        for (File file : getInputDir()) {
-            for(RestTestMutation mutation :  RestTestMutationParser.parse(mapper, yaml, file)){
-                System.out.println("************ --> " + mutation);
+        for (File file : getInputFiles()) {
+            Set<RestTestMutation> mutations = RestTestMutator.parseMutateInstructions(mapper, yaml, file);
+            if(mutations.isEmpty() == false){
+                Map<String, File> testFileNameToTestFile = getTestFiles().getFiles().stream().collect(Collectors.toMap(File::getName, f -> f));
+                RestTestMutator.mutateTest(mutations, mapper, yaml, testFileNameToTestFile.get(file.getName()));
             }
+
         }
     }
 }
