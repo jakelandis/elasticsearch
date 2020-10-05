@@ -177,6 +177,13 @@ public class YamlRestCompatTestPlugin implements Plugin<Project> {
             runnerNonInputProperties.systemProperty(REST_TESTS_COMPAT, true);
         });
 
+        // setup the task to mutate the compatible test
+        project.getTasks().register("mutateCompatTest", MutateCompatTestTask.class, task -> {
+            task.sourceSetName = SOURCE_SET_NAME;
+            task.dependsOn(copyCompatYamlTestTask);
+            task.dependsOn(yamlCompatTestSourceSet.getProcessResourcesTaskName());
+        });
+
         // setup the dependencies
         setupDependencies(project, yamlCompatTestSourceSet);
 

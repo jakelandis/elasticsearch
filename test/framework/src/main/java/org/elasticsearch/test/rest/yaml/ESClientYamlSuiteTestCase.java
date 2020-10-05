@@ -35,17 +35,13 @@ import org.elasticsearch.client.sniff.ElasticsearchNodesSniffer;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.PathUtils;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.yaml.YamlXContent;
 import org.elasticsearch.core.internal.io.IOUtils;
 import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.test.rest.yaml.restspec.ClientYamlSuiteRestApi;
 import org.elasticsearch.test.rest.yaml.restspec.ClientYamlSuiteRestSpec;
 import org.elasticsearch.test.rest.yaml.section.ClientYamlTestSection;
 import org.elasticsearch.test.rest.yaml.section.ClientYamlTestSuite;
-import org.elasticsearch.test.rest.yaml.section.CompatYamlTestParser;
 import org.elasticsearch.test.rest.yaml.section.ExecutableSection;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -56,7 +52,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,7 +59,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Runs a suite of yaml tests shared with all the official Elasticsearch
@@ -95,15 +89,8 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      */
     private static final String REST_TESTS_VALIDATE_SPEC = "tests.rest.validate_spec";
 
-    /**
-     * Property the states this a REST compatible test. REST compatible tests need to inject the compatibility header, ignore deprecation
-     * warnings, and support test overrides
-     */
-    public static final String REST_TESTS_COMPAT = "tests.rest.compat";
-
     private static final String TESTS_PATH = "/rest-api-spec/test";
     private static final String SPEC_PATH = "/rest-api-spec/api";
-    private static final String COMPAT_PATH = "/rest-api-spec/compat";
 
     /**
      * This separator pattern matches ',' except it is preceded by a '\'.
@@ -204,27 +191,7 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
      */
     public static Iterable<Object[]> createParameters(NamedXContentRegistry executeableSectionRegistry) throws Exception {
         String[] paths = resolvePathsProperty(REST_TESTS_SUITE, ""); // default to all tests under the test root
-        Map<String, Set<Path>> yamlSuites = loadSuites(TESTS_PATH, paths);
-        if(isCompatibleTest()){
-            //yamlSuites.forEach((k,v) -> System.out.println("************** ---> \n" +  k + "::" + v.stream().map(p -> p.getFileName().toString()).collect(Collectors.joining("\n"))));
-            Map<String, Set<Path>> compatYamlSuites = loadSuites(COMPAT_PATH, paths);
-            //compatYamlSuites.forEach((k,v) -> System.out.println("$$$$$$$$$$$ ---> \n" +  k + "::" + v.stream().map(p -> p.getFileName().toString()).collect(Collectors.joining("\n"))));
-            compatYamlSuites.values().stream().flatMap(Collection::stream).forEach(compatPath -> {
-
-
-
-
-
-                    try (XContentParser parser = YamlXContent.yamlXContent.createParser(NamedXContentRegistry.EMPTY,
-                        LoggingDeprecationHandler.INSTANCE, Files.newInputStream(compatPath))) {
-
-                        Map<CompatYamlTestParser.MutationSection, Set<CompatYamlTestParser.Mutation>> a = CompatYamlTestParser.parse(parser);
-                    } catch(Exception e) {
-                         e.printStackTrace();
-                    }
-
-            });
-        }
+        Map<String, Set<Path>> yamlSuites = loadSuites(paths);
         List<ClientYamlTestSuite> suites = new ArrayList<>();
         IllegalArgumentException validationException = null;
         // yaml suites are grouped by directory (effectively by api)
@@ -269,9 +236,9 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
 
     /** Find all yaml suites that match the given list of paths from the root test path. */
     // pkg private for tests
-    static Map<String, Set<Path>> loadSuites(String relativeRoot, String... paths) throws Exception {
+    static Map<String, Set<Path>> loadSuites(String... paths) throws Exception {
         Map<String, Set<Path>> files = new HashMap<>();
-        Path root = PathUtils.get(ESClientYamlSuiteTestCase.class.getResource(relativeRoot).toURI());
+        Path root = PathUtils.get(ESClientYamlSuiteTestCase.class.getResource(TESTS_PATH).toURI());
         for (String strPath : paths) {
             Path path = root.resolve(strPath);
             if (Files.isDirectory(path)) {
@@ -471,9 +438,5 @@ public abstract class ESClientYamlSuiteTestCase extends ESRestTestCase {
         RestClientBuilder builder = RestClient.builder(sniffer.sniff().toArray(new Node[0]));
         configureClient(builder, restClientSettings());
         return builder;
-    }
-
-    private static boolean isCompatibleTest(){
-        return Boolean.parseBoolean(System.getProperty(REST_TESTS_COMPAT, Boolean.FALSE.toString()));
     }
 }
