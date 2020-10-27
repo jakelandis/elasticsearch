@@ -74,6 +74,8 @@ public class RestTestMutator {
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
         for (ObjectNode test : tests) {
+
+            System.out.println(test.toString());
             Iterator<Map.Entry<String, JsonNode>> iterator = test.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> root = iterator.next();
