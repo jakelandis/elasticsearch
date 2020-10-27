@@ -23,9 +23,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import com.jayway.jsonpath.JsonPath;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -35,8 +37,8 @@ import java.util.Set;
 
 public class RestTestMutator {
 
-    public static Set<RestTestMutation> parseMutateInstructions(ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
-        Set<RestTestMutation> mutations = new HashSet<>(1);
+    public static Map<String, Set<Mutation>> parseMutateInstructions(ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
+        Map<String, Set<Mutation>> mutations = new HashMap<>(1);
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
         for (ObjectNode test : tests) {
@@ -50,20 +52,15 @@ public class RestTestMutator {
                     Map.Entry<String, JsonNode> actionNode;
                     while (actionMapIterator.hasNext()) {
                         actionNode = actionMapIterator.next();
-                        RestTestMutation.Action action = RestTestMutation.Action.fromString(actionNode.getKey());
-                        Iterator<JsonNode> replacementIterator = actionNode.getValue().iterator();
-                        while (replacementIterator.hasNext()) {
-                            Iterator<Map.Entry<String, JsonNode>> replacementMap = replacementIterator.next().fields();
-                            while (replacementMap.hasNext()) {
-                                Map.Entry<String, JsonNode> mutation = replacementMap.next();
-                                String[] sectionTypeWithIndex = mutation.getKey().split("\\.");
-                                int index = 0;
-                                String sectionType = sectionTypeWithIndex[0];
-                                if (sectionTypeWithIndex.length == 2) {
-                                    index = Integer.parseInt(sectionTypeWithIndex[1]);
-                                }
-                                mutations.add(new RestTestMutation(
-                                    testName, action, RestTestMutation.SectionType.fromString(sectionType), index, mutation.getValue()));
+                        Mutation.Action action = Mutation.Action.fromString(actionNode.getKey());
+                        Iterator<JsonNode> actionIterator = actionNode.getValue().iterator();
+                        while (actionIterator.hasNext()) {
+                            Iterator<Map.Entry<String, JsonNode>> actionMap = actionIterator.next().fields();
+                            while (actionMap.hasNext()) {
+                                Map.Entry<String, JsonNode> mutation = actionMap.next();
+                                JsonPath jsonPath = JsonPath.compile(mutation.getKey());
+                                JsonNode jsonNode = mutation.getValue();
+                                mutations.computeIfAbsent(testName, k -> new HashSet<>()).add(new Mutation(action, jsonPath, jsonNode));
                             }
                         }
                     }
@@ -73,7 +70,7 @@ public class RestTestMutator {
         return mutations;
     }
 
-    public static JsonNode mutateTest(Set<RestTestMutation> mutations, ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
+    public static JsonNode mutateTest(Map<String, Set<Mutation>> mutations, ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
         for (ObjectNode test : tests) {
@@ -91,9 +88,15 @@ public class RestTestMutator {
             }
         }
 
-        for (RestTestMutation mutation : mutations) {
-            System.out.println("************ --> " + mutation);
-        }
+        mutations.forEach((k,v) -> {
+            System.out.println("***************** "+k+"  ************ ");
+            v.forEach( m -> {
+                System.out.println("** " + m);
+            });
+
+        });
+
+
 
 
         return null;

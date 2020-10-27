@@ -101,7 +101,7 @@ public class MutateCompatTestTask extends DefaultTask {
     @TaskAction
     void mutate() throws IOException {
         for (File file : getInputFiles()) {
-            Set<RestTestMutation> mutations = RestTestMutator.parseMutateInstructions(mapper, yaml, file);
+            Map<String, Set<Mutation>> mutations = RestTestMutator.parseMutateInstructions(mapper, yaml, file);
             if(mutations.isEmpty() == false){
                 Map<String, File> testFileNameToTestFile = getTestFiles().getFiles().stream().collect(Collectors.toMap(File::getName, f -> f));
                 RestTestMutator.mutateTest(mutations, mapper, yaml, testFileNameToTestFile.get(file.getName()));
