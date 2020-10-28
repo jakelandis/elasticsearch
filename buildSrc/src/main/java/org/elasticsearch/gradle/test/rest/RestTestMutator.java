@@ -89,7 +89,7 @@ public class RestTestMutator {
                         System.out.println(root.getValue());
 
 
-                        System.out.println("--->" + root.getValue().at(m.getJsonPointer()));
+                        System.out.println("--->" + root.getValue().requiredAt(m.getJsonPointer()));
 //                        System.out.println(readContext.jsonString());
 //                        System.out.println("----> " + readContext.read("$.['Action to list contexts']..['match'][0]"));
                     });

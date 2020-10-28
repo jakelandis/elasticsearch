@@ -40,6 +40,7 @@ public class Mutation {
 
 
     private final Action action;
+    // https://tools.ietf.org/html/rfc6901
     private final String jsonPointer;
     private final JsonNode jsonNode;
 
@@ -53,6 +54,7 @@ public class Mutation {
     public Action getAction() {
         return action;
     }
+
 
     public String getJsonPointer() {
         return jsonPointer;
