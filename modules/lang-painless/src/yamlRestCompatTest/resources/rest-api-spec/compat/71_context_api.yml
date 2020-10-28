@@ -1,7 +1,10 @@
 "Action to list contexts":
-  - remove:
+  - replace:
       - match.0: { thefirstone: replaced1  }
       - match.1: { thesecondone: replaced2  }
+      - do.0:
+          haha:
+            replaced: number4
   - add_after:
       - match.0: { the_third: replaced3  }
 

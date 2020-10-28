@@ -118,29 +118,31 @@ public class RestTestMutator {
                     List<JsonNode> mutatedInstructions = new ArrayList<>();
                     if (instructions.isEmpty() == false) {
                         for (Pair<Mutation.Location, JsonNode> instruction : instructions) {
-                            Optional<Mutation> foundMutation = testMutations.stream().filter(m -> m.getLocation().equals(instruction.getLeft())).findFirst();
-                            if (foundMutation.isPresent()) {
-                                Mutation mutation = foundMutation.get();
-                                System.out.println("-------> found " + mutation);
-                                switch (mutation.getAction()) {
-                                    case REPLACE:
-                                        mutatedInstructions.add(mutation.getJsonNode());
-                                        testMutations.remove(mutation);
-                                        break;
-                                    case REMOVE:
-                                        //do not add to list
-                                        testMutations.remove(mutation);
-                                        break;
-                                    case ADD_BEFORE:
-                                        mutatedInstructions.add(mutation.getJsonNode());
-                                        testMutations.remove(mutation);
-                                        mutatedInstructions.add(instruction.getRight());
-                                        break;
-                                    case ADD_AFTER:
-                                        mutatedInstructions.add(instruction.getRight());
-                                        mutatedInstructions.add(mutation.getJsonNode());
-                                        testMutations.remove(mutation);
-                                        break;
+
+                            Set<Mutation> foundMutations = testMutations.stream().filter(m -> m.getLocation().equals(instruction.getLeft())).collect(Collectors.toSet());
+                            if (foundMutations.isEmpty() == false) {
+                                for (Mutation foundMutation : foundMutations) {
+                                    System.out.println("-------> found " + foundMutation);
+                                    switch (foundMutation.getAction()) {
+                                        case REPLACE:
+                                            mutatedInstructions.add(foundMutation.getJsonNode());
+                                            testMutations.remove(foundMutation);
+                                            break;
+                                        case REMOVE:
+                                            //do not add to list
+                                            testMutations.remove(foundMutation);
+                                            break;
+                                        case ADD_BEFORE:
+                                            mutatedInstructions.add(foundMutation.getJsonNode());
+                                            testMutations.remove(foundMutation);
+                                            mutatedInstructions.add(instruction.getRight());
+                                            break;
+                                        case ADD_AFTER:
+                                            mutatedInstructions.add(instruction.getRight());
+                                            mutatedInstructions.add(foundMutation.getJsonNode());
+                                            testMutations.remove(foundMutation);
+                                            break;
+                                    }
                                 }
                             } else { //preserve original
                                 System.out.println("-------> not found: " + instruction.getLeft() + "::" + instruction.getRight());
