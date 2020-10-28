@@ -18,12 +18,12 @@
  */
 package org.elasticsearch.gradle.test.rest;
 
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-import com.jayway.jsonpath.JsonPath;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,9 +58,8 @@ public class RestTestMutator {
                             Iterator<Map.Entry<String, JsonNode>> actionMap = actionIterator.next().fields();
                             while (actionMap.hasNext()) {
                                 Map.Entry<String, JsonNode> mutation = actionMap.next();
-                                JsonPath jsonPath = JsonPath.compile(mutation.getKey());
-                                JsonNode jsonNode = mutation.getValue();
-                                mutations.computeIfAbsent(testName, k -> new HashSet<>()).add(new Mutation(action, jsonPath, jsonNode));
+                                mutations.computeIfAbsent(testName,
+                                    k -> new HashSet<>()).add(new Mutation(action, mutation.getKey(), mutation.getValue()));
                             }
                         }
                     }
@@ -75,28 +74,43 @@ public class RestTestMutator {
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
         for (ObjectNode test : tests) {
 
-            System.out.println(test.toString());
+
             Iterator<Map.Entry<String, JsonNode>> iterator = test.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> root = iterator.next();
                 String testName = root.getKey();
                 System.out.println("************* " + testName + " ******************** ");
-                Iterator<JsonNode> childIt = root.getValue().iterator();
-                while (childIt.hasNext()) {
+                if(mutations.get(testName) != null){
+                    mutations.get(testName).forEach( m -> {
+                        System.out.println("mutation path = " + m.getJsonPointer());
 
-                    print(childIt.next());
+
+
+                        System.out.println(root.getValue());
+
+
+                        System.out.println("--->" + root.getValue().at(m.getJsonPointer()));
+//                        System.out.println(readContext.jsonString());
+//                        System.out.println("----> " + readContext.read("$.['Action to list contexts']..['match'][0]"));
+                    });
                 }
+
+//                Iterator<JsonNode> childIt = root.getValue().iterator();
+//                while (childIt.hasNext()) {
+//
+//                    print(childIt.next());
+//                }
 
             }
         }
 
-        mutations.forEach((k,v) -> {
-            System.out.println("***************** "+k+"  ************ ");
-            v.forEach( m -> {
-                System.out.println("** " + m);
-            });
-
-        });
+//        mutations.forEach((k,v) -> {
+//            System.out.println("***************** "+k+"  ************ ");
+//            v.forEach( m -> {
+//                System.out.println("** " + m);
+//            });
+//
+//        });
 
 
 

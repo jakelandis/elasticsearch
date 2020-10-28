@@ -21,12 +21,9 @@ package org.elasticsearch.gradle.test.rest;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.jayway.jsonpath.JsonPath;
 
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 public class Mutation {
 
@@ -43,21 +40,33 @@ public class Mutation {
 
 
     private final Action action;
-    private final JsonPath jsonPath;
+    private final String jsonPointer;
     private final JsonNode jsonNode;
 
-    public Mutation(Action action, JsonPath jsonPath, JsonNode jsonNode) {
+    public Mutation(Action action, String jsonPointer, JsonNode jsonNode) {
 
         this.action = Objects.requireNonNull(action);
         this.jsonNode = jsonNode;
-        this.jsonPath = jsonPath;
+        this.jsonPointer = jsonPointer;
+    }
+
+    public Action getAction() {
+        return action;
+    }
+
+    public String getJsonPointer() {
+        return jsonPointer;
+    }
+
+    public JsonNode getJsonNode() {
+        return jsonNode;
     }
 
     @Override
     public String toString() {
         return "Mutation{" +
             "action=" + action +
-            ", jsonPath=" + jsonPath.getPath() +
+            ", jsonPointer='" + jsonPointer + '\'' +
             ", jsonNode=" + jsonNode +
             '}';
     }

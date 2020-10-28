@@ -1,7 +1,7 @@
 "Action to list contexts":
   - replace:
-      - match.0: { contexts.22: script_heuristic  }
-      - match.1: { contexts.23: junk  }
+      - /1/match: { contexts.22: script_heuristic  }
+      - /2/match: { contexts.23: junk  }
 
 
 
