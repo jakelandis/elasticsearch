@@ -30,7 +30,8 @@ public class Mutation {
     enum Action {
         REPLACE,
         REMOVE,
-        ADD;
+        ADD_BEFORE,
+        ADD_AFTER;
 
         static Action fromString(String actionString) {
             return EnumSet.allOf(Action.class).stream().filter(a -> a.name().equalsIgnoreCase(actionString))
@@ -40,15 +41,18 @@ public class Mutation {
 
 
     private final Action action;
-    // https://tools.ietf.org/html/rfc6901
-    private final String jsonPointer;
+    private final Location location;
     private final JsonNode jsonNode;
 
-    public Mutation(Action action, String jsonPointer, JsonNode jsonNode) {
+    public Mutation(Action action, String location, JsonNode jsonNode) {
 
         this.action = Objects.requireNonNull(action);
         this.jsonNode = jsonNode;
-        this.jsonPointer = jsonPointer;
+        String parts[] = location.split("\\.");
+        if(parts.length != 2){
+            throw new IllegalArgumentException("the compatible overrides must be of the format <name>.<position>, for example: match.0");
+        }
+        this.location = new Location(parts[0], Integer.parseInt(parts[1]));
     }
 
     public Action getAction() {
@@ -56,21 +60,46 @@ public class Mutation {
     }
 
 
-    public String getJsonPointer() {
-        return jsonPointer;
-    }
 
     public JsonNode getJsonNode() {
         return jsonNode;
     }
 
-    @Override
-    public String toString() {
-        return "Mutation{" +
-            "action=" + action +
-            ", jsonPointer='" + jsonPointer + '\'' +
-            ", jsonNode=" + jsonNode +
-            '}';
+    public Location getLocation() {
+        return location;
+    }
+
+    public static class Location
+    {
+        private final String key;
+        private final int position;
+
+        public Location(String key, int position) {
+            this.key = key;
+            this.position = position;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Location location = (Location) o;
+            return position == location.position &&
+                Objects.equals(key, location.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(key, position);
+        }
+
+        @Override
+        public String toString() {
+            return "Location{" +
+                "key='" + key + '\'' +
+                ", position=" + position +
+                '}';
+        }
     }
 }
 

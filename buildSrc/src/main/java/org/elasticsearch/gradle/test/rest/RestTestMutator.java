@@ -19,20 +19,37 @@
 package org.elasticsearch.gradle.test.rest;
 
 
+import com.fasterxml.jackson.core.JsonPointer;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import net.sf.saxon.expr.Component;
+import org.apache.commons.lang3.tuple.Pair;
+import org.gradle.internal.impldep.org.apache.ivy.osgi.p2.P2Artifact;
+
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 
 
 public class RestTestMutator {
@@ -69,63 +86,126 @@ public class RestTestMutator {
         return mutations;
     }
 
+
     public static JsonNode mutateTest(Map<String, Set<Mutation>> mutations, ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
         for (ObjectNode test : tests) {
-
-
             Iterator<Map.Entry<String, JsonNode>> iterator = test.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> root = iterator.next();
                 String testName = root.getKey();
                 System.out.println("************* " + testName + " ******************** ");
-                if(mutations.get(testName) != null){
-                    mutations.get(testName).forEach( m -> {
-                        System.out.println("mutation path = " + m.getJsonPointer());
+
+                Set<Mutation> testMutations = mutations.get(testName);
+                if (testMutations != null && testMutations.isEmpty() == false) {
+                    Map<String, AtomicInteger> keyCounts = new HashMap<>();
 
 
+                    //we know that the tests all have an array of do,match,gte, etc. objects directly under the root test name
+                    ArrayNode testRoot = (ArrayNode) root.getValue();
 
-                        System.out.println("original: " + root.getValue());
-                        System.out.println("--->" + root.getValue().requiredAt(m.getJsonPointer()));
-                        JsonNode nodeToMutate = root.getValue().requiredAt(m.getJsonPointer());
-                        Iterator<JsonNode> it = root.getValue().iterator();
+                    List<Pair<Mutation.Location, JsonNode>> instructions = new ArrayList<>();
+
+                    Iterator<JsonNode> arrayValues = testRoot.iterator();
+                    while (arrayValues.hasNext()) {
+                        JsonNode arrayValue = arrayValues.next();
 
 
+                        if (JsonNodeType.OBJECT.equals(arrayValue.getNodeType())) {
+                            ObjectNode valueAsObject = (ObjectNode) arrayValue;
+
+                            Iterator<Map.Entry<String, JsonNode>> objectIterator = valueAsObject.fields();
+
+                            String key = objectIterator.next().getKey();
+
+                            int keyCount = keyCounts.computeIfAbsent(key, k -> new AtomicInteger(-1)).incrementAndGet();
+                            Mutation.Location location = new Mutation.Location(key, keyCount);
+
+                            instructions.add(Pair.of(location, arrayValue));
+
+                            if (objectIterator.hasNext()) {
+                                throw new IllegalStateException("Expected only 1 key per array under test [" + testName + "]" +
+                                    " but found multiple keys [" + key + ", " + objectIterator.next().getKey() + " ]. This is likely a bug.");
+                            }
+                        }
 
 
+                        //
+//                        instructions.add();
+                    }
 
 
-//                        System.out.println(readContext.jsonString());
-//                        System.out.println("----> " + readContext.read("$.['Action to list contexts']..['match'][0]"));
-                    });
+                    System.out.println("********************");
+                    instructions.forEach(p -> System.out.println("location: " + p.getLeft() + " node: " + p.getRight()));
+                    System.out.println("********************");
+
+                    List<JsonNode> mutatedInstructions = new ArrayList<>();
+                    for(Pair<Mutation.Location, JsonNode> instruction : instructions){
+                        Optional<Mutation> foundMutation = testMutations.stream().filter(m -> m.getLocation().equals(instruction.getLeft())).findFirst();
+                        if(foundMutation.isPresent()) {
+                            switch(foundMutation.get().getAction()){
+                                case REPLACE:
+                                    mutatedInstructions.add(foundMutation.get().getJsonNode());
+                                    break;
+                                case REMOVE:
+                                    //do nothing
+                                    break;
+                                case ADD_BEFORE:
+                                    mutatedInstructions.add(foundMutation.get().getJsonNode());
+                                    mutatedInstructions.add(instruction.getRight());
+                                case ADD_AFTER:
+                                    mutatedInstructions.add(instruction.getRight());
+                                    mutatedInstructions.add(foundMutation.get().getJsonNode());
+                                    break;
+                            }
+                        }else{ //preserve original
+                            mutatedInstructions.add(instruction.getRight());
+                        }
+
+                    }
+
+                    //  keyCounts.forEach((k, v) -> System.out.println("key: " + k + " count: " + v));
+                    testRoot.removeAll();
+                     testRoot.addAll(mutatedInstructions);
+
+
                 }
-
-//                Iterator<JsonNode> childIt = root.getValue().iterator();
-//                while (childIt.hasNext()) {
+//                    //we know that the tests all have an array of do,match,gte, etc. objects directly under the root test name
+//                    List<JsonNode> instructions = new LinkedList<>();
+//                    Iterator<JsonNode> it = root.getValue().iterator();
+//                    while (it.hasNext()) {
+//                        instructions.add(it.next());
+//                    }
+//                    Mutation mutation = testMutations.iterator().next();
 //
-//                    print(childIt.next());
+//                    String parts[] = mutation.getJsonPointer().split("\\.");
+//                    String instruction = parts[0];
+//                    int pos = parts.length == 2 ? Integer.parseInt(parts[1]) : -1;
+//                    //replace
+//                    instructions.set(pos, mutation.getJsonNode());
 //                }
 
+
+                Iterator<JsonNode> childIt = root.getValue().iterator();
+
+                while (childIt.hasNext()) {
+
+                    print(childIt.next());
+                }
             }
+
+
         }
-
-//        mutations.forEach((k,v) -> {
-//            System.out.println("***************** "+k+"  ************ ");
-//            v.forEach( m -> {
-//                System.out.println("** " + m);
-//            });
-//
-//        });
-
-
 
 
         return null;
     }
 
+
     private static void print(final JsonNode node) throws IOException {
         Iterator<Map.Entry<String, JsonNode>> fieldsIterator = node.fields();
+        JsonNode parent = node;
 
         while (fieldsIterator.hasNext()) {
             Map.Entry<String, JsonNode> field = fieldsIterator.next();
@@ -135,6 +215,7 @@ public class RestTestMutator {
             if (value.isContainerNode()) {
                 print(value); // RECURSIVE CALL
             } else {
+
                 System.out.println("Value: " + value);
             }
         }
