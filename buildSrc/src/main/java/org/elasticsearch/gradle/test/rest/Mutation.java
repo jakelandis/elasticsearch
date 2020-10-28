@@ -69,6 +69,15 @@ public class Mutation {
         return location;
     }
 
+    @Override
+    public String toString() {
+        return "Mutation{" +
+            "action=" + action +
+            ", location=" + location +
+            ", jsonNode=" + jsonNode +
+            '}';
+    }
+
     public static class Location
     {
         private final String key;

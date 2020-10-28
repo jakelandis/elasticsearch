@@ -1,7 +1,9 @@
 "Action to list contexts":
-  - add_after:
+  - remove:
       - match.0: { thefirstone: replaced1  }
       - match.1: { thesecondone: replaced2  }
+  - add_after:
+      - match.0: { the_third: replaced3  }
 
 
 

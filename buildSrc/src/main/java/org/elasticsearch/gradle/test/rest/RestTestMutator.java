@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 
 public class RestTestMutator {
@@ -87,6 +88,9 @@ public class RestTestMutator {
                 System.out.println("************* " + testName + " ******************** ");
                 Set<Mutation> testMutations = mutations.get(testName);
                 if (testMutations != null && testMutations.isEmpty() == false) {
+                    System.out.println("********* test mutations ***********");
+                    testMutations.forEach(m -> System.out.println("mutation: " + m));
+                    System.out.println("********************");
                     Map<String, AtomicInteger> keyCounts = new HashMap<>();
                     //we know that the tests all have an array of do,match,gte, etc. objects directly under the root test name
                     ArrayNode testRoot = (ArrayNode) root.getValue();
@@ -107,33 +111,65 @@ public class RestTestMutator {
                             }
                         }
                     }
-                    System.out.println("********************");
+                    System.out.println("********* instructions ***********");
                     instructions.forEach(p -> System.out.println("location: " + p.getLeft() + " node: " + p.getRight()));
                     System.out.println("********************");
 
                     List<JsonNode> mutatedInstructions = new ArrayList<>();
-                    for(Pair<Mutation.Location, JsonNode> instruction : instructions){
-                        Optional<Mutation> foundMutation = testMutations.stream().filter(m -> m.getLocation().equals(instruction.getLeft())).findFirst();
-                        if(foundMutation.isPresent()) {
-                            switch(foundMutation.get().getAction()){
-                                case REPLACE:
-                                    mutatedInstructions.add(foundMutation.get().getJsonNode());
-                                    break;
-                                case REMOVE:
-                                    //do nothing
-                                    break;
-                                case ADD_BEFORE:
-                                    mutatedInstructions.add(foundMutation.get().getJsonNode());
-                                    mutatedInstructions.add(instruction.getRight());
-                                case ADD_AFTER:
-                                    mutatedInstructions.add(instruction.getRight());
-                                    mutatedInstructions.add(foundMutation.get().getJsonNode());
-                                    break;
+                    if (instructions.isEmpty() == false) {
+                        for (Pair<Mutation.Location, JsonNode> instruction : instructions) {
+                            Optional<Mutation> foundMutation = testMutations.stream().filter(m -> m.getLocation().equals(instruction.getLeft())).findFirst();
+                            if (foundMutation.isPresent()) {
+                                Mutation mutation = foundMutation.get();
+                                System.out.println("-------> found " + mutation);
+                                switch (mutation.getAction()) {
+                                    case REPLACE:
+                                        mutatedInstructions.add(mutation.getJsonNode());
+                                        testMutations.remove(mutation);
+                                        break;
+                                    case REMOVE:
+                                        //do not add to list
+                                        testMutations.remove(mutation);
+                                        break;
+                                    case ADD_BEFORE:
+                                        mutatedInstructions.add(mutation.getJsonNode());
+                                        testMutations.remove(mutation);
+                                        mutatedInstructions.add(instruction.getRight());
+                                        break;
+                                    case ADD_AFTER:
+                                        mutatedInstructions.add(instruction.getRight());
+                                        mutatedInstructions.add(mutation.getJsonNode());
+                                        testMutations.remove(mutation);
+                                        break;
+                                }
+                            } else { //preserve original
+                                System.out.println("-------> not found: " + instruction.getLeft() + "::" + instruction.getRight());
+                                mutatedInstructions.add(instruction.getRight());
                             }
-                        }else{ //preserve original
-                            mutatedInstructions.add(instruction.getRight());
                         }
                     }
+                    //in case we are just adding
+                    //TODO: figure out proper ordering, use a comparator and group by number and sub sort by do: / the rest
+                    for (Mutation mutation : testMutations) {
+                        switch (mutation.getAction()) {
+                            case ADD_BEFORE:
+                                mutatedInstructions.add(mutation.getJsonNode());
+                                testMutations.remove(mutation);
+                                break;
+
+                            case ADD_AFTER:
+                                mutatedInstructions.add(mutation.getJsonNode());
+                                testMutations.remove(mutation);
+                                break;
+                        }
+                    }
+
+
+                    if (testMutations.isEmpty() == false) {
+                        throw new IllegalStateException("mutations were requested, but no matches were found [" + testMutations.stream().map(Mutation::toString).collect(Collectors.joining(",")) + "]");
+                    }
+
+                    mutatedInstructions.forEach(j -> System.out.println("$$$$$$$$ " + j));
 
                     testRoot.removeAll();
                     testRoot.addAll(mutatedInstructions);
