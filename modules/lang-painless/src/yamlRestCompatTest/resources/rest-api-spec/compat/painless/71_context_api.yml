@@ -1,0 +1,4 @@
+"Action to get all API values for score context":
+  - replace:
+    - match.8: { class_bindings.0.name: cosineSimilarity }
+

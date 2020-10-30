@@ -22,6 +22,7 @@ package org.elasticsearch.gradle.test.rest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -81,14 +82,19 @@ public class RestTestMutator {
 
 
     public static List<ObjectNode> mutateTest(Map<String, Set<Mutation>> mutations, ObjectMapper mapper, YAMLFactory yaml, File file) throws IOException {
+        JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
-
+        List<Pair<String, ObjectNode>> mutatedTests = new ArrayList<>(tests.size());
         for (ObjectNode test : tests) {
             Iterator<Map.Entry<String, JsonNode>> iterator = test.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> testObject = iterator.next();
                 String testName = testObject.getKey();
+
+                System.out.println("********** Original [" + testName + "] ************* ");
+                System.out.println(testObject.getValue().toPrettyString());
+
                 if(logger.isTraceEnabled()) {
                     logger.trace("********** Original [" + testName + "] ************* ");
                     logger.trace(testObject.getValue().toPrettyString());
@@ -152,16 +158,17 @@ public class RestTestMutator {
                                         mutatedInstructions.add(doSectionParent);
                                         testMutations.remove(foundMutation);
                                     } else {
+                                        String sectionName = foundMutation.getLocation().getSection().name().toLowerCase(Locale.ROOT);
                                         switch (foundMutation.getAction()) {
                                             case REPLACE:
-                                                mutatedInstructions.add(foundMutation.getJsonNode());
+                                                mutatedInstructions.add(new ObjectNode(jsonNodeFactory, Map.of(sectionName, foundMutation.getJsonNode())));
                                                 break;
                                             case REMOVE:
                                                 //do nothing
                                                 break;
                                             case ADD:
                                                 mutatedInstructions.add(executable.getRight());
-                                                mutatedInstructions.add(foundMutation.getJsonNode());
+                                                mutatedInstructions.add(new ObjectNode(jsonNodeFactory, Map.of(sectionName, foundMutation.getJsonNode())));
                                                 break;
                                             default:
                                                 assert false : "replace, remove, add are the only valid actions";
@@ -190,11 +197,14 @@ public class RestTestMutator {
                     executableArrayNode.removeAll();
                     executableArrayNode.addAll(mutatedInstructions);
                 }
-
+                System.out.println("********** Mutated [" + testName + "] ************* ");
+                System.out.println(testObject.getValue().toPrettyString());
                 if(logger.isTraceEnabled()) {
                     logger.trace("********** Mutated [" + testName + "] ************* ");
                     logger.trace(testObject.getValue().toPrettyString());
                 }
+
+                mutatedTests.add(Pair.of(testName, test));
             }
         }
         return tests;

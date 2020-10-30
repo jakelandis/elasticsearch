@@ -1,3 +1,0 @@
-"Update Script with script error":
-  - replace:
-    - do.1.catch : gotcha

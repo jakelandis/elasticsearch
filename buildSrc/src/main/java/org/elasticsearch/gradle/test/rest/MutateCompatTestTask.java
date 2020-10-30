@@ -19,10 +19,11 @@
 
 package org.elasticsearch.gradle.test.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.commons.lang3.tuple.Pair;
 import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -31,6 +32,8 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -41,7 +44,6 @@ import org.gradle.internal.Factory;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,8 +79,18 @@ public class MutateCompatTestTask extends DefaultTask {
         return sourceSetName;
     }
 
+    @OutputDirectory
+    public File getOutputDir() {
+        return new File(
+            getSourceSet().orElseThrow(() -> new IllegalArgumentException("could not find source set [" + sourceSetName + "]"))
+                .getOutput()
+                .getResourcesDir(),
+            REST_TEST_PREFIX
+        );
+    }
+
     @Internal
-    public File getInputDir(){
+    public File getInputDir() {
         return getSourceSet()
             .orElseThrow(() -> new IllegalArgumentException("could not find source set [" + sourceSetName + "]"))
             .getOutput().getResourcesDir();
@@ -91,7 +103,7 @@ public class MutateCompatTestTask extends DefaultTask {
     }
 
     @Internal
-    public FileTree getTestFiles(){
+    public FileTree getTestFiles() {
         return getProject().files(getInputDir()).getAsFileTree().matching(testPatternSet);
     }
 
@@ -106,14 +118,25 @@ public class MutateCompatTestTask extends DefaultTask {
     void mutate() throws IOException {
         for (File file : getInputFiles()) {
             Map<String, Set<Mutation>> mutations = RestTestMutator.parseMutateInstructions(mapper, yaml, file);
-            if(mutations.isEmpty() == false){
+            if (mutations.isEmpty() == false) {
+
                 Map<String, File> testFileNameToTestFile = getTestFiles().getFiles().stream().collect(Collectors.toMap(File::getName, f -> f));
                 List<ObjectNode> mutatedTests = RestTestMutator.mutateTest(mutations, mapper, yaml, testFileNameToTestFile.get(file.getName()));
+                //fixme: obviously
+                File outputFile = new File(getOutputDir(), "painless/" + file.getName());
+                try (SequenceWriter sequenceWriter = mapper.writer().writeValues(outputFile)) {
 
-                for(ObjectNode t : mutatedTests){
-                    mapper.writeValue(System.out, t);
+                    for (ObjectNode mutatedTest : mutatedTests) {
+                        sequenceWriter.write(mutatedTest);
+                    }
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
+
         }
+
     }
 }
