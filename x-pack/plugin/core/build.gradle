@@ -69,7 +69,7 @@ ext.expansions = [
 processResources {
   from(sourceSets.main.resources.srcDirs) {
     // we need to have duplicate strategy here as
-    // we cannot apply the filter on root level due
+    // we cannot apply the filter on testObject level due
     // to wrong behaviour with binary files.
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     exclude '**/public.key'

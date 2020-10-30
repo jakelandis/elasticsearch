@@ -19,7 +19,7 @@ artifacts {
 testingConventions.enabled = false
 
 subprojects {
-  // Use tests from the root security qa project in subprojects
+  // Use tests from the testObject security qa project in subprojects
   configurations.create('testArtifacts')
 
   dependencies {

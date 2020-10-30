@@ -19,7 +19,9 @@
 
 package org.elasticsearch.gradle.test.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.DefaultTask;
@@ -40,6 +42,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -105,9 +108,12 @@ public class MutateCompatTestTask extends DefaultTask {
             Map<String, Set<Mutation>> mutations = RestTestMutator.parseMutateInstructions(mapper, yaml, file);
             if(mutations.isEmpty() == false){
                 Map<String, File> testFileNameToTestFile = getTestFiles().getFiles().stream().collect(Collectors.toMap(File::getName, f -> f));
-                RestTestMutator.mutateTest(mutations, mapper, yaml, testFileNameToTestFile.get(file.getName()));
-            }
+                List<ObjectNode> mutatedTests = RestTestMutator.mutateTest(mutations, mapper, yaml, testFileNameToTestFile.get(file.getName()));
 
+                for(ObjectNode t : mutatedTests){
+                    mapper.writeValue(System.out, t);
+                }
+            }
         }
     }
 }

@@ -269,7 +269,7 @@ Closure commonPackageConfig(String type, boolean oss, boolean jdk, String archit
     }
     copyEmptyDir('/var/log/elasticsearch', 'elasticsearch', 'elasticsearch', 02750)
     copyEmptyDir('/var/lib/elasticsearch', 'elasticsearch', 'elasticsearch', 02750)
-    copyEmptyDir('/usr/share/elasticsearch/plugins', 'root', 'root', 0755)
+    copyEmptyDir('/usr/share/elasticsearch/plugins', 'testObject', 'testObject', 0755)
 
     // the oss package conflicts with the default distribution and vice versa
     conflicts('elasticsearch' + (oss ? '' : '-oss'))
@@ -307,8 +307,8 @@ ospackage {
 
   fileMode 0644
   dirMode 0755
-  user 'root'
-  permissionGroup 'root'
+  user 'testObject'
+  permissionGroup 'testObject'
 
   into '/usr/share/elasticsearch'
 }

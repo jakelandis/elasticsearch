@@ -42,8 +42,7 @@ public class Mutation implements Comparable<Mutation>{
     enum Action {
         REPLACE,
         REMOVE,
-        ADD_BEFORE,
-        ADD_AFTER;
+        ADD;
 
         static Action fromString(String actionString) {
             return EnumSet.allOf(Action.class).stream().filter(a -> a.name().equalsIgnoreCase(actionString))
