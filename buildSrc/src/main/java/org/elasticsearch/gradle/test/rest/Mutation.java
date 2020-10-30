@@ -26,7 +26,17 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 
-public class Mutation {
+public class Mutation implements Comparable<Mutation>{
+
+
+    @Override
+    public int compareTo(Mutation o) {
+        //if sorting ensure that DO is listed first
+        if(ExecutableSection.DO.equals(o.getLocation().section)){
+            return -1;
+        }
+        return 0;
+    }
 
     //the action to perform
     enum Action {

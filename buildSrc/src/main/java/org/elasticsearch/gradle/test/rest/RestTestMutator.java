@@ -27,7 +27,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import org.apache.commons.lang3.tuple.Pair;
-import org.gradle.internal.impldep.com.google.api.client.json.Json;
 
 import java.io.File;
 import java.io.IOException;
