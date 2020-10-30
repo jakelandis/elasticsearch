@@ -35,6 +35,7 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.TaskProvider;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -177,12 +178,15 @@ public class YamlRestCompatTestPlugin implements Plugin<Project> {
             runnerNonInputProperties.systemProperty(REST_TESTS_COMPAT, true);
         });
 
+        //TODO: this task should have the depenedency on the chec
         // setup the task to mutate the compatible test
-        project.getTasks().register("mutateCompatTest", MutateCompatTestTask.class, task -> {
+        TaskProvider<MutateCompatTestTask> mutateTestTask = project.getTasks().register("mutateCompatTest", MutateCompatTestTask.class, task -> {
             task.sourceSetName = SOURCE_SET_NAME;
             task.dependsOn(copyCompatYamlTestTask);
             task.dependsOn(yamlCompatTestSourceSet.getProcessResourcesTaskName());
         });
+        //TODO: yamlCompatTestTask -> mutate -> restresources -> bwc checkout stuff
+        project.getTasks().named(SOURCE_SET_NAME).configure(fixmecompatibletesttask -> fixmecompatibletesttask.dependsOn(mutateTestTask));
 
         // setup the dependencies
         setupDependencies(project, yamlCompatTestSourceSet);
