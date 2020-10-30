@@ -84,16 +84,11 @@ public class RestTestMutator {
             Iterator<Map.Entry<String, JsonNode>> iterator = test.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> root = iterator.next();
-
                 String testName = root.getKey();
-                System.out.println("************* " + testName + " ******************** ");
                 System.out.println("********** Original ["+testName+"] ************* ");
                 System.out.println(root.getValue().toPrettyString());
                 Set<Mutation> testMutations = mutations.get(testName);
                 if (testMutations != null && testMutations.isEmpty() == false) {
-                    System.out.println("********* test mutations ***********");
-                    testMutations.forEach(m -> System.out.println("mutation: " + m));
-                    System.out.println("********************");
                     Map<String, AtomicInteger> keyCounts = new HashMap<>();
                     //we know that the tests all have an array of do,match,gte, etc. objects directly under the root test name
                     ArrayNode testRoot = (ArrayNode) root.getValue();
@@ -112,38 +107,25 @@ public class RestTestMutator {
                             executables.add(Pair.of(location, arrayValue));
                         }
                     }
-                    System.out.println("********* executables ***********");
-                    executables.forEach(p -> System.out.println("location: " + p.getLeft() + " node: " + p.getRight()));
-                    System.out.println("********************");
 
                     List<JsonNode> mutatedInstructions = new ArrayList<>();
                     if (executables.isEmpty() == false) {
                         for (Pair<Mutation.Location, JsonNode> executable : executables) {
-
                             Set<Mutation> foundMutations = testMutations.stream().filter(m -> m.getLocation().equals(executable.getLeft())).collect(Collectors.toSet());
                             if (foundMutations.isEmpty() == false) {
                                 for (Mutation foundMutation : foundMutations) {
-                                    System.out.println("-------> found " + foundMutation);
                                     foundMutation.getJsonNode();
                                     if(foundMutation.getLocation().getDoSectionSub() != null){
 
                                         // we don't want to replace the whole do section, only the specific sub  e.g. do.0.catch
                                         JsonNode doSectionParent = executable.getRight();
                                         ObjectNode doSection = (ObjectNode) doSectionParent.get(Mutation.ExecutableSection.DO.name().toLowerCase(Locale.ROOT));
-
                                         Map<String, JsonNode> mutatedDoSectionSubs = new HashMap<>();
-
-
-
                                         Iterator<Map.Entry<String, JsonNode>> doIterator = doSection.fields();
-
                                         while(doIterator.hasNext()){
                                             Map.Entry<String, JsonNode> doSectionSubObject = doIterator.next();
-                                            System.out.println("^^^^^^^^^^^^^ " + doSectionSubObject.getKey());
                                             if(Mutation.DoSectionSub.fromString(doSectionSubObject.getKey()).isPresent()){
-
                                                 String doSectionSubKey = foundMutation.getLocation().getDoSectionSub().name().toLowerCase(Locale.ROOT);
-                                                System.out.println("%%%%%%%%%%% found mutation: " + doSectionSubObject.getValue() );
                                                 switch (foundMutation.getAction()) {
                                                     case REPLACE:
                                                         mutatedDoSectionSubs.put(doSectionSubKey, foundMutation.getJsonNode());
@@ -164,20 +146,15 @@ public class RestTestMutator {
                                                         testMutations.remove(foundMutation);
                                                         break;
                                                 }
-
                                             }else{
-                                                System.out.println("%%%%%%%%%%% found preserve: " +  doSectionSubObject.getValue());
                                                 mutatedDoSectionSubs.put(doSectionSubObject.getKey(), doSectionSubObject.getValue());
                                             }
-
                                         }
 
                                         doSection.removeAll();
                                         doSection.setAll(mutatedDoSectionSubs);
                                         mutatedInstructions.add(doSectionParent);
                                         testMutations.remove(foundMutation);
-                                        System.out.println("************ mutated do section ************ ");
-                                        System.out.println(doSection.toPrettyString());
 
 
                                     } else {
@@ -204,13 +181,12 @@ public class RestTestMutator {
                                     }
                                 }
                             } else { //preserve original
-                                System.out.println("-------> not found: " + executable.getLeft() + "::" + executable.getRight());
                                 mutatedInstructions.add(executable.getRight());
                             }
                         }
                     }
                     //in case we are just adding
-                    //TODO: figure out proper ordering, use a comparator and group by number and sub sort by do: / the rest
+                    //TODO: ensure we get the ordering right.
                     for (Mutation mutation : testMutations) {
                         switch (mutation.getAction()) {
                             case ADD_BEFORE:
@@ -230,16 +206,11 @@ public class RestTestMutator {
                         throw new IllegalStateException("mutations were requested, but no matches were found [" + testMutations.stream().map(Mutation::toString).collect(Collectors.joining(",")) + "]");
                     }
 
-                    mutatedInstructions.forEach(j -> System.out.println("$$$$$$$$ " + j));
-
                     testRoot.removeAll();
                     testRoot.addAll(mutatedInstructions);
                 }
 
-                Iterator<JsonNode> childIt = root.getValue().iterator();
-                while (childIt.hasNext()) {
-                    print(childIt.next());
-                }
+
 
                 System.out.println("********** FINAL ["+testName+"] ************* ");
                 System.out.println(root.getValue().toPrettyString());
@@ -251,21 +222,5 @@ public class RestTestMutator {
     }
 
 
-    private static void print(final JsonNode node) throws IOException {
-        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = node.fields();
-        JsonNode parent = node;
 
-        while (fieldsIterator.hasNext()) {
-            Map.Entry<String, JsonNode> field = fieldsIterator.next();
-            final String key = field.getKey();
-            System.out.println("Key: " + key);
-            final JsonNode value = field.getValue();
-            if (value.isContainerNode()) {
-                print(value); // RECURSIVE CALL
-            } else {
-
-                System.out.println("Value: " + value);
-            }
-        }
-    }
 }

@@ -33,7 +33,7 @@ public class Mutation implements Comparable<Mutation>{
     public int compareTo(Mutation o) {
         //if sorting ensure that DO is listed first
         if(ExecutableSection.DO.equals(o.getLocation().section)){
-            return -1;
+            return  -1; //ensuring that all do's come before any others
         }
         return 0;
     }
@@ -129,7 +129,7 @@ public class Mutation implements Comparable<Mutation>{
             '}';
     }
 
-    public static class Location
+    public static class Location implements Comparable<Location>
     {
         private final ExecutableSection section;
         private final DoSectionSub doSectionSub;
@@ -183,6 +183,11 @@ public class Mutation implements Comparable<Mutation>{
                 ", doSectionSub=" + doSectionSub +
                 ", position=" + position +
                 '}';
+        }
+
+        @Override
+        public int compareTo(Location o) {
+            return Integer.valueOf(position).compareTo(o.position);
         }
     }
 }
