@@ -24,9 +24,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Mutation {
 
+    //the action to perform
     enum Action {
         REPLACE,
         REMOVE,
@@ -39,6 +41,43 @@ public class Mutation {
         }
     }
 
+    //These are a mirror of org.elasticsearch.test.rest.yaml.section.ExecutableSection
+    // these are duplicated here for validation (and we can't reference that class directly)
+    //These are the supported sections that we can locate. For example match.1, or lt.0
+    enum ExecutableSection {
+        DO,
+        SET,
+        TRANSFORM_AND_SET,
+        MATCH,
+        IS_TRUE,
+        IS_FALSE,
+        GT,
+        GTE,
+        LT,
+        LTE,
+        CONTAINS,
+        LENGTH;
+
+        static ExecutableSection fromString(String section) {
+            return EnumSet.allOf(ExecutableSection.class).stream().filter(a -> a.name().equalsIgnoreCase(section))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Invalid section."));
+        }
+    }
+
+
+    // These are the supported children for do that we can directly reference. Any
+    // for example, do.0.catch, do.1.warnings
+    enum DoSectionSub {
+        CATCH,
+        HEADERS,
+        WARNINGS,
+        ALLOWED_WARNINGS;
+
+        static Optional<DoSectionSub> fromString(String section) {
+            return EnumSet.allOf(DoSectionSub.class).stream().filter(a -> a.name().equalsIgnoreCase(section))
+                .findFirst();
+        }
+    }
 
     private final Action action;
     private final Location location;
@@ -49,17 +88,19 @@ public class Mutation {
         this.action = Objects.requireNonNull(action);
         this.jsonNode = jsonNode;
         String parts[] = location.split("\\.");
-        if(parts.length != 2){
-            throw new IllegalArgumentException("the compatible overrides must be of the format <name>.<position>, for example: match.0");
+        if(parts.length < 2){
+            //TODO: clean this up and source from the enumerations
+            throw new IllegalArgumentException("the compatible overrides must be of the format: " +
+                "[do|set|transform_and_set|match|is_true|is_false|gt|gte|lt|lte|contains|length].[0-9]*, for example: match.0; " +
+                "or may be do.[0-9]*.[catch|headers|warnings|allowed_warnings], for example do.0.catch");
         }
-        this.location = new Location(parts[0], Integer.parseInt(parts[1]));
+        //TODO: actually implement the doSection
+        this.location = new Location(ExecutableSection.fromString(parts[0]), Integer.parseInt(parts[1]), parts.length == 3 ? DoSectionSub.fromString(parts[2]).get() : null);
     }
 
     public Action getAction() {
         return action;
     }
-
-
 
     public JsonNode getJsonNode() {
         return jsonNode;
@@ -80,32 +121,56 @@ public class Mutation {
 
     public static class Location
     {
-        private final String key;
+        private final ExecutableSection section;
+        private final DoSectionSub doSectionSub;
         private final int position;
 
-        public Location(String key, int position) {
-            this.key = key;
-            this.position = position;
+        public Location(ExecutableSection section, int position){
+            this(section, position, null);
         }
 
+        public Location(ExecutableSection section, int position, DoSectionSub doSectionSub) {
+            if(doSectionSub != null && ExecutableSection.DO.equals(section) == false){
+                throw new IllegalStateException("a do section part must be part of a do section");
+            }
+            this.section = section;
+            this.position = position;
+            this.doSectionSub = doSectionSub;
+        }
+
+        public ExecutableSection getSection() {
+            return section;
+        }
+
+        public DoSectionSub getDoSectionSub() {
+            return doSectionSub;
+        }
+
+        public int getPosition() {
+            return position;
+        }
+
+        //intentionally not including doSectionSub
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Location location = (Location) o;
             return position == location.position &&
-                Objects.equals(key, location.key);
+                section == location.section;
         }
 
+        //intentionally not including doSectionSub
         @Override
         public int hashCode() {
-            return Objects.hash(key, position);
+            return Objects.hash(section, position);
         }
 
         @Override
         public String toString() {
             return "Location{" +
-                "key='" + key + '\'' +
+                "section=" + section +
+                ", doSectionSub=" + doSectionSub +
                 ", position=" + position +
                 '}';
         }

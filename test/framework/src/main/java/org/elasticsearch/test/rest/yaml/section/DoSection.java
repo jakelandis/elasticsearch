@@ -331,6 +331,7 @@ public class DoSection implements ExecutableSection {
             final boolean matches = matcher.matches();
             if (matches) {
                 final String message = HeaderWarning.extractWarningValueFromWarningHeader(header, true);
+                //TODO: here support regex epressions in allowed and expected
                 if (allowed.contains(message)) {
                     continue;
                 }

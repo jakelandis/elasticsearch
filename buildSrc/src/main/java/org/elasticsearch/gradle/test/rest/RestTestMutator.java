@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import org.apache.commons.lang3.tuple.Pair;
+import org.gradle.internal.impldep.com.google.api.client.json.Json;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,8 +36,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -84,8 +85,11 @@ public class RestTestMutator {
             Iterator<Map.Entry<String, JsonNode>> iterator = test.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> root = iterator.next();
+
                 String testName = root.getKey();
                 System.out.println("************* " + testName + " ******************** ");
+                System.out.println("********** Original ["+testName+"] ************* ");
+                System.out.println(root.getValue().toPrettyString());
                 Set<Mutation> testMutations = mutations.get(testName);
                 if (testMutations != null && testMutations.isEmpty() == false) {
                     System.out.println("********* test mutations ***********");
@@ -94,59 +98,115 @@ public class RestTestMutator {
                     Map<String, AtomicInteger> keyCounts = new HashMap<>();
                     //we know that the tests all have an array of do,match,gte, etc. objects directly under the root test name
                     ArrayNode testRoot = (ArrayNode) root.getValue();
-                    List<Pair<Mutation.Location, JsonNode>> instructions = new ArrayList<>();
+                    List<Pair<Mutation.Location, JsonNode>> executables = new ArrayList<>();
                     Iterator<JsonNode> arrayValues = testRoot.iterator();
+                    //add the custom location to all of the top level array values
                     while (arrayValues.hasNext()) {
                         JsonNode arrayValue = arrayValues.next();
                         if (JsonNodeType.OBJECT.equals(arrayValue.getNodeType())) {
                             ObjectNode valueAsObject = (ObjectNode) arrayValue;
                             Iterator<Map.Entry<String, JsonNode>> objectIterator = valueAsObject.fields();
                             String key = objectIterator.next().getKey();
+                            assert objectIterator.hasNext() == false : "found unexpected structure for YAML test [" + testName + "]";
                             int keyCount = keyCounts.computeIfAbsent(key, k -> new AtomicInteger(-1)).incrementAndGet();
-                            Mutation.Location location = new Mutation.Location(key, keyCount);
-                            instructions.add(Pair.of(location, arrayValue));
-                            if (objectIterator.hasNext()) {
-                                throw new IllegalStateException("Expected only 1 key per array under test [" + testName + "]" +
-                                    " but found multiple keys [" + key + ", " + objectIterator.next().getKey() + " ]. This is likely a bug.");
-                            }
+                            Mutation.Location location = new Mutation.Location(Mutation.ExecutableSection.fromString(key), keyCount);
+                            executables.add(Pair.of(location, arrayValue));
                         }
                     }
-                    System.out.println("********* instructions ***********");
-                    instructions.forEach(p -> System.out.println("location: " + p.getLeft() + " node: " + p.getRight()));
+                    System.out.println("********* executables ***********");
+                    executables.forEach(p -> System.out.println("location: " + p.getLeft() + " node: " + p.getRight()));
                     System.out.println("********************");
 
                     List<JsonNode> mutatedInstructions = new ArrayList<>();
-                    if (instructions.isEmpty() == false) {
-                        for (Pair<Mutation.Location, JsonNode> instruction : instructions) {
+                    if (executables.isEmpty() == false) {
+                        for (Pair<Mutation.Location, JsonNode> executable : executables) {
 
-                            Set<Mutation> foundMutations = testMutations.stream().filter(m -> m.getLocation().equals(instruction.getLeft())).collect(Collectors.toSet());
+                            Set<Mutation> foundMutations = testMutations.stream().filter(m -> m.getLocation().equals(executable.getLeft())).collect(Collectors.toSet());
                             if (foundMutations.isEmpty() == false) {
                                 for (Mutation foundMutation : foundMutations) {
                                     System.out.println("-------> found " + foundMutation);
-                                    switch (foundMutation.getAction()) {
-                                        case REPLACE:
-                                            mutatedInstructions.add(foundMutation.getJsonNode());
-                                            testMutations.remove(foundMutation);
-                                            break;
-                                        case REMOVE:
-                                            //do not add to list
-                                            testMutations.remove(foundMutation);
-                                            break;
-                                        case ADD_BEFORE:
-                                            mutatedInstructions.add(foundMutation.getJsonNode());
-                                            testMutations.remove(foundMutation);
-                                            mutatedInstructions.add(instruction.getRight());
-                                            break;
-                                        case ADD_AFTER:
-                                            mutatedInstructions.add(instruction.getRight());
-                                            mutatedInstructions.add(foundMutation.getJsonNode());
-                                            testMutations.remove(foundMutation);
-                                            break;
+                                    foundMutation.getJsonNode();
+                                    if(foundMutation.getLocation().getDoSectionSub() != null){
+
+                                        // we don't want to replace the whole do section, only the specific sub  e.g. do.0.catch
+                                        JsonNode doSectionParent = executable.getRight();
+                                        ObjectNode doSection = (ObjectNode) doSectionParent.get(Mutation.ExecutableSection.DO.name().toLowerCase(Locale.ROOT));
+
+                                        Map<String, JsonNode> mutatedDoSectionSubs = new HashMap<>();
+
+
+
+                                        Iterator<Map.Entry<String, JsonNode>> doIterator = doSection.fields();
+
+                                        while(doIterator.hasNext()){
+                                            Map.Entry<String, JsonNode> doSectionSubObject = doIterator.next();
+                                            System.out.println("^^^^^^^^^^^^^ " + doSectionSubObject.getKey());
+                                            if(Mutation.DoSectionSub.fromString(doSectionSubObject.getKey()).isPresent()){
+
+                                                String doSectionSubKey = foundMutation.getLocation().getDoSectionSub().name().toLowerCase(Locale.ROOT);
+                                                System.out.println("%%%%%%%%%%% found mutation: " + doSectionSubObject.getValue() );
+                                                switch (foundMutation.getAction()) {
+                                                    case REPLACE:
+                                                        mutatedDoSectionSubs.put(doSectionSubKey, foundMutation.getJsonNode());
+                                                        testMutations.remove(foundMutation);
+                                                        break;
+                                                    case REMOVE:
+                                                        //do not add to list
+                                                        testMutations.remove(foundMutation);
+                                                        break;
+                                                    case ADD_BEFORE:
+                                                        mutatedDoSectionSubs.put(doSectionSubObject.getKey(), doSectionSubObject.getValue());
+                                                        mutatedDoSectionSubs.put(doSectionSubKey, foundMutation.getJsonNode());
+                                                        testMutations.remove(foundMutation);
+                                                        break;
+                                                    case ADD_AFTER:
+                                                        mutatedDoSectionSubs.put(doSectionSubKey, foundMutation.getJsonNode());
+                                                        mutatedDoSectionSubs.put(doSectionSubObject.getKey(), doSectionSubObject.getValue());
+                                                        testMutations.remove(foundMutation);
+                                                        break;
+                                                }
+
+                                            }else{
+                                                System.out.println("%%%%%%%%%%% found preserve: " +  doSectionSubObject.getValue());
+                                                mutatedDoSectionSubs.put(doSectionSubObject.getKey(), doSectionSubObject.getValue());
+                                            }
+
+                                        }
+
+                                        doSection.removeAll();
+                                        doSection.setAll(mutatedDoSectionSubs);
+                                        mutatedInstructions.add(doSectionParent);
+                                        testMutations.remove(foundMutation);
+                                        System.out.println("************ mutated do section ************ ");
+                                        System.out.println(doSection.toPrettyString());
+
+
+                                    } else {
+                                        switch (foundMutation.getAction()) {
+                                            case REPLACE:
+                                                mutatedInstructions.add(foundMutation.getJsonNode());
+                                                testMutations.remove(foundMutation);
+                                                break;
+                                            case REMOVE:
+                                                //do not add to list
+                                                testMutations.remove(foundMutation);
+                                                break;
+                                            case ADD_BEFORE:
+                                                mutatedInstructions.add(foundMutation.getJsonNode());
+                                                testMutations.remove(foundMutation);
+                                                mutatedInstructions.add(executable.getRight());
+                                                break;
+                                            case ADD_AFTER:
+                                                mutatedInstructions.add(executable.getRight());
+                                                mutatedInstructions.add(foundMutation.getJsonNode());
+                                                testMutations.remove(foundMutation);
+                                                break;
+                                        }
                                     }
                                 }
                             } else { //preserve original
-                                System.out.println("-------> not found: " + instruction.getLeft() + "::" + instruction.getRight());
-                                mutatedInstructions.add(instruction.getRight());
+                                System.out.println("-------> not found: " + executable.getLeft() + "::" + executable.getRight());
+                                mutatedInstructions.add(executable.getRight());
                             }
                         }
                     }
@@ -181,7 +241,11 @@ public class RestTestMutator {
                 while (childIt.hasNext()) {
                     print(childIt.next());
                 }
+
+                System.out.println("********** FINAL ["+testName+"] ************* ");
+                System.out.println(root.getValue().toPrettyString());
             }
+
         }
 
         return null;
