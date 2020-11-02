@@ -1,3 +1,7 @@
+"Action to list contexts":
+  - replace:
+    - match.1: { contexts.22: script_heuristic}
+---
 "Action to get all API values for score context":
   - replace:
     - match.9: { class_bindings.0.name: cosineSimilarity }
