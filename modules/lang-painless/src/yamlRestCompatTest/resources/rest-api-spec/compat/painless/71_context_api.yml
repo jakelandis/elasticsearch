@@ -1,6 +1,6 @@
 "Action to list contexts":
   - replace:
-    - match.1: { contexts.22: script_heuristic}
+    - match.contexts.22: script_heuristic
 ---
 "Action to get all API values for score context":
   - replace:

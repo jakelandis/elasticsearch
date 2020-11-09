@@ -1,0 +1,19 @@
+"Action to list contexts":
+  replace:
+    - value: foo
+      with: bar
+    - object: {match: {a:b}}
+      with: {match: {c:d}}
+    - location: /foo/bar
+      with: {match: {c:d}}
+  add:
+    - location: /foo/bar
+      object: {foo: bar}
+  remove:
+    - location: /foo/bar
+    - object: { foo: bar }
+#---
+#"Action to get all API values for score context":
+#  - add:
+#      - match.class_bindings.0.name: cosineSimilarity
+

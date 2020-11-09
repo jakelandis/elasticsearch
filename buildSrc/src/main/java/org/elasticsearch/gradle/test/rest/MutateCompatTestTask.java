@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.commons.lang3.tuple.Pair;
 import org.elasticsearch.gradle.util.GradleUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -33,7 +32,6 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -117,24 +115,24 @@ public class MutateCompatTestTask extends DefaultTask {
     @TaskAction
     void mutate() throws IOException {
         for (File file : getInputFiles()) {
-            Map<String, Set<Mutation>> mutations = RestTestMutator.parseMutateInstructions(mapper, yaml, file);
-            if (mutations.isEmpty() == false) {
-
-                Map<String, File> testFileNameToTestFile = getTestFiles().getFiles().stream().collect(Collectors.toMap(File::getName, f -> f));
-                List<ObjectNode> mutatedTests = RestTestMutator.mutateTest(mutations, mapper, yaml, testFileNameToTestFile.get(file.getName()));
-                //fixme: obviously
-                File outputFile = new File(getOutputDir(), "painless/" + file.getName());
-                try (SequenceWriter sequenceWriter = mapper.writer().writeValues(outputFile)) {
-
-                    for (ObjectNode mutatedTest : mutatedTests) {
-                        sequenceWriter.write(mutatedTest);
-                    }
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+//            Map<String, Set<MutationOld>> mutations = RestTestMutator.parseMutateInstructions(mapper, yaml, file);
+//            if (mutations.isEmpty() == false) {
+//
+//                Map<String, File> testFileNameToTestFile = getTestFiles().getFiles().stream().collect(Collectors.toMap(File::getName, f -> f));
+//                List<ObjectNode> mutatedTests = RestTestMutator.mutateTest(mutations, mapper, yaml, testFileNameToTestFile.get(file.getName()));
+//                //fixme: obviously
+//                File outputFile = new File(getOutputDir(), "painless/" + file.getName());
+//                try (SequenceWriter sequenceWriter = mapper.writer().writeValues(outputFile)) {
+//
+//                    for (ObjectNode mutatedTest : mutatedTests) {
+//                        sequenceWriter.write(mutatedTest);
+//                    }
+//
+//
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
 
         }
 
