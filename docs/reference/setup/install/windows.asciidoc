@@ -335,7 +335,7 @@ different installation directory to the default one:
 
 ["source","sh",subs="attributes,callouts"]
 --------------------------------------------
-start /wait msiexec.exe /i elasticsearch-{version}.msi /qn INSTALLDIR="C:\Custom Install Directory\{version}" 
+start /wait msiexec.exe /i elasticsearch-{version}.msi /qn INSTALLDIR="C:\Custom Install Directory\{version}"
 --------------------------------------------
 
 Consult the https://msdn.microsoft.com/en-us/library/windows/desktop/aa367988(v=vs.85).aspx[Windows Installer SDK Command-Line Options]
@@ -484,7 +484,7 @@ WARNING: Uninstallation will remove **all** contents created as part of
 installation, **except for data, config or logs directories**. It is recommended that you make a copy of your data directory before upgrading or consider using the snapshot API.
 
 MSI installer packages do not provide a GUI for uninstallation. An installed program can be uninstalled
-by pressing the Windows key and typing `add or remove programs` to open the system settings.
+by pressing the Windows key and typing `item or remove programs` to open the system settings.
 
 Once opened, find the Elasticsearch installation within the list of installed applications, click
 and choose `Uninstall`:

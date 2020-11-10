@@ -92,7 +92,7 @@ break.
 Either this or the `mappings` parameter must be specified.
 
 [[analysis-mapping-charfilter-customize]]
-==== Customize and add to an analyzer
+==== Customize and item to an analyzer
 
 To customize the `mappings` filter, duplicate it to create the basis for a new
 custom character filter. You can modify the filter using its configurable

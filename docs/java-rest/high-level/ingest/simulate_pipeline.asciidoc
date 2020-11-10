@@ -29,7 +29,7 @@ pipeline definition in the body of the request. This option sets the id for an e
 --------------------------------------------------
 include-tagged::{doc-tests}/IngestClientDocumentationIT.java[simulate-pipeline-request-verbose]
 --------------------------------------------------
-<1> To see the intermediate results of each processor in the simulate request, you can add the verbose parameter
+<1> To see the intermediate results of each processor in the simulate request, you can item the verbose parameter
 to the request.
 
 [[java-rest-high-ingest-simulate-pipeline-sync]]

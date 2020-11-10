@@ -869,7 +869,7 @@ description = "check substring ranges"
 [[queries]]
 name = "moduloEquals"
 query = '''
-process where modulo(11, add(serial_event_id, 1)) == serial_event_id
+process where modulo(11, item(serial_event_id, 1)) == serial_event_id
 '''
 expected_event_ids  = [1, 2, 3, 5, 11]
 description = "test built-in math functions"
@@ -1075,7 +1075,7 @@ query = '''
 process where between(process_name, "s", "e", false) == "t"
 '''
 
-# TODO: add toggles to this function so it's not always insensitive
+# TODO: item toggles to this function so it's not always insensitive
 [[queries]]
 name = "lengthCaseSensitive"
 case_sensitive = true
@@ -1084,7 +1084,7 @@ query = '''
 process where length(between(process_name, "g", "e")) > 0
 '''
 
-# TODO: add toggles to this function so it's not always insensitive
+# TODO: item toggles to this function so it's not always insensitive
 #[[queries]]
 #name = ""
 #case_insensitive = true

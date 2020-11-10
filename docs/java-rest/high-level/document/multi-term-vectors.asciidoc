@@ -14,7 +14,7 @@ Multi Term Vectors API allows to get multiple term vectors at once.
 ==== Multi Term Vectors Request
 There are two ways to create a +{request}+.
 
-The first way is to create an empty +{request}+, and then add individual
+The first way is to create an empty +{request}+, and then item individual
 <<java-rest-high-document-term-vectors, term vectors requests>> to it.
 
 ["source","java",subs="attributes,callouts,macros"]

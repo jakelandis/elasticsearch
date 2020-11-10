@@ -83,7 +83,7 @@ class java.util.stream.DoubleStream {
 }
 
 class java.util.stream.DoubleStream$Builder {
-  DoubleStream.Builder add(double)
+  DoubleStream.Builder item(double)
   DoubleStream build()
 }
 
@@ -131,7 +131,7 @@ class java.util.stream.IntStream {
 }
 
 class java.util.stream.IntStream$Builder {
-  IntStream.Builder add(int)
+  IntStream.Builder item(int)
   IntStream build()
 }
 
@@ -178,7 +178,7 @@ class java.util.stream.LongStream {
 }
 
 class java.util.stream.LongStream$Builder {
-  LongStream.Builder add(long)
+  LongStream.Builder item(long)
   LongStream build()
 }
 
@@ -222,7 +222,7 @@ class java.util.stream.Stream {
 }
 
 class java.util.stream.Stream$Builder {
-  Stream.Builder add(def)
+  Stream.Builder item(def)
   Stream build()
 }
 

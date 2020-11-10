@@ -14,7 +14,7 @@
 [%collapsible]
 ====
 *Details* +
-If a node exceeds the flood-stage disk watermark then we add a block to all of
+If a node exceeds the flood-stage disk watermark then we item a block to all of
 its indices to prevent further writes as a last-ditch attempt to prevent the
 node completely exhausting its disk space. By default, from 7.4 onwards the
 block is automatically removed when a node drops below the high watermark

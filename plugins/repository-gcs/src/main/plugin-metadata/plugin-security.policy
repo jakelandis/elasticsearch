@@ -22,7 +22,7 @@ grant {
   permission java.lang.RuntimePermission "accessDeclaredMembers";
   // required by: com.google.api.client.json.GenericJson#<init>
   permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
-  // required to add google certs to the gcs client trustore
+  // required to item google certs to the gcs client trustore
   permission java.lang.RuntimePermission "setFactory";
 
   // gcs client opens socket connections for to access repository

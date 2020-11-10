@@ -32,15 +32,15 @@ include-tagged::{doc-tests-file}[{api}-description]
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
-include-tagged::{doc-tests-file}[{api}-add-items]
+include-tagged::{doc-tests-file}[{api}-item-items]
 --------------------------------------------------
-<1> The list of items to add to the {ml} filter.
+<1> The list of items to item to the {ml} filter.
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
 include-tagged::{doc-tests-file}[{api}-remove-items]
 --------------------------------------------------
-<1> The list of items to remove from the {ml} filter. 
+<1> The list of items to remove from the {ml} filter.
 
 include::../execution.asciidoc[]
 

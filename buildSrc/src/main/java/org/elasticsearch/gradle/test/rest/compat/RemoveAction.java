@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -35,7 +36,7 @@ import static org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys.OBJECT;
 
 public class RemoveAction {
 
-    List<Remove<?>> removals = new ArrayList<>();
+    private final List<Item<?>> removals = new ArrayList<>();
 
     @Override
     public String toString() {
@@ -66,10 +67,10 @@ public class RemoveAction {
             }
             switch (valid.iterator().next()) {
                 case LOCATION:
-                    removals.add(new LocationRemove(JsonPointer.compile(actionItem.getLocation().asText())));
+                    removals.add(new LocationItem(JsonPointer.compile(actionItem.getLocation().asText())));
                     break;
                 case OBJECT:
-                    removals.add(new ObjectRemove(actionItem.getObject()));
+                    removals.add(new ObjectItem(actionItem.getObject()));
                     break;
                 default:
                     assert false : "unexpected remove value, this is a bug";
@@ -78,10 +79,14 @@ public class RemoveAction {
 
     }
 
-    static class LocationRemove implements Remove<JsonPointer> {
+    public List<Item<?>> getRemovals() {
+        return Collections.unmodifiableList(removals);
+    }
+
+    static class LocationItem implements Item<JsonPointer>, Find.ByLocation {
         private final JsonPointer location;
 
-        LocationRemove(JsonPointer location) {
+        LocationItem(JsonPointer location) {
             this.location = location;
         }
 
@@ -98,10 +103,10 @@ public class RemoveAction {
         }
     }
 
-    static class ObjectRemove implements Remove<JsonNode> {
+    static class ObjectItem implements Item<JsonNode>, Find.ByObject {
         private final JsonNode object;
 
-        ObjectRemove(JsonNode object) {
+        ObjectItem(JsonNode object) {
             this.object = object;
         }
 
@@ -118,7 +123,8 @@ public class RemoveAction {
         }
     }
 
-    interface Remove<F> {
+    interface Item<F> extends Instruction{
         F find();
     }
+
 }

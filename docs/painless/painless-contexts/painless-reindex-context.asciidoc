@@ -2,7 +2,7 @@
 === Reindex context
 
 Use a Painless script in a {ref}/docs-reindex.html[reindex] operation to
-add, modify, or delete fields within each document in an original index as its
+item, modify, or delete fields within each document in an original index as its
 reindexed into a target index.
 
 *Variables*
@@ -49,7 +49,7 @@ reindexed into a target index.
         Modify this to modify the version for the current document.
 
 {ref}/mapping-source-field.html[`ctx['_source']`]::
-        Modify the values in the `Map/List` structure to add, modify, or delete
+        Modify the values in the `Map/List` structure to item, modify, or delete
         the fields of a document.
 
 *Return*

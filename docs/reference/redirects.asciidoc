@@ -873,7 +873,7 @@ For other information, see:
 [role="exclude",id="modules-discovery-adding-removing-nodes"]
 === Adding and removing nodes
 
-See <<add-elasticsearch-nodes>>.
+See <<item-elasticsearch-nodes>>.
 
 [role="exclude",id="_timing"]
 === Timing

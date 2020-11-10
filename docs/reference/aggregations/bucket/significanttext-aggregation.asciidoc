@@ -10,7 +10,7 @@ It is like the <<search-aggregations-bucket-significantterms-aggregation,signifi
 noisy text that otherwise tend to skew statistics.
 
 WARNING: Re-analyzing _large_ result sets will require a lot of time and memory. It is recommended that the significant_text
-         aggregation is used as a child of either the <<search-aggregations-bucket-sampler-aggregation,sampler>> or 
+         aggregation is used as a child of either the <<search-aggregations-bucket-sampler-aggregation,sampler>> or
          <<search-aggregations-bucket-diversified-sampler-aggregation,diversified sampler>> aggregation to limit the analysis
          to a _small_ selection of top-matching documents e.g. 200. This will typically improve speed, memory use and quality of
          results.
@@ -27,7 +27,7 @@ that is significant and probably very relevant to their search. 5/10,000,000 vs 
 
 ==== Basic use
 
-In the typical use case, the _foreground_ set of interest is a selection of the top-matching search results for a query 
+In the typical use case, the _foreground_ set of interest is a selection of the top-matching search results for a query
 and the _background_set used for statistical comparisons is the index or indices from which the results were gathered.
 
 Example:
@@ -87,22 +87,22 @@ Response:
 // TESTRESPONSE[skip:historically skipped]
 
 The results show that "h5n1" is one of several terms strongly associated with bird flu.
-It only occurs 5 times in our index as a whole (see the `bg_count`) and yet 4 of these 
+It only occurs 5 times in our index as a whole (see the `bg_count`) and yet 4 of these
 were lucky enough to appear in our 100 document sample of "bird flu" results. That suggests
-a significant word and one which the user can potentially add to their search. 
+a significant word and one which the user can potentially item to their search.
 
 [[filter-duplicate-text-noisy-data]]
 ==== Dealing with noisy data using `filter_duplicate_text`
-Free-text fields often contain a mix of original content and mechanical copies of text (cut-and-paste biographies, email reply chains, 
+Free-text fields often contain a mix of original content and mechanical copies of text (cut-and-paste biographies, email reply chains,
 retweets, boilerplate headers/footers, page navigation menus, sidebar news links, copyright notices, standard disclaimers, addresses).
 
 In real-world data these duplicate sections of text tend to feature heavily in `significant_text` results if they aren't filtered out.
-Filtering near-duplicate text is a difficult task at index-time but we can cleanse the data on-the-fly at query time using the 
+Filtering near-duplicate text is a difficult task at index-time but we can cleanse the data on-the-fly at query time using the
 `filter_duplicate_text` setting.
 
 
 First let's look at an unfiltered real-world example using the https://research.signalmedia.co/newsir16/signal-dataset.html[Signal media dataset] of
-a million news articles covering a wide variety of news. Here are the raw significant text results for a search for the articles 
+a million news articles covering a wide variety of news. Here are the raw significant text results for a search for the articles
 mentioning "elasticsearch":
 
 
@@ -142,7 +142,7 @@ mentioning "elasticsearch":
 --------------------------------------------------
 // NOTCONSOLE
 
-The uncleansed documents have thrown up some odd-looking terms that are, on the face of it, statistically 
+The uncleansed documents have thrown up some odd-looking terms that are, on the face of it, statistically
 correlated with appearances of our search term "elasticsearch" e.g. "pozmantier".
 We can drill down into examples of these documents to see why pozmantier is connected using this query:
 
@@ -207,7 +207,7 @@ The results show a series of very similar news articles about a judging panel fo
 // NOTCONSOLE
 Mike Pozmantier was one of many judges on a panel and elasticsearch was used in one of many projects being judged.
 
-As is typical, this lengthy press release was cut-and-paste by a variety of news sites and consequently any rare names, numbers or 
+As is typical, this lengthy press release was cut-and-paste by a variety of news sites and consequently any rare names, numbers or
 typos they contain become statistically correlated with our matching query.
 
 Fortunately similar documents tend to rank similarly so as part of examining the stream of top-matching documents the significant_text
@@ -280,11 +280,11 @@ The results from analysing our deduplicated text are obviously of higher quality
 --------------------------------------------------
 // NOTCONSOLE
 
-Mr Pozmantier and other one-off associations with elasticsearch no longer appear in the aggregation 
-results as a consequence of copy-and-paste operations or other forms of mechanical repetition. 
+Mr Pozmantier and other one-off associations with elasticsearch no longer appear in the aggregation
+results as a consequence of copy-and-paste operations or other forms of mechanical repetition.
 
 If your duplicate or near-duplicate content is identifiable via a single-value indexed field  (perhaps
-a hash of the article's `title` text or an `original_press_release_url` field) then it would be more 
+a hash of the article's `title` text or an `original_press_release_url` field) then it would be more
 efficient to use a parent <<search-aggregations-bucket-diversified-sampler-aggregation,diversified sampler>> aggregation
 to eliminate these documents from the sample set based on that single key. The less duplicate content you can feed into
 the significant_text aggregation up front the better in terms of performance.
@@ -292,9 +292,9 @@ the significant_text aggregation up front the better in terms of performance.
 
 .How are the significance scores calculated?
 **********************************
-The numbers returned for scores are primarily intended for ranking different suggestions sensibly rather than something easily 
-understood by end users. The scores are derived from the doc frequencies in _foreground_ and _background_ sets. In brief, a 
-term is considered significant if there is a noticeable difference in the frequency in which a term appears in the subset and 
+The numbers returned for scores are primarily intended for ranking different suggestions sensibly rather than something easily
+understood by end users. The scores are derived from the doc frequencies in _foreground_ and _background_ sets. In brief, a
+term is considered significant if there is a noticeable difference in the frequency in which a term appears in the subset and
 in the background. The way the terms are ranked can be configured, see "Parameters" section.
 
 **********************************
@@ -324,7 +324,7 @@ The significant_text aggregation intentionally does not support the addition of 
 
 The volume of candidate terms is generally very high and these are pruned heavily before the final
 results are returned. Supporting child aggregations would generate additional churn and be inefficient.
-Clients can always take the heavily-trimmed set of results from a `significant_text` request and 
+Clients can always take the heavily-trimmed set of results from a `significant_text` request and
 make a subsequent follow-up query using a `terms` aggregation with an `include` clause and child
 aggregations to perform further analysis of selected keywords in a more efficient fashion.
 
@@ -381,22 +381,22 @@ NOTE:   `shard_size` cannot be smaller than `size` (as it doesn't make much sens
 It is possible to only return terms that match more than a configured number of hits using the `min_doc_count` option.
 The Default value is 3.
 
-Terms that score highly will be collected on a shard level and merged with the terms collected from other shards in a second step. 
-However, the shard does not have the information about the global term frequencies available. The decision if a term is added to a 
+Terms that score highly will be collected on a shard level and merged with the terms collected from other shards in a second step.
+However, the shard does not have the information about the global term frequencies available. The decision if a term is added to a
 candidate list depends only on the score computed on the shard using local shard frequencies, not the global frequencies of the word.
-The `min_doc_count` criterion is only applied after merging local terms statistics of all shards. In a way the decision to add the 
-term as a candidate is made without being very _certain_ about if the term will actually reach the required `min_doc_count`. 
-This might cause many (globally) high frequent terms to be missing in the final result if low frequent but high scoring terms populated 
-the candidate lists. To avoid this, the `shard_size` parameter can be increased to allow more candidate terms on the shards. 
+The `min_doc_count` criterion is only applied after merging local terms statistics of all shards. In a way the decision to item the
+term as a candidate is made without being very _certain_ about if the term will actually reach the required `min_doc_count`.
+This might cause many (globally) high frequent terms to be missing in the final result if low frequent but high scoring terms populated
+the candidate lists. To avoid this, the `shard_size` parameter can be increased to allow more candidate terms on the shards.
 However, this increases memory consumption and network traffic.
 
 `shard_min_doc_count` parameter
 
-The parameter `shard_min_doc_count` regulates the _certainty_ a shard has if the term should actually be added to the candidate list or 
-not with respect to the `min_doc_count`. Terms will only be considered if their local shard frequency within the set is higher than the 
-`shard_min_doc_count`. If your dictionary contains many low frequent words and you are not interested in these (for example misspellings), 
-then you can set the `shard_min_doc_count` parameter to filter out candidate terms on a shard level that will with a reasonable certainty 
-not reach the required `min_doc_count` even after merging the local frequencies. `shard_min_doc_count` is set to `1` per default and has 
+The parameter `shard_min_doc_count` regulates the _certainty_ a shard has if the term should actually be added to the candidate list or
+not with respect to the `min_doc_count`. Terms will only be considered if their local shard frequency within the set is higher than the
+`shard_min_doc_count`. If your dictionary contains many low frequent words and you are not interested in these (for example misspellings),
+then you can set the `shard_min_doc_count` parameter to filter out candidate terms on a shard level that will with a reasonable certainty
+not reach the required `min_doc_count` even after merging the local frequencies. `shard_min_doc_count` is set to `1` per default and has
 no effect unless you explicitly set it.
 
 
@@ -406,7 +406,7 @@ WARNING: Setting `min_doc_count` to `1` is generally not advised as it tends to 
          are typos or other bizarre curiosities. Finding more than one instance of a term helps
          reinforce that, while still rare, the term was not the result of a one-off accident. The
          default value of 3 is used to provide a minimum weight-of-evidence.
-         Setting `shard_min_doc_count` too high will cause significant candidate terms to be filtered out on a shard level. 
+         Setting `shard_min_doc_count` too high will cause significant candidate terms to be filtered out on a shard level.
          This value should be set much lower than `min_doc_count/#shards`.
 
 
@@ -450,7 +450,7 @@ WARNING: Use of background filters will slow the query as each term's postings m
 ===== Dealing with source and index mappings
 
 Ordinarily the indexed field name and the original JSON field being retrieved share the same name.
-However with more complex field mappings using features like `copy_to` the source 
+However with more complex field mappings using features like `copy_to` the source
 JSON field(s) and the indexed field being aggregated can differ.
 In these cases it is possible to list the JSON _source fields from which text
 will be analyzed using the `source_fields` parameter:

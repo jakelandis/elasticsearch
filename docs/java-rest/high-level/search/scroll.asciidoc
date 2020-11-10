@@ -159,14 +159,14 @@ The scroll identifiers can be added to the request one by one:
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
-include-tagged::{doc-tests}/SearchDocumentationIT.java[clear-scroll-add-scroll-id]
+include-tagged::{doc-tests}/SearchDocumentationIT.java[clear-scroll-item-scroll-id]
 --------------------------------------------------
 
 Or all together using:
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
-include-tagged::{doc-tests}/SearchDocumentationIT.java[clear-scroll-add-scroll-ids]
+include-tagged::{doc-tests}/SearchDocumentationIT.java[clear-scroll-item-scroll-ids]
 --------------------------------------------------
 
 [[java-rest-high-clear-scroll-sync]]

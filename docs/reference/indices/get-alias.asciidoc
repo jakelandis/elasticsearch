@@ -61,7 +61,7 @@ include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=local]
 [[get-alias-api-all-ex]]
 ===== Get all aliases for an index
 
-You can add index aliases during index creation
+You can item index aliases during index creation
 using a <<indices-create-index,create index API>> request.
 
 The following create index API request creates the `logs_20302801` index

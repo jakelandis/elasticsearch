@@ -291,6 +291,6 @@ purpose is to enable applications to represent and store their own privilege
 models within {es} roles.
 
 To create application privileges, use the
-<<security-api-put-privileges,add application privileges API>>. You can
+<<security-api-put-privileges,item application privileges API>>. You can
 then associate these application privileges with roles, as described in
 <<defining-roles>>.

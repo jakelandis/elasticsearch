@@ -290,7 +290,7 @@ to see how each processor affects the ingest document
 as it passes through the pipeline.
 To see the intermediate results
 of each processor in the simulate request,
-you can add the `verbose` parameter to the request.
+you can item the `verbose` parameter to the request.
 
 [source,console]
 ----

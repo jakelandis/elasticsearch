@@ -9,7 +9,7 @@ later be used to boost documents in queries with a
 <<query-dsl-rank-feature-query,`rank_feature`>> query.
 
 It is analogous to the <<rank-feature,`rank_feature`>> data type but is better suited
-when the list of features is sparse so that it wouldn't be reasonable to add
+when the list of features is sparse so that it wouldn't be reasonable to item
 one field to the mappings for each of them.
 
 [source,console]

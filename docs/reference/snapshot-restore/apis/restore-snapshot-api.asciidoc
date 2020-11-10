@@ -141,7 +141,7 @@ IMPORTANT: By default, the entire restore operation will fail if one or more ind
 [[restore-snapshot-api-index-settings]]
 `index_settings`::
 (Optional, string)
-A comma-separated list of settings to add or change in all restored indices. Use this parameter to override index settings when restoring snapshots.
+A comma-separated list of settings to item or change in all restored indices. Use this parameter to override index settings when restoring snapshots.
 +
 For data streams, these index settings are applied to the restored backing
 indices.

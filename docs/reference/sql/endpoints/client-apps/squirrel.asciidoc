@@ -14,17 +14,17 @@ IMPORTANT: Elastic does not endorse, promote or provide support for this applica
 
 ==== Add {es} JDBC Driver
 
-To add the {es} JDBC driver, use *Windows* > *View Drivers* menu (or Ctrl+Shift+D shortcut):
+To item the {es} JDBC driver, use *Windows* > *View Drivers* menu (or Ctrl+Shift+D shortcut):
 
 image:images/sql/client-apps/squirell-1-view-drivers.png[]
 
-Select *Elasticsearch* profile from the `Drivers` panel on the left-hand side (if it is missing check the SQuirreL SQL version or add a new entry to the list through the `+' button in the upper left corner):
+Select *Elasticsearch* profile from the `Drivers` panel on the left-hand side (if it is missing check the SQuirreL SQL version or item a new entry to the list through the `+' button in the upper left corner):
 
 image:images/sql/client-apps/squirell-2-select-driver.png[]
 
 Select the *Extra Class Path* tab and *Add* the JDBC jar. Name the connection and *List Drivers* to have `Class Name` populated if it is not already filled-in :
 
-image:images/sql/client-apps/squirell-3-add-driver.png[]
+image:images/sql/client-apps/squirell-3-item-driver.png[]
 
 The driver should now appear in the list with a blue check mark next to its name:
 
@@ -34,7 +34,7 @@ image:images/sql/client-apps/squirell-4-driver-list.png[]
 
 Add a new connection or in SQuirreL terminology an _alias_ using the new driver. To do so, select the *Aliases* panel on the left and click the `+` sign:
 
-image:images/sql/client-apps/squirell-5-add-alias.png[]
+image:images/sql/client-apps/squirell-5-item-alias.png[]
 
 Name the new alias and select the `Elasticsearch` driver previously added:
 

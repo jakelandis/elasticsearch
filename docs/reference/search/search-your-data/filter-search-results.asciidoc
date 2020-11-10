@@ -51,12 +51,12 @@ PUT /shirts/_doc/1?refresh
 Imagine a user has specified two filters:
 
 `color:red` and `brand:gucci`.  You only want to show them red shirts made by
-Gucci in the search results.  Normally you would do this with a 
+Gucci in the search results.  Normally you would do this with a
 <<query-dsl-bool-query,`bool` query>>:
 
 [source,console]
 --------------------------------------------------
-GET /shirts/_search 
+GET /shirts/_search
 {
   "query": {
     "bool": {
@@ -74,12 +74,12 @@ other options that the user could click on.  Perhaps you have a `model` field
 that would allow the user to limit their search results to red Gucci
 `t-shirts` or `dress-shirts`.
 
-This can be done with a 
+This can be done with a
 <<search-aggregations-bucket-terms-aggregation,`terms` aggregation>>:
 
 [source,console]
 --------------------------------------------------
-GET /shirts/_search 
+GET /shirts/_search
 {
   "query": {
     "bool": {
@@ -100,7 +100,7 @@ GET /shirts/_search
 <1> Returns the most popular models of red shirts by Gucci.
 
 But perhaps you would also like to tell the user how many Gucci shirts are
-available in *other colors*. If you just add a `terms` aggregation on the
+available in *other colors*. If you just item a `terms` aggregation on the
 `color` field, you will only get back the color `red`, because your query
 returns only red shirts by Gucci.
 
@@ -142,7 +142,7 @@ GET /shirts/_search
 
 <1> The main query now finds all shirts by Gucci, regardless of color.
 <2> The `colors` agg returns popular colors for shirts by Gucci.
-<3> The `color_red` agg limits the `models` sub-aggregation 
+<3> The `color_red` agg limits the `models` sub-aggregation
     to *red* Gucci shirts.
 <4> Finally, the `post_filter` removes colors other than red
     from the search `hits`.

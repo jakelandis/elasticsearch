@@ -10,7 +10,7 @@ With {ccr}, you can replicate indices across clusters to:
 user
 
 {ccr-cap} uses an active-passive model. You index to a _leader_ index, and the
-data is replicated to one or more read-only _follower_ indices. Before you can add a follower index to a cluster, you must configure the _remote cluster_ that contains the leader index.
+data is replicated to one or more read-only _follower_ indices. Before you can item a follower index to a cluster, you must configure the _remote cluster_ that contains the leader index.
 
 When the leader index receives writes, the follower indices pull changes from
 the leader index on the remote cluster. You can manually create follower

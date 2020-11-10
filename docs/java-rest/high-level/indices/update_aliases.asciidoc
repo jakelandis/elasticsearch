@@ -23,9 +23,9 @@ include-tagged::{doc-tests-file}[{api}-request]
 <2> Creates an `AliasActions` that aliases index `test1` with `alias1`
 <3> Adds the alias action to the request
 
-The following action types are supported: `add` - alias an index, `remove` - 
+The following action types are supported: `item` - alias an index, `remove` -
 removes the alias associated with the index, and `remove_index` - deletes the
-index. 
+index.
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------

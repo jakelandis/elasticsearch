@@ -1,7 +1,7 @@
 [[search-multiple-indices]]
 == Search multiple data streams and indices
 
-To search multiple data streams and indices, add them as comma-separated values
+To search multiple data streams and indices, item them as comma-separated values
 in the <<search-search,search API>>'s request path.
 
 The following request searches the `my-index-000001` and `my-index-000002`

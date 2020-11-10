@@ -1358,8 +1358,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 * {java11-javadoc}/java.base/java/math/BigDecimal.html#<init>(java.lang.String,java.math.MathContext)[BigDecimal](null, MathContext)
 * BigDecimal {java11-javadoc}/java.base/java/math/BigDecimal.html#abs()[abs]()
 * BigDecimal {java11-javadoc}/java.base/java/math/BigDecimal.html#abs(java.math.MathContext)[abs](MathContext)
-* BigDecimal {java11-javadoc}/java.base/java/math/BigDecimal.html#add(java.math.BigDecimal)[add](BigDecimal)
-* BigDecimal {java11-javadoc}/java.base/java/math/BigDecimal.html#add(java.math.BigDecimal,java.math.MathContext)[add](BigDecimal, MathContext)
+* BigDecimal {java11-javadoc}/java.base/java/math/BigDecimal.html#item(java.math.BigDecimal)[item](BigDecimal)
+* BigDecimal {java11-javadoc}/java.base/java/math/BigDecimal.html#item(java.math.BigDecimal,java.math.MathContext)[item](BigDecimal, MathContext)
 * byte {java11-javadoc}/java.base/java/lang/Number.html#byteValue()[byteValue]()
 * byte {java11-javadoc}/java.base/java/math/BigDecimal.html#byteValueExact()[byteValueExact]()
 * int {java11-javadoc}/java.base/java/math/BigDecimal.html#compareTo(java.math.BigDecimal)[compareTo](BigDecimal)
@@ -1420,7 +1420,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 * {java11-javadoc}/java.base/java/math/BigInteger.html#<init>(java.lang.String)[BigInteger](null)
 * {java11-javadoc}/java.base/java/math/BigInteger.html#<init>(java.lang.String,int)[BigInteger](null, int)
 * BigInteger {java11-javadoc}/java.base/java/math/BigInteger.html#abs()[abs]()
-* BigInteger {java11-javadoc}/java.base/java/math/BigInteger.html#add(java.math.BigInteger)[add](BigInteger)
+* BigInteger {java11-javadoc}/java.base/java/math/BigInteger.html#item(java.math.BigInteger)[item](BigInteger)
 * BigInteger {java11-javadoc}/java.base/java/math/BigInteger.html#and(java.math.BigInteger)[and](BigInteger)
 * BigInteger {java11-javadoc}/java.base/java/math/BigInteger.html#andNot(java.math.BigInteger)[andNot](BigInteger)
 * int {java11-javadoc}/java.base/java/math/BigInteger.html#bitCount()[bitCount]()
@@ -4216,7 +4216,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-AbstractCollection]]
 ==== AbstractCollection
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -4257,8 +4257,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-AbstractList]]
 ==== AbstractList
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -4380,7 +4380,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-AbstractQueue]]
 ==== AbstractQueue
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -4426,8 +4426,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-AbstractSequentialList]]
 ==== AbstractSequentialList
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -4482,7 +4482,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-AbstractSet]]
 ==== AbstractSet
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -4526,7 +4526,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== ArrayDeque
 * {java11-javadoc}/java.base/java/util/ArrayDeque.html#<init>()[ArrayDeque]()
 * {java11-javadoc}/java.base/java/util/ArrayDeque.html#<init>(java.util.Collection)[ArrayDeque](Collection)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * void {java11-javadoc}/java.base/java/util/Deque.html#addFirst(java.lang.Object)[addFirst](def)
 * void {java11-javadoc}/java.base/java/util/Deque.html#addLast(java.lang.Object)[addLast](def)
@@ -4593,8 +4593,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== ArrayList
 * {java11-javadoc}/java.base/java/util/ArrayList.html#<init>()[ArrayList]()
 * {java11-javadoc}/java.base/java/util/ArrayList.html#<init>(java.util.Collection)[ArrayList](Collection)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -4784,7 +4784,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 * static Calendar {java11-javadoc}/java.base/java/util/Calendar.html#getInstance()[getInstance]()
 * static Calendar {java11-javadoc}/java.base/java/util/Calendar.html#getInstance(java.util.TimeZone)[getInstance](TimeZone)
 * static Calendar {java11-javadoc}/java.base/java/util/Calendar.html#getInstance(java.util.TimeZone,java.util.Locale)[getInstance](TimeZone, Locale)
-* void {java11-javadoc}/java.base/java/util/Calendar.html#add(int,int)[add](int, int)
+* void {java11-javadoc}/java.base/java/util/Calendar.html#item(int,int)[item](int, int)
 * boolean {java11-javadoc}/java.base/java/util/Calendar.html#after(java.lang.Object)[after](Object)
 * boolean {java11-javadoc}/java.base/java/util/Calendar.html#before(java.lang.Object)[before](Object)
 * void {java11-javadoc}/java.base/java/util/Calendar.html#clear()[clear]()
@@ -4852,7 +4852,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-Collection]]
 ==== Collection
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -5019,7 +5019,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-Deque]]
 ==== Deque
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * void {java11-javadoc}/java.base/java/util/Deque.html#addFirst(java.lang.Object)[addFirst](def)
 * void {java11-javadoc}/java.base/java/util/Deque.html#addLast(java.lang.Object)[addLast](def)
@@ -5246,7 +5246,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 * {java11-javadoc}/java.base/java/util/GregorianCalendar.html#<init>(int,int,int)[GregorianCalendar](int, int, int)
 * {java11-javadoc}/java.base/java/util/GregorianCalendar.html#<init>(int,int,int,int,int)[GregorianCalendar](int, int, int, int, int)
 * {java11-javadoc}/java.base/java/util/GregorianCalendar.html#<init>(int,int,int,int,int,int)[GregorianCalendar](int, int, int, int, int, int)
-* void {java11-javadoc}/java.base/java/util/Calendar.html#add(int,int)[add](int, int)
+* void {java11-javadoc}/java.base/java/util/Calendar.html#item(int,int)[item](int, int)
 * boolean {java11-javadoc}/java.base/java/util/Calendar.html#after(java.lang.Object)[after](Object)
 * boolean {java11-javadoc}/java.base/java/util/Calendar.html#before(java.lang.Object)[before](Object)
 * void {java11-javadoc}/java.base/java/util/Calendar.html#clear()[clear]()
@@ -5345,7 +5345,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== HashSet
 * {java11-javadoc}/java.base/java/util/HashSet.html#<init>()[HashSet]()
 * {java11-javadoc}/java.base/java/util/HashSet.html#<init>(java.util.Collection)[HashSet](Collection)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -5652,7 +5652,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== LinkedHashSet
 * {java11-javadoc}/java.base/java/util/LinkedHashSet.html#<init>()[LinkedHashSet]()
 * {java11-javadoc}/java.base/java/util/LinkedHashSet.html#<init>(java.util.Collection)[LinkedHashSet](Collection)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -5697,8 +5697,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== LinkedList
 * {java11-javadoc}/java.base/java/util/LinkedList.html#<init>()[LinkedList]()
 * {java11-javadoc}/java.base/java/util/LinkedList.html#<init>(java.util.Collection)[LinkedList](Collection)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * void {java11-javadoc}/java.base/java/util/Deque.html#addFirst(java.lang.Object)[addFirst](def)
@@ -5776,8 +5776,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-List]]
 ==== List
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -5832,7 +5832,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ListIterator]]
 ==== ListIterator
-* void {java11-javadoc}/java.base/java/util/ListIterator.html#add(java.lang.Object)[add](def)
+* void {java11-javadoc}/java.base/java/util/ListIterator.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/lang/Object.html#equals(java.lang.Object)[equals](Object)
 * void {java11-javadoc}/java.base/java/util/Iterator.html#forEachRemaining(java.util.function.Consumer)[forEachRemaining](Consumer)
 * boolean {java11-javadoc}/java.base/java/util/Iterator.html#hasNext()[hasNext]()
@@ -6161,7 +6161,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-NavigableSet]]
 ==== NavigableSet
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -6386,7 +6386,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== PriorityQueue
 * {java11-javadoc}/java.base/java/util/PriorityQueue.html#<init>()[PriorityQueue]()
 * {java11-javadoc}/java.base/java/util/PriorityQueue.html#<init>(java.util.Comparator)[PriorityQueue](Comparator)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -6432,7 +6432,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-Queue]]
 ==== Queue
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -6509,7 +6509,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-Set]]
 ==== Set
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -6638,7 +6638,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-SortedSet]]
 ==== SortedSet
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -6785,8 +6785,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 [[painless-api-reference-shared-Stack]]
 ==== Stack
 * {java11-javadoc}/java.base/java/util/Stack.html#<init>()[Stack]()
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * void {java11-javadoc}/java.base/java/util/Vector.html#addElement(java.lang.Object)[addElement](def)
@@ -6861,7 +6861,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== StringJoiner
 * {java11-javadoc}/java.base/java/util/StringJoiner.html#<init>(java.lang.CharSequence)[StringJoiner](CharSequence)
 * {java11-javadoc}/java.base/java/util/StringJoiner.html#<init>(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence)[StringJoiner](CharSequence, CharSequence, CharSequence)
-* StringJoiner {java11-javadoc}/java.base/java/util/StringJoiner.html#add(java.lang.CharSequence)[add](CharSequence)
+* StringJoiner {java11-javadoc}/java.base/java/util/StringJoiner.html#item(java.lang.CharSequence)[item](CharSequence)
 * boolean {java11-javadoc}/java.base/java/lang/Object.html#equals(java.lang.Object)[equals](Object)
 * int {java11-javadoc}/java.base/java/lang/Object.html#hashCode()[hashCode]()
 * int {java11-javadoc}/java.base/java/util/StringJoiner.html#length()[length]()
@@ -7000,7 +7000,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== TreeSet
 * {java11-javadoc}/java.base/java/util/TreeSet.html#<init>()[TreeSet]()
 * {java11-javadoc}/java.base/java/util/TreeSet.html#<init>(java.util.Comparator)[TreeSet](Comparator)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean any(Predicate)
 * Collection asCollection()
@@ -7105,8 +7105,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 ==== Vector
 * {java11-javadoc}/java.base/java/util/Vector.html#<init>()[Vector]()
 * {java11-javadoc}/java.base/java/util/Vector.html#<init>(java.util.Collection)[Vector](Collection)
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * void {java11-javadoc}/java.base/java/util/Vector.html#addElement(java.lang.Object)[addElement](def)
@@ -7746,7 +7746,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 [[painless-api-reference-shared-DoubleStream-Builder]]
 ==== DoubleStream.Builder
 * void {java11-javadoc}/java.base/java/util/function/DoubleConsumer.html#accept(double)[accept](double)
-* DoubleStream.Builder {java11-javadoc}/java.base/java/util/stream/DoubleStream$Builder.html#add(double)[add](double)
+* DoubleStream.Builder {java11-javadoc}/java.base/java/util/stream/DoubleStream$Builder.html#item(double)[item](double)
 * DoubleConsumer {java11-javadoc}/java.base/java/util/function/DoubleConsumer.html#andThen(java.util.function.DoubleConsumer)[andThen](DoubleConsumer)
 * DoubleStream {java11-javadoc}/java.base/java/util/stream/DoubleStream$Builder.html#build()[build]()
 * boolean {java11-javadoc}/java.base/java/lang/Object.html#equals(java.lang.Object)[equals](Object)
@@ -7807,7 +7807,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 [[painless-api-reference-shared-IntStream-Builder]]
 ==== IntStream.Builder
 * void {java11-javadoc}/java.base/java/util/function/IntConsumer.html#accept(int)[accept](int)
-* IntStream.Builder {java11-javadoc}/java.base/java/util/stream/IntStream$Builder.html#add(int)[add](int)
+* IntStream.Builder {java11-javadoc}/java.base/java/util/stream/IntStream$Builder.html#item(int)[item](int)
 * IntConsumer {java11-javadoc}/java.base/java/util/function/IntConsumer.html#andThen(java.util.function.IntConsumer)[andThen](IntConsumer)
 * IntStream {java11-javadoc}/java.base/java/util/stream/IntStream$Builder.html#build()[build]()
 * boolean {java11-javadoc}/java.base/java/lang/Object.html#equals(java.lang.Object)[equals](Object)
@@ -7867,7 +7867,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 [[painless-api-reference-shared-LongStream-Builder]]
 ==== LongStream.Builder
 * void {java11-javadoc}/java.base/java/util/function/LongConsumer.html#accept(long)[accept](long)
-* LongStream.Builder {java11-javadoc}/java.base/java/util/stream/LongStream$Builder.html#add(long)[add](long)
+* LongStream.Builder {java11-javadoc}/java.base/java/util/stream/LongStream$Builder.html#item(long)[item](long)
 * LongConsumer {java11-javadoc}/java.base/java/util/function/LongConsumer.html#andThen(java.util.function.LongConsumer)[andThen](LongConsumer)
 * LongStream {java11-javadoc}/java.base/java/util/stream/LongStream$Builder.html#build()[build]()
 * boolean {java11-javadoc}/java.base/java/lang/Object.html#equals(java.lang.Object)[equals](Object)
@@ -7927,7 +7927,7 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 [[painless-api-reference-shared-Stream-Builder]]
 ==== Stream.Builder
 * void {java11-javadoc}/java.base/java/util/function/Consumer.html#accept(java.lang.Object)[accept](def)
-* Stream.Builder {java11-javadoc}/java.base/java/util/stream/Stream$Builder.html#add(java.lang.Object)[add](def)
+* Stream.Builder {java11-javadoc}/java.base/java/util/stream/Stream$Builder.html#item(java.lang.Object)[item](def)
 * Consumer {java11-javadoc}/java.base/java/util/function/Consumer.html#andThen(java.util.function.Consumer)[andThen](Consumer)
 * Stream {java11-javadoc}/java.base/java/util/stream/Stream$Builder.html#build()[build]()
 * boolean {java11-javadoc}/java.base/java/lang/Object.html#equals(java.lang.Object)[equals](Object)
@@ -7971,8 +7971,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ScriptDocValues-Booleans]]
 ==== ScriptDocValues.Booleans
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -8028,8 +8028,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ScriptDocValues-BytesRefs]]
 ==== ScriptDocValues.BytesRefs
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -8085,8 +8085,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ScriptDocValues-Dates]]
 ==== ScriptDocValues.Dates
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -8142,8 +8142,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ScriptDocValues-Doubles]]
 ==== ScriptDocValues.Doubles
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -8199,8 +8199,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ScriptDocValues-GeoPoints]]
 ==== ScriptDocValues.GeoPoints
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -8266,8 +8266,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ScriptDocValues-Longs]]
 ==== ScriptDocValues.Longs
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -8323,8 +8323,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-ScriptDocValues-Strings]]
 ==== ScriptDocValues.Strings
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)
@@ -8384,8 +8384,8 @@ See the <<painless-api-reference-shared, Shared API>> for a high-level overview 
 
 [[painless-api-reference-shared-IpFieldMapper-IpFieldType-IpScriptDocValues]]
 ==== IpFieldMapper.IpFieldType.IpScriptDocValues
-* boolean {java11-javadoc}/java.base/java/util/Collection.html#add(java.lang.Object)[add](def)
-* void {java11-javadoc}/java.base/java/util/List.html#add(int,java.lang.Object)[add](int, def)
+* boolean {java11-javadoc}/java.base/java/util/Collection.html#item(java.lang.Object)[item](def)
+* void {java11-javadoc}/java.base/java/util/List.html#item(int,java.lang.Object)[item](int, def)
 * boolean {java11-javadoc}/java.base/java/util/Collection.html#addAll(java.util.Collection)[addAll](Collection)
 * boolean {java11-javadoc}/java.base/java/util/List.html#addAll(int,java.util.Collection)[addAll](int, Collection)
 * boolean any(Predicate)

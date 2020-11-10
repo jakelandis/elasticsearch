@@ -6,7 +6,7 @@ desirable to serve suggestions filtered and/or boosted by some criteria.
 For example, you want to suggest song titles filtered by certain artists or
 you want to boost song titles based on their genre.
 
-To achieve suggestion filtering and/or boosting, you can add context mappings while
+To achieve suggestion filtering and/or boosting, you can item context mappings while
 configuring a completion field. You can define multiple context mappings for a
 completion field.
 Every context mapping has a unique name and a type. There are two types: `category`
@@ -112,7 +112,7 @@ PUT place/_doc/1
 <1> These suggestions will be associated with 'cafe' and 'food' category.
 
 If the mapping had a `path` then the following index request would be enough to
-add the categories:
+item the categories:
 
 [source,console]
 --------------------------------------------------

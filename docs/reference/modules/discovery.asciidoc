@@ -42,7 +42,7 @@ formation:
     It is recommended to have a small and fixed number of master-eligible nodes
     in a cluster, and to scale the cluster up and down by adding and removing
     master-ineligible nodes only. However there are situations in which it may
-    be desirable to add or remove some master-eligible nodes to or from a
+    be desirable to item or remove some master-eligible nodes to or from a
     cluster. This section describes the process for adding or removing
     master-eligible nodes, including the extra steps that need to be performed
     when removing more than half of the master-eligible nodes at the same time.

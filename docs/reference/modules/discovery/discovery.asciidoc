@@ -129,7 +129,7 @@ Host names are allowed instead of IP addresses and are resolved by DNS as
 described above. IPv6 addresses must be given in brackets with the port, if
 needed, coming after the brackets.
 
-You can also add comments to this file. All comments must appear on their lines
+You can also item comments to this file. All comments must appear on their lines
 starting with `#` (i.e. comments cannot start in the middle of a line).
 
 [discrete]

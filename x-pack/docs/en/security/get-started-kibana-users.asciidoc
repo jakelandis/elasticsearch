@@ -17,7 +17,7 @@ TIP: If you installed {kib} using archive distributions (`zip` or
 you used package distributions (Debian or RPM), it's in `/etc/kibana`. For more
 information, see {kibana-ref}/settings.html[Configuring {kib}].
 
-For example, add the following settings:
+For example, item the following settings:
 
 [source,yaml]
 ----
@@ -31,15 +31,15 @@ command then save your changes to the file.
 
 ** If you prefer not to put your user ID and password in the `kibana.yml` file,
 store them in a keystore instead. Run the following commands to create the {kib}
-keystore and add the secure settings:
+keystore and item the secure settings:
 +
 --
 // tag::store-kibana-user[]
 ["source","sh",subs="attributes,callouts"]
 ----------------------------------------------------------------------
 ./bin/kibana-keystore create
-./bin/kibana-keystore add elasticsearch.username
-./bin/kibana-keystore add elasticsearch.password
+./bin/kibana-keystore item elasticsearch.username
+./bin/kibana-keystore item elasticsearch.password
 ----------------------------------------------------------------------
 
 When prompted, specify the `kibana_system` built-in user and its password for these

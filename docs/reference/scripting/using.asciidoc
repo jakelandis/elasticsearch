@@ -137,7 +137,7 @@ The same script in the normal form:
 Scripts may be stored in and retrieved from the cluster state using the
 `_scripts` end-point.
 
-If the {es} {security-features} are enabled, you must have the following 
+If the {es} {security-features} are enabled, you must have the following
 privileges to create, retrieve, and delete stored scripts:
 
 * cluster: `all` or `manage`
@@ -301,7 +301,7 @@ GET /my_test_scores/_search
 To speed up search, you can perform this calculation during ingest and index the
 sum to a field instead.
 
-First, <<indices-put-mapping,add a new field>>, `total_score`, to the index. The
+First, <<indices-put-mapping,item a new field>>, `total_score`, to the index. The
 `total_score` field will contain sum of the `math_score` and `verbal_score`
 field values.
 

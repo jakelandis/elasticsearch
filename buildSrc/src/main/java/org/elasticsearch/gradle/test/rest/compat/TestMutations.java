@@ -24,6 +24,9 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Parent pojo to deserialize the compatible override instructions. replace, add, and remove are supported.
+ */
 public class TestMutations {
 
     private String testName;
@@ -37,10 +40,21 @@ public class TestMutations {
         this.replaceAction = new ReplaceAction(actions.get("replace"));
         this.addAction = new AddAction(actions.get("add"));
         this.removeAction = new RemoveAction(actions.get("remove"));
-
     }
     public String getTestName() {
         return testName;
+    }
+
+    public ReplaceAction getReplaceAction() {
+        return replaceAction;
+    }
+
+    public AddAction getAddAction() {
+        return addAction;
+    }
+
+    public RemoveAction getRemoveAction() {
+        return removeAction;
     }
 
     @Override
@@ -56,7 +70,20 @@ public class TestMutations {
 
 }
 
-
+//"Action to list contexts":
+//    replace:
+//    - value: foo
+//    with: bar
+//    - object: {match: {a:b}}
+//    with: {match: {c:d}}
+//    - location: /foo/bar
+//    with: {match: {c:d}}
+//    add:
+//    - location: /foo/bar
+//    object: {foo: bar}
+//    remove:
+//    - location: /foo/bar
+//    - object: { foo: bar }
 
 
 

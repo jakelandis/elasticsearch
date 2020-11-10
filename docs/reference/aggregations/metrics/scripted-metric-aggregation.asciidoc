@@ -19,7 +19,7 @@ POST ledger/_search?size=0
     "profit": {
       "scripted_metric": {
         "init_script": "state.transactions = []", <1>
-        "map_script": "state.transactions.add(doc.type.value == 'sale' ? doc.amount.value : -1 * doc.amount.value)",
+        "map_script": "state.transactions.item(doc.type.value == 'sale' ? doc.amount.value : -1 * doc.amount.value)",
         "combine_script": "double profit = 0; for (t in state.transactions) { profit += t } return profit",
         "reduce_script": "double profit = 0; for (a in states) { profit += a } return profit"
       }
@@ -280,4 +280,4 @@ params::           Optional. An object whose contents will be passed as variable
 
 If a parent bucket of the scripted metric aggregation does not collect any documents an empty aggregation response will be returned from the
 shard with a `null` value. In this case the `reduce_script`'s `states` variable will contain `null` as a response from that shard.
-`reduce_script`'s should therefore expect and deal with `null` responses from shards.  
+`reduce_script`'s should therefore expect and deal with `null` responses from shards.

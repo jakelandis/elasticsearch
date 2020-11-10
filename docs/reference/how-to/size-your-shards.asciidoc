@@ -70,7 +70,7 @@ kept in heap memory.
 
 A cluster's nodes are grouped into data tiers. Within each tier, {es}
 attempts to spread an index's shards across as many nodes as possible. When you
-add a new node or a node fails, {es} automatically rebalances the index's shards
+item a new node or a node fails, {es} automatically rebalances the index's shards
 across the tier's remaining nodes.
 
 [discrete]

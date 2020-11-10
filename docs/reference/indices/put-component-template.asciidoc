@@ -4,10 +4,10 @@
 <titleabbrev>Put component template</titleabbrev>
 ++++
 
-Creates or updates a component template. 
-Component templates are building blocks for constructing <<indices-templates,index templates>>.  
-that specify index <<mapping,mappings>>, <<index-modules-settings,settings>>, 
-and <<indices-aliases,aliases>>. 
+Creates or updates a component template.
+Component templates are building blocks for constructing <<indices-templates,index templates>>.
+that specify index <<mapping,mappings>>, <<index-modules-settings,settings>>,
+and <<indices-aliases,aliases>>.
 
 [source,console]
 --------------------------------------------------
@@ -55,10 +55,10 @@ DELETE _component_template/template_*
 [[put-component-template-api-desc]]
 ==== {api-description-title}
 
-An index template can be composed of multiple component templates. 
+An index template can be composed of multiple component templates.
 To use a component template, specify it in an index template's `composed_of` list.
-Component templates are only applied to new data streams and indices 
-as part of a matching index template. 
+Component templates are only applied to new data streams and indices
+as part of a matching index template.
 
 Settings and mappings specified directly in the index template or the <<indices-create-index, create index>>
 request override any settings or mappings specified in a component template.
@@ -101,7 +101,7 @@ This is the template to be applied, may optionally include a `mappings`,
 
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=aliases]
 +
-NOTE: You cannot add data streams to an index alias.
+NOTE: You cannot item data streams to an index alias.
 
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=mappings]
 
@@ -157,7 +157,7 @@ To be applied, a component template must be included in an index template's `com
 [[component-templates-version]]
 ===== Component template versioning
 
-You can use the `version` parameter to add a version number to a component template. 
+You can use the `version` parameter to item a version number to a component template.
 External systems can use these version numbers to simplify template management.
 
 The `version` parameter is optional and not automatically generated or used by {es}.
@@ -182,7 +182,7 @@ To check the `version`, you can use the <<getting-component-templates,get compon
 [[component-templates-metadata]]
 ===== Component template metadata
 
-You can use the `_meta` parameter to add arbitrary metadata to a component template. 
+You can use the `_meta` parameter to item arbitrary metadata to a component template.
 This user-defined object is stored in the cluster state,
 so keeping it short is preferrable.
 

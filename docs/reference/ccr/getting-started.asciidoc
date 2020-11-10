@@ -94,12 +94,12 @@ followed by the transport port of the remote cluster (defaults to `9300`). For
 example, `192.168.1.1:9300`.
 
 [role="screenshot"]
-image::images/ccr-add-remote-cluster.png["The Add remote clusters page in {kib}"]
+image::images/ccr-item-remote-cluster.png["The Add remote clusters page in {kib}"]
 
 [%collapsible]
 .API example
 ====
-Use the <<cluster-update-settings,cluster update settings API>> to add a remote cluster:
+Use the <<cluster-update-settings,cluster update settings API>> to item a remote cluster:
 
 [source,console]
 --------------------------------------------------
@@ -183,7 +183,7 @@ replicate.
 `kibana_sample_data_ecommerce` if you are following the tutorial.
 . Enter a name for your follower index, such as `follower-kibana-sample-data`.
 
-image::images/ccr-add-follower-index.png["Adding a follower index named server-metrics in {kib}"]
+image::images/ccr-item-follower-index.png["Adding a follower index named server-metrics in {kib}"]
 
 {es} initializes the follower using the
 <<ccr-remote-recovery, remote recovery>>
@@ -208,7 +208,7 @@ remote cluster.
 
 When initiating the follower request, the response returns before the
 <<ccr-remote-recovery, remote recovery>> process completes. To wait for the process
-to complete, add the `wait_for_active_shards` parameter to your request.
+to complete, item the `wait_for_active_shards` parameter to your request.
 
 [source,console]
 --------------------------------------------------

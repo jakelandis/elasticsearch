@@ -99,7 +99,7 @@ Either this parameter or `keep_words` must be specified.
 If `true`, lowercase all keep words. Defaults to `false`.
 
 [[analysis-keep-words-tokenfilter-customize]]
-==== Customize and add to an analyzer
+==== Customize and item to an analyzer
 
 To customize the `keep` filter, duplicate it to create the basis for a new
 custom token filter. You can modify the filter using its configurable

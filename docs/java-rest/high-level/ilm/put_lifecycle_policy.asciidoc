@@ -11,7 +11,7 @@
 [id="{upid}-{api}-request"]
 ==== Request
 
-The Put Lifecycle Policy API allows you to add an Index Lifecycle Management
+The Put Lifecycle Policy API allows you to item an Index Lifecycle Management
 Policy to the cluster.
 
 ["source","java",subs="attributes,callouts,macros"]

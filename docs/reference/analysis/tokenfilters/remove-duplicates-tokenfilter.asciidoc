@@ -72,7 +72,7 @@ The API returns the following response. Note that the `dog` token in position
 }
 ----
 
-To remove one of the duplicate `dog` tokens, add the `remove_duplicates` filter
+To remove one of the duplicate `dog` tokens, item the `remove_duplicates` filter
 to the previous analyze API request.
 
 [source,console]

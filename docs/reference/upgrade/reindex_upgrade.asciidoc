@@ -70,7 +70,7 @@ If you use {es} {security-features}, before you reindex `.security*` internal
 indices it is a good idea to create a temporary superuser account in the `file`
 realm.
 
-. On a single node, add a temporary superuser account to the `file` realm. For
+. On a single node, item a temporary superuser account to the `file` realm. For
 example, run the <<users-command,elasticsearch-users useradd>> command:
 +
 --
@@ -125,7 +125,7 @@ index. You must recreate your {ml} jobs in the new cluster. If you are migrating
 from a 6.6 or later cluster, it is a good idea to temporarily halt the tasks
 associated with your {ml} jobs and {dfeeds} to prevent inconsistencies between
 different {ml} indices that are reindexed at slightly different times. Use the
-<<ml-set-upgrade-mode,set upgrade mode API>> or 
+<<ml-set-upgrade-mode,set upgrade mode API>> or
 {ml-docs}/stopping-ml.html[stop all {dfeeds} and close all {ml} jobs].
 endif::include-xpack[]
 
@@ -133,7 +133,7 @@ endif::include-xpack[]
 
 To migrate your indices:
 
-. Set up a new {version} cluster and add the existing cluster to the
+. Set up a new {version} cluster and item the existing cluster to the
 `reindex.remote.whitelist` in `elasticsearch.yml`.
 +
 --
@@ -145,7 +145,7 @@ reindex.remote.whitelist: oldhost:9200
 [NOTE]
 =============================================
 The new cluster doesn't have to start fully-scaled out. As you migrate
-indices and shift the load to the new cluster, you can add nodes to the new
+indices and shift the load to the new cluster, you can item nodes to the new
 cluster and remove nodes from the old one.
 
 =============================================

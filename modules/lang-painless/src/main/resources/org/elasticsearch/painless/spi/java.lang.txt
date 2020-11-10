@@ -42,7 +42,7 @@ class java.lang.CharSequence {
   String toString()
 }
 
-# Cloneable: add clone() to subclasses directly.
+# Cloneable: item clone() to subclasses directly.
 
 class java.lang.Comparable {
   int compareTo(def)

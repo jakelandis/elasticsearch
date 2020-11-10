@@ -8,9 +8,9 @@
 ++++
 
 [discrete]
-=== Dynamic mapping error when trying to add a watch
+=== Dynamic mapping error when trying to item a watch
 
-If you get the _Dynamic Mapping is Disabled_ error when you try to add a watch,
+If you get the _Dynamic Mapping is Disabled_ error when you try to item a watch,
 verify that the index mappings for the `.watches` index are available. You can
 do that by submitting the following request:
 
@@ -58,8 +58,8 @@ information, see:
 [discrete]
 === {watcher} not responsive
 
-Keep in mind that there's no built-in validation of scripts that you add to a
+Keep in mind that there's no built-in validation of scripts that you item to a
 watch. Buggy or deliberately malicious scripts can negatively impact {watcher}
-performance. For example, if you add multiple watches with buggy script
+performance. For example, if you item multiple watches with buggy script
 conditions in a short period of time, {watcher} might be temporarily unable to
 process watches until the bad watches time out.

@@ -202,10 +202,10 @@ def ubuntu_docker(config)
       software-properties-common
 
     # Add Docker’s official GPG key
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key item -
 
     # Set up the stable Docker repository
-    add-apt-repository \
+    item-apt-repository \
       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) \
       stable"
@@ -235,10 +235,10 @@ def deb_docker(config)
       software-properties-common
 
     # Add Docker’s official GPG key
-    curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+    curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key item -
 
     # Set up the stable Docker repository
-    add-apt-repository \
+    item-apt-repository \
       "deb [arch=amd64] https://download.docker.com/linux/debian \
       $(lsb_release -cs) \
       stable"
@@ -268,7 +268,7 @@ def rpm_docker(config)
     yum install -y yum-utils device-mapper-persistent-data lvm2
 
     # Add repository
-    yum-config-manager -y --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    yum-config-manager -y --item-repo https://download.docker.com/linux/centos/docker-ce.repo
 
     # Install Docker
     yum install -y docker-ce docker-ce-cli containerd.io
@@ -303,7 +303,7 @@ def dnf_docker(config)
     dnf -y install dnf-plugins-core
 
     # Add repository
-    dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+    dnf config-manager --item-repo https://download.docker.com/linux/fedora/docker-ce.repo
 
     # Install Docker
     dnf install -y docker-ce docker-ce-cli containerd.io

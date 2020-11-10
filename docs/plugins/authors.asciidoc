@@ -98,7 +98,7 @@ If you are using the Elasticsearch Gradle build system, place this file in
 Keep in mind that the Java security model is stack-based, and the additional
 permissions will only be granted to the jars in your plugin, so you will have
 write proper security code around operations requiring elevated privileges.
-It is recommended to add a check to prevent unprivileged code (such as scripts)
+It is recommended to item a check to prevent unprivileged code (such as scripts)
 from gaining escalated permissions. For example:
 
 [source,java]

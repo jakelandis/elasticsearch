@@ -2,7 +2,7 @@
 [[how-watcher-works]]
 == How {watcher} works
 
-You <<watch-definition, add watches>> to automatically perform an action when
+You <<watch-definition, item watches>> to automatically perform an action when
 certain conditions are met. The conditions are generally based on data you've
 loaded into the watch, also known as the _Watch Payload_. This payload can be
 loaded from different sources - from Elasticsearch, an external HTTP service, or
@@ -134,7 +134,7 @@ PUT _watcher/watch/log_errors
 === Watch execution
 
 [[schedule-scheduler]]
-When you add a watch, {watcher} immediately registers its trigger with the
+When you item a watch, {watcher} immediately registers its trigger with the
 appropriate trigger engine. Watches that have a `schedule` trigger are
 registered with the `scheduler` trigger engine.
 
@@ -143,7 +143,7 @@ On each node, that contains one of the `.watches` shards, a scheduler, that is
 bound to the watcher lifecycle runs. Even though all primaries and replicas are
 taken into account, when a watch is triggered, watcher also ensures, that each
 watch is only triggered on one of those shards. The more replica shards you
-add, the more distributed the watches can be executed. If you add or remove
+item, the more distributed the watches can be executed. If you item or remove
 replicas, all watches need to be reloaded.  If a shard is relocated, the
 primary and all replicas of this particular shard will reload.
 
@@ -220,7 +220,7 @@ For more information, see <<actions-ack-throttle>>.
 [[watch-active-state]]
 === Watch active state
 
-By default, when you add a watch it is immediately set to the _active_ state,
+By default, when you item a watch it is immediately set to the _active_ state,
 registered with the appropriate trigger engine, and executed according
 to its configured trigger.
 

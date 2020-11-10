@@ -31,7 +31,7 @@ indices.
 . <<ilm-gs-check-progress, Verify indices are moving through the lifecycle phases>>
 as expected.
 
-For an introduction to rolling indices, see <<index-rollover>>. 
+For an introduction to rolling indices, see <<index-rollover>>.
 
 IMPORTANT: When you enable {ilm} for {beats} or the {ls} {es} output plugin,
 lifecycle policies are set up automatically.
@@ -46,17 +46,17 @@ or the {ilm-init} APIs.
 
 A lifecycle policy specifies the phases in the index lifecycle
 and the actions to perform in each phase. A lifecycle can have up to four phases:
-`hot`, `warm`, `cold`, and `delete`. 
+`hot`, `warm`, `cold`, and `delete`.
 
 For example, you might define a `timeseries_policy` that has two phases:
- 
-* A `hot` phase that defines a rollover action to specify that an index rolls over when it 
+
+* A `hot` phase that defines a rollover action to specify that an index rolls over when it
 reaches either a `max_size` of 50 gigabytes or a `max_age` of 30 days.
 * A `delete` phase that sets `min_age` to remove the index 90 days after rollover.
-Note that this value is relative to the rollover time, not the index creation time. 
+Note that this value is relative to the rollover time, not the index creation time.
 
-You can create the policy through {kib} or with the 
-<<ilm-put-lifecycle, put policy>> API. 
+You can create the policy through {kib} or with the
+<<ilm-put-lifecycle, put policy>> API.
 To create the policy from {kib}, open the menu and go to *Stack Management >
 Index Lifecycle Policies*. Click *Index Lifecycle Policies*.
 
@@ -110,7 +110,7 @@ To enable the {ilm-init} to manage the data stream, the template configures one 
 
 * `index.lifecycle.name` specifies the name of the lifecycle policy to apply to the data stream.
 
-You can use the {kib} Create template wizard to add the template. From Kibana,
+You can use the {kib} Create template wizard to item the template. From Kibana,
 open the menu and go to *Stack Management > Index Management*. In the *Index
 Templates* tab, click *Create template*.
 
@@ -309,7 +309,7 @@ that match the index pattern.
 * `index.lifecycle.rollover_alias` specifies the index alias to be rolled over
 when the rollover action is triggered for an index.
 
-You can use the {kib} Create template wizard to add the template. To access the
+You can use the {kib} Create template wizard to item the template. To access the
 wizard, open the menu and go to *Stack Management > Index Management*. In the
 the *Index Templates* tab, click *Create template*.
 

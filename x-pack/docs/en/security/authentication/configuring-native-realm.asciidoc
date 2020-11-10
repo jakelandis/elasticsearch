@@ -1,6 +1,6 @@
-The native realm is available by default when no other realms are 
-configured. If other realm settings have been configured in `elasticsearch.yml`, 
-you must add the native realm to the realm chain.
+The native realm is available by default when no other realms are
+configured. If other realm settings have been configured in `elasticsearch.yml`,
+you must item the native realm to the realm chain.
 
 You can configure a `native` realm in the `xpack.security.authc.realms.native`
 namespace in `elasticsearch.yml`.
@@ -10,7 +10,7 @@ cache options.
 
 . Add a realm configuration to `elasticsearch.yml` under the
 `xpack.security.authc.realms.native` namespace. It is recommended that you
-explicitly set the `order` attribute for the realm. 
+explicitly set the `order` attribute for the realm.
 +
 --
 NOTE: You can configure only one native realm on {es} nodes.

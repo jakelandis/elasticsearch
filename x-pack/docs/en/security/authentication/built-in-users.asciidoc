@@ -92,7 +92,7 @@ new bootstrap password:
 
 [source,shell]
 ----------------------------------------------------
-bin/elasticsearch-keystore add "bootstrap.password"
+bin/elasticsearch-keystore item "bootstrap.password"
 ----------------------------------------------------
 
 You can then start {es} and {kib} and use the `elastic` user and bootstrap
@@ -101,10 +101,10 @@ submit Change Password API requests for each built-in user. These methods are
 better suited for changing your passwords after the initial setup is complete,
 since at that point the bootstrap password is no longer required.
 
-[[add-built-in-user-passwords]]
+[[item-built-in-user-passwords]]
 
 [discrete]
-[[add-built-in-user-kibana]]
+[[item-built-in-user-kibana]]
 ==== Adding built-in user passwords to {kib}
 
 After the `kibana_system` user password is set, you need to update the {kib} server
@@ -119,7 +119,7 @@ elasticsearch.password: kibanapassword
 See {kibana-ref}/using-kibana-with-security.html[Configuring security in {kib}].
 
 [discrete]
-[[add-built-in-user-logstash]]
+[[item-built-in-user-logstash]]
 ==== Adding built-in user passwords to {ls}
 
 The `logstash_system` user is used internally within Logstash when
@@ -146,7 +146,7 @@ PUT _security/user/logstash_system/_enable
 See {logstash-ref}/ls-security.html#ls-monitoring-user[Configuring credentials for {ls} monitoring].
 
 [discrete]
-[[add-built-in-user-beats]]
+[[item-built-in-user-beats]]
 ==== Adding built-in user passwords to Beats
 
 The `beats_system` user is used internally within Beats when monitoring is
@@ -173,7 +173,7 @@ the case, then you should use the *Management > Users* page in {kib} or the
 for these users.
 
 [discrete]
-[[add-built-in-user-apm]]
+[[item-built-in-user-apm]]
 ==== Adding built-in user passwords to APM
 
 The `apm_system` user is used internally within APM when monitoring is enabled.

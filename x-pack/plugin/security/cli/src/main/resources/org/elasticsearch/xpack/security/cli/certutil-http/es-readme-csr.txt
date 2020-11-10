@@ -37,7 +37,7 @@ configuration setting in Elasticsearch so that it can decrypt your private key.
 
 The command for this is:
 
-   elasticsearch-keystore add "xpack.security.http.ssl.secure_key_passphrase"
+   elasticsearch-keystore item "xpack.security.http.ssl.secure_key_passphrase"
 
 #else
 Your private key is not password protected.

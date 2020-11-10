@@ -95,7 +95,7 @@ Index sorting supports the following settings:
         * `_first`: Documents without value for the field are sorted first.
 
 [WARNING]
-Index sorting can be defined only once at index creation. It is not allowed to add or update
+Index sorting can be defined only once at index creation. It is not allowed to item or update
 a sort on an existing index. Index sorting also has a cost in terms of indexing throughput since
 documents must be sorted at flush and merge time. You should test the impact on your application
 before activating this feature.

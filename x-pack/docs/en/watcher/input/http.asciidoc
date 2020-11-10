@@ -8,13 +8,13 @@ response into the watch execution context when the watch is triggered. See
 
 With the `http` input, you can:
 
-* Query external Elasticsearch clusters. The `http` input provides a way 
-  to submit search requests to clusters other than the one {watcher} is running 
-  on. This is useful when you're running a dedicated {watcher} cluster or if you 
+* Query external Elasticsearch clusters. The `http` input provides a way
+  to submit search requests to clusters other than the one {watcher} is running
+  on. This is useful when you're running a dedicated {watcher} cluster or if you
   need to search clusters that are running different Elasticsearch versions.
 
 * Query Elasticsearch APIs other than the search API. For example, you might want
-  to load data from the <<cluster-nodes-stats,nodes stats>>, 
+  to load data from the <<cluster-nodes-stats,nodes stats>>,
   <<cluster-health,cluster health>> or <<cluster-state,cluster state>> APIs.
 
 * Query external web services. The `http` input enables you to load data from
@@ -24,9 +24,9 @@ With the `http` input, you can:
 ==== Querying external Elasticsearch clusters
 
 To query an external Elasticsearch cluster, you specify the cluster's
-`host` and `port` attributes and the index's search endpoint as the `path`. 
+`host` and `port` attributes and the index's search endpoint as the `path`.
 If you omit the search body, the request returns all documents in the specified
-index: 
+index:
 
 [source,js]
 --------------------------------------------------
@@ -43,7 +43,7 @@ index:
 // NOTCONSOLE
 
 You can use the full Elasticsearch <<query-dsl,query DSL>> to perform
-more sophisticated searches. For example, the following `http` input retrieves 
+more sophisticated searches. For example, the following `http` input retrieves
 all documents that contain `event` in the `category` field:
 
 [source,js]
@@ -65,7 +65,7 @@ all documents that contain `event` in the `category` field:
 
 To load the data from other Elasticsearch APIs, specify the API
 endpoint as the `path` attribute. Use the `params` attribute to specify
-query string parameters. For example, the following `http` input 
+query string parameters. For example, the following `http` input
 calls the <<cluster-stats,cluster stats>> API and enables the `human` attribute:
 
 [source,js]
@@ -115,7 +115,7 @@ a username and password to access `myservice`:
 // NOTCONSOLE
 
 You can also pass in service-specific API keys and other information
-through the `params` attribute. For example, the following `http` 
+through the `params` attribute. For example, the following `http`
 input loads the current weather forecast for Amsterdam from the
 http://openweathermap.org/appid[OpenWeatherMap] service:
 
@@ -162,18 +162,18 @@ and restrict the results to documents added within the last five minutes:
 ==== Accessing the HTTP response
 
 If the response body is formatted in  JSON or YAML, it is parsed and loaded into
-the execution context. If the response body is not formatted in JSON or YAML, it 
-is loaded into the payload's `_value` field. 
+the execution context. If the response body is not formatted in JSON or YAML, it
+is loaded into the payload's `_value` field.
 
-Conditions, transforms, and actions access the response data through the 
-execution context. For example, if the response contains a `message` 
-object, you can use `ctx.payload.message` to access the message data. 
+Conditions, transforms, and actions access the response data through the
+execution context. For example, if the response contains a `message`
+object, you can use `ctx.payload.message` to access the message data.
 
 In addition all the headers from the response can be accessed using the
 `ctx.payload._headers` field as well as the HTTP status code of the response using
 `ctx.payload._status_code`.
 
-      
+
 [[http-input-attributes]]
 ==== HTTP input attributes
 
@@ -201,7 +201,7 @@ In addition all the headers from the response can be accessed using the
                                                        static text or contain `mustache` <<templates,templates>>.
 
 | `request.url`                 | no       | -       | Allows you to set `request.scheme`, `request.host`, `request.port`
-                                                       and `request.params` add once by specifying a real URL, like
+                                                       and `request.params` item once by specifying a real URL, like
                                                        `https://www.example.org:1234/mypath?foo=bar`. May not be combined
                                                        with on of those four parameters. As those parameters are set,
                                                        specifying them individually might overwrite them.
@@ -220,7 +220,7 @@ In addition all the headers from the response can be accessed using the
 
 | `request.read_timeout`        | no       | 10s     | The timeout for reading data from http connection. If no response
                                                        was received within this time, the input will timeout and fail.
-                                                      
+
 
 | `request.body`                | no       | -       | The HTTP request body. The body can be static text or include
                                                        `mustache` <<templates,templates>>.

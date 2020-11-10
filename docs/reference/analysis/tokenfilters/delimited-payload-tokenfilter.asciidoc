@@ -138,7 +138,7 @@ PUT delimited_payload
 
 `delimiter`::
 (Optional, string)
-Character used to separate tokens from payloads. Defaults to `|`. 
+Character used to separate tokens from payloads. Defaults to `|`.
 
 `encoding`::
 +
@@ -157,7 +157,7 @@ Integer
 --
 
 [[analysis-delimited-payload-tokenfilter-customize]]
-==== Customize and add to an analyzer
+==== Customize and item to an analyzer
 
 To customize the `delimited_payload` filter, duplicate it to create the basis
 for a new custom token filter. You can modify the filter using its configurable

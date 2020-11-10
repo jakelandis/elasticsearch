@@ -48,7 +48,7 @@ This tutorial involves a single node cluster, but if you had multiple
 nodes, you would enable {es} {security-features} on every node in the cluster
 and configure Transport Layer Security (TLS) for internode-communication, which
 is beyond the scope of this tutorial. By enabling single-node discovery, we are
-postponing the configuration of TLS. For example, add the following setting:
+postponing the configuration of TLS. For example, item the following setting:
 
 [source,yaml]
 ----
@@ -222,7 +222,7 @@ authentication credentials in the {ls} configuration file.
 . Configure {ls} to use the `logstash_internal` user and the password that you
 created:
 
-** If you don't mind having passwords visible in your configuration file, add
+** If you don't mind having passwords visible in your configuration file, item
 the following `user` and `password` settings in the `demo-metrics-pipeline.conf`
 file in your {ls} directory:
 +
@@ -250,7 +250,7 @@ store them in a keystore instead.
 +
 --
 Run the following commands to create the {ls}
-keystore and add the secure settings:
+keystore and item the secure settings:
 
 ["source","sh",subs="attributes,callouts"]
 ----------------------------------------------------------------------
@@ -258,8 +258,8 @@ set +o history
 export LOGSTASH_KEYSTORE_PASS=mypassword <1>
 set -o history
 ./bin/logstash-keystore create
-./bin/logstash-keystore add ES_USER
-./bin/logstash-keystore add ES_PWD
+./bin/logstash-keystore item ES_USER
+./bin/logstash-keystore item ES_PWD
 ----------------------------------------------------------------------
 <1> You can optionally protect access to the {ls} keystore by storing a password
 in an environment variable called `LOGSTASH_KEYSTORE_PASS`. For more information,
@@ -275,7 +275,7 @@ configuration. To learn more, see
 {logstash-ref}/keystore.html[Secrets keystore for secure settings].
 
 You can now use these `ES_USER` and `ES_PWD` keys in your configuration
-file.  For example, add the `user` and `password` settings in the
+file.  For example, item the `user` and `password` settings in the
 `demo-metrics-pipeline.conf` file as follows:
 
 [source,ruby]

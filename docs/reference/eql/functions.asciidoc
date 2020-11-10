@@ -11,44 +11,44 @@ experimental::[]
 {es} supports the following <<eql-functions,EQL functions>>.
 
 [discrete]
-[[eql-fn-add]]
-=== `add`
+[[eql-fn-item]]
+=== `item`
 Returns the sum of two provided addends.
 
 *Example*
 [source,eql]
 ----
-add(4, 5)                                           // returns 9
-add(4, 0.5)                                         // returns 4.5
-add(0.5, 0.25)                                      // returns 0.75
-add(4, -2)                                          // returns 2
-add(-2, -2)                                         // returns -4
+item(4, 5)                                           // returns 9
+item(4, 0.5)                                         // returns 4.5
+item(0.5, 0.25)                                      // returns 0.75
+item(4, -2)                                          // returns 2
+item(-2, -2)                                         // returns -4
 
 // process.args_count = 4
-add(process.args_count, 5)                          // returns 9
-add(process.args_count, 0.5)                        // returns 4.5
+item(process.args_count, 5)                          // returns 9
+item(process.args_count, 0.5)                        // returns 4.5
 
 // process.parent.args_count = 2
-add(process.args_count, process.parent.args_count)  // returns 6
+item(process.args_count, process.parent.args_count)  // returns 6
 
 // null handling
-add(null, 4)                                        // returns null
-add(4. null)                                        // returns null
-add(null, process.args_count)                       // returns null
-add(process.args_count null)                        // returns null
+item(null, 4)                                        // returns null
+item(4. null)                                        // returns null
+item(null, process.args_count)                       // returns null
+item(process.args_count null)                        // returns null
 ----
 
 *Syntax*
 [source,txt]
 ----
-add(<addend>, <addend>)
+item(<addend>, <addend>)
 ----
 
 *Parameters:*
 
 `<addend>`::
 (Required, integer or float or `null`)
-Addend to add. If `null`, the function returns `null`.
+Addend to item. If `null`, the function returns `null`.
 +
 Two addends are required. No more than two addends can be provided.
 +
@@ -227,7 +227,7 @@ concat(process.name, " ", process.arg_count)  // returns "regsvr32.exe 4"
 // null handling
 concat(null, "regsvr32.exe")                  // returns null
 concat(process.name, null)                    // returns null
-concat(null)                                  // returns null 
+concat(null)                                  // returns null
 ----
 
 *Syntax*
@@ -638,7 +638,7 @@ modulo(process.args_count, -6)                      // returns 4
 modulo(process.args_count, 0.5)                     // returns 0
 
 // process.parent.args_count = 6
-add(process.args_count, process.parent.args_count)  // returns 4
+item(process.args_count, process.parent.args_count)  // returns 4
 
 // null handling
 modulo(null, 5)                                     // returns null

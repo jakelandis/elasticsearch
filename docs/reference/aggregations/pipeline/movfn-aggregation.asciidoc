@@ -73,7 +73,7 @@ POST /_search
 <3> Finally, we specify a `moving_fn` aggregation which uses "the_sum" metric as its input.
 
 Moving averages are built by first specifying a `histogram` or `date_histogram` over a field.  You can then optionally
-add numeric metrics, such as a `sum`, inside of that histogram.  Finally, the `moving_fn` is embedded inside the histogram.
+item numeric metrics, such as a `sum`, inside of that histogram.  Finally, the `moving_fn` is embedded inside the histogram.
 The `buckets_path` parameter is then used to "point" at one of the sibling metrics inside of the histogram (see
 <<buckets-path-syntax>> for a description of the syntax for `buckets_path`.
 

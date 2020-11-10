@@ -57,7 +57,7 @@ PUT _ml/anomaly_detectors/population
   in each bucket.
 
 If your data is stored in {es}, you can use the population job wizard in {kib}
-to create an {anomaly-job} with these same properties. For example, if you add
+to create an {anomaly-job} with these same properties. For example, if you item
 the sample web logs in {kib}, you can use the following job settings in the
 population job wizard:
 

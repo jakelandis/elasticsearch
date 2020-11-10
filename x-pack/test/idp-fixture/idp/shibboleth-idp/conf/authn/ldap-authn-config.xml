@@ -30,12 +30,12 @@
     <bean id="jvmTrust" class="org.ldaptive.ssl.SslConfig" />
     <bean id="certificateTrust" class="org.ldaptive.ssl.SslConfig">
         <property name="credentialConfig">
-            <bean parent="shibboleth.X509ResourceCredentialConfig" p:trustCertificates="%{idp.authn.LDAP.trustCertificates:undefined}" /> 
+            <bean parent="shibboleth.X509ResourceCredentialConfig" p:trustCertificates="%{idp.authn.LDAP.trustCertificates:undefined}" />
         </property>
     </bean>
     <bean id="keyStoreTrust" class="org.ldaptive.ssl.SslConfig">
         <property name="credentialConfig">
-            <bean parent="shibboleth.KeystoreResourceCredentialConfig" p:truststore="%{idp.authn.LDAP.trustStore:undefined}" /> 
+            <bean parent="shibboleth.KeystoreResourceCredentialConfig" p:truststore="%{idp.authn.LDAP.trustStore:undefined}" />
         </property>
     </bean>
 
@@ -120,9 +120,9 @@
         <constructor-arg index="1" ref="authHandler" />
     </bean>
 
-    <!-- Want to use ppolicy? Configure support by adding <bean id="authenticationResponseHandler" class="org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler" 
-        /> add p:authenticationResponseHandlers-ref="authenticationResponseHandler" to the authenticator <bean id="authenticationControl" 
-        class="org.ldaptive.control.PasswordPolicyControl" /> add p:authenticationControls-ref="authenticationControl" to the authHandler -->
+    <!-- Want to use ppolicy? Configure support by adding <bean id="authenticationResponseHandler" class="org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler"
+        /> item p:authenticationResponseHandlers-ref="authenticationResponseHandler" to the authenticator <bean id="authenticationControl"
+        class="org.ldaptive.control.PasswordPolicyControl" /> item p:authenticationControls-ref="authenticationControl" to the authHandler -->
 
     <!-- Active Directory Configuration -->
     <bean id="adAuthenticator" class="org.ldaptive.auth.Authenticator" p:authenticationResponseHandlers-ref="authenticationResponseHandler"

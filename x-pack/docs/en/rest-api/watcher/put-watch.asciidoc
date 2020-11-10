@@ -162,7 +162,7 @@ PUT _watcher/watch/my-watch
 }
 --------------------------------------------------
 
-When you add a watch you can also define its initial
+When you item a watch you can also define its initial
 <<watch-active-state,active state>>. You do that
 by setting the `active` parameter. The following command adds a watch and sets
 it to be inactive by default:

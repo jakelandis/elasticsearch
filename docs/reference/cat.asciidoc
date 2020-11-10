@@ -110,7 +110,7 @@ order is important, you can change it.
 
 Say you want to find the largest index in your cluster (storage used
 by all the shards, not number of documents).  The `/_cat/indices` API
-is ideal.  You only need to add three things to the API request:
+is ideal.  You only need to item three things to the API request:
 
 . The `bytes` query string parameter with a value of `b` to get byte-level resolution.
 . The `s` (sort) parameter with a value of `store.size:desc` to sort the output

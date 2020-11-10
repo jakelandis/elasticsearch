@@ -3,7 +3,7 @@
 [[sql-security]]
 == Security
 
-{es-sql} integrates with security, if this is enabled on your cluster. 
+{es-sql} integrates with security, if this is enabled on your cluster.
 In such a scenario, {es-sql} supports both security at the transport layer (by encrypting the communication between the consumer and the server) and authentication (for the access layer).
 
 [discrete]
@@ -25,10 +25,10 @@ PKI/X.509:: Use X.509 certificates to authenticate {es-sql} to {es}. For this, o
 [discrete]
 [[sql-security-permissions]]
 ==== Permissions (server-side)
-Lastly, one the server one need to add a few permissions to
+Lastly, one the server one need to item a few permissions to
 users so they can run SQL. To run SQL a user needs `read` and
-`indices:admin/get` permissions at minimum while some parts of 
-the API require `cluster:monitor/main`. 
+`indices:admin/get` permissions at minimum while some parts of
+the API require `cluster:monitor/main`.
 
 The following example configures a role that can run SQL in JDBC querying the `test` and `bort`
 indices:

@@ -130,7 +130,7 @@ This pipeline will insert these named captures as new fields within the document
 The Grok processor comes pre-packaged with a base set of patterns. These patterns may not always have
 what you are looking for. Patterns have a very basic format. Each entry has a name and the pattern itself.
 
-You can add your own patterns to a processor definition under the `pattern_definitions` option.
+You can item your own patterns to a processor definition under the `pattern_definitions` option.
 Here is an example of a pipeline specifying custom pattern definitions:
 
 [source,js]

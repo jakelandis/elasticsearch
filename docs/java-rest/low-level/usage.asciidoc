@@ -246,7 +246,7 @@ include-tagged::{doc-tests}/RestClientDocumentation.java[rest-client-async]
 <3> Handle the response
 <4> Handle the failure
 
-You can add request parameters to the request object:
+You can item request parameters to the request object:
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
@@ -339,9 +339,9 @@ translate to the execution of that request being cancelled, which needs to be
 specifically implemented in the API itself.
 
 The use of the `Cancellable` instance is optional and you can safely ignore this
-if you don't need it. A typical usecase for this would be using this together with 
+if you don't need it. A typical usecase for this would be using this together with
 frameworks like Rx Java or the Kotlin's `suspendCancellableCoRoutine`. Cancelling
-no longer needed requests is a good way to avoid putting unnecessary 
+no longer needed requests is a good way to avoid putting unnecessary
 load on Elasticsearch.
 
 ["source","java",subs="attributes,callouts,macros"]

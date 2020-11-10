@@ -6,7 +6,7 @@
 <titleabbrev>Manage {filebeat} time-based indices</titleabbrev>
 ++++
 
-With {ilm} ({ilm-init}), you can create policies that perform actions automatically 
+With {ilm} ({ilm-init}), you can create policies that perform actions automatically
 on indices as they age and grow. {ilm-init} policies help you to manage
 performance, resilience, and retention of your data during its lifecycle. This tutorial shows
 you how to use {kib}’s *Index Lifecycle Policies* to modify and create {ilm-init}
@@ -37,12 +37,12 @@ log data has the following data retention guidelines:
 To complete this tutorial, you'll need:
 
 * An {es} cluster with hot and warm nodes configured for shard allocation
-awareness. 
+awareness.
 
-** {ess}: 
+** {ess}:
 Choose the Elastic Stack and then the {cloud}/ec-getting-started-profiles.html#ec-getting-started-profiles-hot-warm[hot-warm architecture] hardware profile.
 
-** Self-managed cluster: 
+** Self-managed cluster:
 Add node attributes as described for {ref}/shard-allocation-filtering.html[shard allocation filtering].
 +
 For example, you can set this in your `elasticsearch.yml` for each data node:
@@ -85,7 +85,7 @@ You can modify the policy to meet more complex requirements.
 +
 --
 [role="screenshot"]
-image::images/ilm/tutorial-ilm-modify-default-warm-phase-rollover.png["Modify to add warm phase"]
+image::images/ilm/tutorial-ilm-modify-default-warm-phase-rollover.png["Modify to item warm phase"]
 
 .. Set one of the following options to control when the index moves to the warm phase:
 
@@ -138,7 +138,7 @@ To create a custom policy:
 **Number of segments**: 1
 
 [role="screenshot"]
-image::images/ilm/tutorial-ilm-custom-policy.png["Modify the custom policy to add a warm phase"]
+image::images/ilm/tutorial-ilm-custom-policy.png["Modify the custom policy to item a warm phase"]
 --
 
 . Activate the delete phase and set the timing to 90 days.

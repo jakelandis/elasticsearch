@@ -22,21 +22,28 @@ package org.elasticsearch.gradle.test.rest.compat;
 import org.elasticsearch.gradle.test.GradleUnitTestCase;
 
 import java.io.File;
+import java.util.Map;
 
-public class TestMutationsParserTests extends GradleUnitTestCase {
+public class TestMutationsTests extends GradleUnitTestCase {
 
     public void testSingleTest() throws Exception {
 
         File singleTest = new File(getClass().getResource("/10_single.yml").toURI());
-        MutateTest.readMutations(singleTest);
+        MutateTest.readInstructions(singleTest);
 
 
     }
 
     public void testMultipleTests() throws Exception {
 
-        File multipleTests = new File(getClass().getResource("/20_multiple.yml").toURI());
-        MutateTest.readMutations(multipleTests);
+        File instructions = new File(getClass().getResource("/20_multiple.yml").toURI());
+
+        File originalTest = new File(getClass().getResource("/71_context_api.yml").toURI());
+        Map<String, TestMutations> mutations = MutateTest.readInstructions(instructions);
+        mutations.forEach((k,v) -> System.out.println("** Found mutations for test: " + k + "\n" + v) );
+        MutateTest.mutateTest(originalTest, mutations );
+
+
 
     }
 

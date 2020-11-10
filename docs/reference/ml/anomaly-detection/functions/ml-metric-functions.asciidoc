@@ -15,8 +15,8 @@ The {ml-features} include the following metric functions:
 * <<ml-metric-metric,`metric`>>
 * xref:ml-metric-varp[`varp`, `high_varp`, `low_varp`]
 
-NOTE: You cannot add rules with conditions to detectors that use the `metric` 
-function. 
+NOTE: You cannot item rules with conditions to detectors that use the `metric`
+function.
 
 [discrete]
 [[ml-metric-min]]

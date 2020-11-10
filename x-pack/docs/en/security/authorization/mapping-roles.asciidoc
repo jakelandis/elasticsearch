@@ -37,7 +37,7 @@ NOTE: Users with no roles assigned will be unauthorized for any action.
 ==== Using the role mapping API
 
 You can define role-mappings through the
-<<security-api-put-role-mapping,add role mapping API>>.
+<<security-api-put-role-mapping,item role mapping API>>.
 
 [[mapping-roles-file]]
 ==== Using role mapping files
@@ -49,10 +49,10 @@ this.
 By default, role mappings are stored in `ES_PATH_CONF/role_mapping.yml`,
 where `ES_PATH_CONF` is `ES_HOME/config` (zip/tar installations) or
 `/etc/elasticsearch` (package installations). To specify a different location,
-you configure the `files.role_mapping` setting in the 
-<<ref-ad-settings,Active Directory>>, 
-<<ref-ldap-settings,LDAP>>, and 
-<<ref-pki-settings,PKI>> realm settings in 
+you configure the `files.role_mapping` setting in the
+<<ref-ad-settings,Active Directory>>,
+<<ref-ldap-settings,LDAP>>, and
+<<ref-pki-settings,PKI>> realm settings in
 `elasticsearch.yml`.
 
 Within the role mapping file, the security roles are keys and groups and users
@@ -67,9 +67,9 @@ this is a common setting in Elasticsearch, changing its value might effect other
 schedules in the system.
 
 While the _role mapping APIs_ is the preferred way to manage role mappings, using
-the `role_mappings.yml` file becomes useful in a couple of use cases: 
+the `role_mappings.yml` file becomes useful in a couple of use cases:
 
-. If you want to define fixed role mappings that no one (besides an administrator 
+. If you want to define fixed role mappings that no one (besides an administrator
 with physical access to the {es} nodes) would be able to change.
 
 . If cluster administration depends on users from external realms and these users
@@ -82,7 +82,7 @@ as a minimal administrative function and is not intended to cover and be used to
 define roles for all use cases.
 
 IMPORTANT: You cannot view, edit, or remove any roles that are defined in the role
-mapping files by using the the role mapping APIs. 
+mapping files by using the the role mapping APIs.
 
 ==== Realm specific details
 [discrete]

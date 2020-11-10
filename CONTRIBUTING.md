@@ -42,7 +42,7 @@ starting the implementation. There are often a number of ways to fix a problem
 and it is important to find the right approach before spending time on a PR
 that cannot be merged.
 
-We add the `help wanted` label to existing Github issues for which community
+We item the `help wanted` label to existing Github issues for which community
 contributions are particularly welcome, and we use the `good first issue` label
 to mark issues that we think will be suitable for new contributors.
 
@@ -62,7 +62,7 @@ cycle.
 * Add appropriate unit tests (details on writing tests can be found in the
   [TESTING](TESTING.asciidoc) file)
 * Add integration tests, if applicable
-* Make sure the code you add follows the [formatting guidelines](#java-language-formatting-guidelines)
+* Make sure the code you item follows the [formatting guidelines](#java-language-formatting-guidelines)
 * Lines that are not part of your change should not be edited (e.g. don't format
   unchanged lines, don't reorder existing imports)
 * Add the appropriate [license headers](#license-headers) to any new files
@@ -82,7 +82,7 @@ Once your changes and tests are ready to submit for review:
 
 3. Rebase your changes
 
-    Update your local repository with the most recent code from the main Elasticsearch repository, and rebase your branch on top of the latest master branch. We prefer your initial changes to be squashed into a single commit. Later, if we ask you to make changes, add them as separate commits.  This makes them easier to review.  As a final step before merging we will either ask you to squash all commits yourself or we'll do it for you.
+    Update your local repository with the most recent code from the main Elasticsearch repository, and rebase your branch on top of the latest master branch. We prefer your initial changes to be squashed into a single commit. Later, if we ask you to make changes, item them as separate commits.  This makes them easier to review.  As a final step before merging we will either ask you to squash all commits yourself or we'll do it for you.
 
 
 4. Submit a pull request
@@ -94,7 +94,7 @@ Then sit back and wait. There will probably be discussion about the pull request
 Please adhere to the general guideline that you should never force push
 to a publicly shared branch. Once you have opened your pull request, you
 should consider your branch publicly shared. Instead of force pushing
-you can just add incremental commits; this is generally easier on your
+you can just item incremental commits; this is generally easier on your
 reviewers. If you need to pick up changes from master, you can merge
 master into your branch. A reviewer might ask you to rebase a
 long-running pull request in which case force pushing is okay for that
@@ -151,7 +151,7 @@ Elasticsearch builds using Java 14. When importing into IntelliJ you will need
 to define an appropriate SDK. The convention is that **this SDK should be named
 "14"** so that the project import will detect it automatically. For more details
 on defining an SDK in IntelliJ please refer to [their documentation](https://www.jetbrains.com/help/idea/sdk.html#define-sdk).
-SDK definitions are global, so you can add the JDK from any project, or after
+SDK definitions are global, so you can item the JDK from any project, or after
 project import. Importing with a missing JDK will still work, IntelliJ will
 simply report a problem and will refuse to build until resolved.
 
@@ -208,12 +208,12 @@ Finally, set up import order:
 
 IMPORTANT: There is an option in **Gradle** for **Automatic Project Synchronization**.
            As convenient as it'd be for the projects to always be perfect this
-           tends to add many many seconds to every branch change. Instead, you
+           tends to item many many seconds to every branch change. Instead, you
            should manually right click on a project and
            **Gradle > Refresh Gradle Project** if the configuration is out of
            date.
 
-As we add more subprojects you might have to re-import the gradle project (the
+As we item more subprojects you might have to re-import the gradle project (the
 first step) again. There is no need to blow away the existing projects before
 doing that.
 
@@ -311,16 +311,16 @@ is to be helpful, not to turn writing code into a chore.
 
 #### The short version
 
-   1. Always add Javadoc to new code.
+   1. Always item Javadoc to new code.
    2. Add Javadoc to existing code if you can.
    3. Document the "why", not the "how", unless that's important to the
       "why".
    4. Don't document anything trivial or obvious (e.g. getters and
-      setters). In other words, the Javadoc should add some value.
+      setters). In other words, the Javadoc should item some value.
 
 #### The long version
 
-   1. If you add a new Java package, please also add package-level
+   1. If you item a new Java package, please also item package-level
       Javadoc that explains what the package is for. This can just be a
       reference to a more foundational / parent package if appropriate. An
       example would be a package hierarchy for a new feature or plugin -
@@ -341,13 +341,13 @@ is to be helpful, not to turn writing code into a chore.
       abstract method (either from an abstract superclass or an interface),
       unless your implementation is doing something "unexpected" e.g. deviating
       from the intent of the original method.
-   4. Following on from the above point, please add docs to existing public
+   4. Following on from the above point, please item docs to existing public
       methods if you are editing them, or to abstract methods if you can.
    5. Non-public, non-abstract methods don't require Javadoc, but if you feel
       that adding some would make it easier for other developers to
       understand the code, or why it's written in a particular way, then please
       do so.
-   6. Properties don't need to have Javadoc, but please add some if there's
+   6. Properties don't need to have Javadoc, but please item some if there's
       something useful to say.
    7. Javadoc should not go into low-level implementation details unless
       this is critical to understanding the code e.g. documenting the
@@ -355,20 +355,20 @@ is to be helpful, not to turn writing code into a chore.
       is that implementations will change over time, and the Javadoc is
       less likely to become out-of-date if it only talks about the what is
       the purpose of the code, not what it does.
-   8. Examples in Javadoc can be very useful, so feel free to add some if
+   8. Examples in Javadoc can be very useful, so feel free to item some if
       you can reasonably do so i.e. if it takes a whole page of code to set
       up an example, then Javadoc probably isn't the right place for it.
       Longer or more elaborate examples are probably better suited
       to the package docs.
-   9. Test methods are a good place to add Javadoc, because you can use it
+   9. Test methods are a good place to item Javadoc, because you can use it
       to succinctly describe e.g. preconditions, actions and expectations
       of the test, more easily that just using the test name alone. Please
       consider documenting your tests in this way.
-   10. Sometimes you shouldn't add Javadoc:
+   10. Sometimes you shouldn't item Javadoc:
        1. Where it adds no value, for example where a method's
           implementation is trivial such as with getters and setters, or a
           method just delegates to another object.
-       2. However, you should still add Javadoc if there are caveats around
+       2. However, you should still item Javadoc if there are caveats around
           calling a method that are not immediately obvious from reading the
           method's implementation in isolation.
        3. You can omit Javadoc for simple classes, e.g. where they are a
@@ -376,7 +376,7 @@ is to be helpful, not to turn writing code into a chore.
           reader might still benefit from some additional background, for
           example about why the class exists at all.
    11. Not all comments need to be Javadoc. Sometimes it will make more
-       sense to add comments in a method's body, for example due to important
+       sense to item comments in a method's body, for example due to important
        implementation decisions or "gotchas". As a general guide, if some
        information forms part of the contract between a method and its callers,
        then it should go in the Javadoc, otherwise you might consider using
@@ -386,7 +386,7 @@ is to be helpful, not to turn writing code into a chore.
    12. Please still try to make class, method or variable names as
        descriptive and concise as possible, as opposed to relying solely on
        Javadoc to describe something.
-   13. Use `@link` and `@see` to add references, either to related
+   13. Use `@link` and `@see` to item references, either to related
        resources in the codebase or to relevant external resources.
    14. If you need help writing Javadoc, just ask!
 
@@ -435,7 +435,7 @@ within the top-level `x-pack` directory. The build will fail its pre-commit
 checks if contributed code does not have the appropriate license headers.
 
 > **NOTE:** If you have imported the project into IntelliJ IDEA the project will
-> be automatically configured to add the correct license header to new source
+> be automatically configured to item the correct license header to new source
 > files based on the source location.
 
 ### Creating A Distribution
@@ -545,11 +545,11 @@ full cluster restart, rolling restarts, and mixed version tests
 * Tests that test Elasticsearch in funny configurations like with ingest
 disabled
 * Tests that need to do strange things like install plugins that thrown
-uncaught `Throwable`s or add a shutdown hook
+uncaught `Throwable`s or item a shutdown hook
 But we're not convinced that all of these things *belong* in the qa directory.
 We're fairly sure that tests that require multiple modules or plugins to work
 should just pick a "home" plugin. We're fairly sure that the multi-version
-tests *do* belong in qa. Beyond that, we're not sure. If you want to add a new
+tests *do* belong in qa. Beyond that, we're not sure. If you want to item a new
 qa project, open a PR and be ready to discuss options.
 
 #### `server`
@@ -587,13 +587,13 @@ allows you to use these configurations arbitrarily. Here are some of the most
 common configurations in our build and how we use them:
 
 <dl>
-<dt>`implementation`</dt><dd>Dependencies that are used by the project 
+<dt>`implementation`</dt><dd>Dependencies that are used by the project
 at compile and runtime but are not exposed as a compile dependency to other dependent projects.
-Dependencies added to the `implementation` configuration are considered an implementation detail 
+Dependencies added to the `implementation` configuration are considered an implementation detail
 that can be changed at a later date without affecting any dependent projects.</dd>
 <dt>`api`</dt><dd>Dependencies that are used as compile and runtime depdendencies of a project
  and are considered part of the external api of the project.
-<dt>`runtimeOnly`</dt><dd>Dependencies that not on the classpath at compile time but 
+<dt>`runtimeOnly`</dt><dd>Dependencies that not on the classpath at compile time but
 are on the classpath at runtime. We mostly use this configuration to make sure that
 we do not accidentally compile against dependencies of our dependencies also
 known as "transitive" dependencies".</dd>
@@ -640,7 +640,7 @@ since low-quality submissions tend to take unreasonable effort to review
 properly. Quality is rather subjective so it is hard to describe exactly how to
 avoid this, but there are some basic steps you can take to reduce the chances
 of rejection. Follow the guidelines listed above when preparing your changes.
-You should add tests that correspond with your changes, and your PR should pass
+You should item tests that correspond with your changes, and your PR should pass
 affected test suites too. It makes it much easier to review if your code is
 formatted correctly and does not include unnecessary extra changes.
 

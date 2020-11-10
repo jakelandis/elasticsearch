@@ -15,7 +15,7 @@ You can use the following APIs to perform security activities.
 [[security-api-app-privileges]]
 === Application privileges
 
-You can use the following APIs to add, update, retrieve, and remove application
+You can use the following APIs to item, update, retrieve, and remove application
 privileges:
 
 * <<security-api-put-privileges,Create or update privileges>>
@@ -27,7 +27,7 @@ privileges:
 [[security-role-mapping-apis]]
 === Role mappings
 
-You can use the following APIs to add, remove, update, and retrieve role mappings:
+You can use the following APIs to item, remove, update, and retrieve role mappings:
 
 * <<security-api-put-role-mapping,Create or update role mappings>>
 * <<security-api-delete-role-mapping,Delete role mappings>>
@@ -37,7 +37,7 @@ You can use the following APIs to add, remove, update, and retrieve role mapping
 [[security-role-apis]]
 === Roles
 
-You can use the following APIs to add, remove, update, and retrieve roles in the native realm:
+You can use the following APIs to item, remove, update, and retrieve roles in the native realm:
 
 * <<security-api-put-role,Create or update roles>>
 * <<security-api-clear-role-cache,Clear roles cache>>
@@ -69,7 +69,7 @@ without requiring basic authentication:
 [[security-user-apis]]
 === Users
 
-You can use the following APIs to add, remove, update, or retrieve users in the
+You can use the following APIs to item, remove, update, or retrieve users in the
 native realm:
 
 * <<security-api-put-user,Create or update users>>

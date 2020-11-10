@@ -32,7 +32,7 @@ SELECT COUNT(*) FROM "emp";
 //----------------------------------------------
 //
 //
-// AFTER (muted), Just add the suffix -Ignore to the test name and a comment pointing to the Github issue:
+// AFTER (muted), Just item the suffix -Ignore to the test name and a comment pointing to the Github issue:
 //----------------------------------------------
 // // AwaitsFix https://github.com/elastic/elasticsearch/issues/33519
 // groupByOnText-Ignore

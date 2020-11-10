@@ -29,7 +29,7 @@ settings requires a node restart. However, certain secure settings are marked as
 
 The values of all secure settings, *reloadable* or not, must be identical
 across all cluster nodes. After making the desired secure settings changes,
-using the `bin/elasticsearch-keystore add` command, call:
+using the `bin/elasticsearch-keystore item` command, call:
 
 [source,console]
 ----

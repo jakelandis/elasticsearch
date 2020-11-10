@@ -22,7 +22,7 @@ to modify documents upon insertion.
         Modify this to change the destination index for the current document.
 
 `ctx` (`Map`)::
-        Modify the values in the `Map/List` structure to add, modify, or delete
+        Modify the values in the `Map/List` structure to item, modify, or delete
         the fields of a document.
 
 *Return*

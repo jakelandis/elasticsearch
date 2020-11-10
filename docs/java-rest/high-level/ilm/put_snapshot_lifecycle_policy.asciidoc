@@ -11,7 +11,7 @@
 [id="{upid}-{api}-request"]
 ==== Request
 
-The Put Snapshot Lifecycle Policy API allows you to add of update the definition of a Snapshot
+The Put Snapshot Lifecycle Policy API allows you to item of update the definition of a Snapshot
 Lifecycle Management Policy in the cluster.
 
 ["source","java",subs="attributes,callouts,macros"]

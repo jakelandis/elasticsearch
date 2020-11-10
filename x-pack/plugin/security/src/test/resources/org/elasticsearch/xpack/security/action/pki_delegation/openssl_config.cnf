@@ -8,7 +8,7 @@ default_ca      = CA_default            # The default ca section
 [ CA_default ]
 
 # By default we use "user certificate" extensions when signing
-x509_extensions = usr_cert              # The extentions to add to the cert
+x509_extensions = usr_cert              # The extentions to item to the cert
 
 # Honor extensions requested of us
 copy_extensions    = copy
@@ -18,7 +18,7 @@ copy_extensions    = copy
 name_opt        = ca_default            # Subject Name options
 cert_opt        = ca_default            # Certificate field options
 
-# Extensions to add to a CRL. Note: Netscape communicator chokes on V2 CRLs
+# Extensions to item to a CRL. Note: Netscape communicator chokes on V2 CRLs
 # so this is commented out by default to leave a V1 CRL.
 # crlnumber must also be commented out to leave a V1 CRL.
 #crl_extensions        = crl_ext
@@ -63,8 +63,8 @@ default_bits            = 2048
 default_keyfile         = privkey.pem
 distinguished_name      = req_distinguished_name # where to get DN for reqs
 attributes              = req_attributes         # req attributes
-x509_extensions         = v3_ca  # The extentions to add to self signed certs
-req_extensions          = v3_req # The extensions to add to req's
+x509_extensions         = v3_ca  # The extentions to item to self signed certs
+req_extensions          = v3_req # The extensions to item to req's
 
 # This sets a mask for permitted string types. There are several options.
 # default: PrintableString, T61String, BMPString.

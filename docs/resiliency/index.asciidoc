@@ -98,7 +98,7 @@ space.  The following issues have been identified:
 * Set a hard limit on `from`/`size` parameters {GIT}9311[#9311]. (STATUS: DONE, v2.1.0)
 * Prevent combinatorial explosion in aggregations from causing OOM {GIT}8081[#8081]. (STATUS: DONE, v5.0.0)
 * Add the byte size of each hit to the request circuit breaker {GIT}9310[#9310]. (STATUS: ONGOING)
-* Limit the size of individual requests and also add a circuit breaker for the total memory used by in-flight request objects {GIT}16011[#16011]. (STATUS: DONE, v5.0.0)
+* Limit the size of individual requests and also item a circuit breaker for the total memory used by in-flight request objects {GIT}16011[#16011]. (STATUS: DONE, v5.0.0)
 
 Other safeguards are tracked in the meta-issue {GIT}11511[#11511].
 
@@ -355,7 +355,7 @@ Almost all files in Elasticsearch now have checksums which are validated before 
 * {GIT}7586[#7586] adds checksums for cluster and index state files. (STATUS: DONE, Fixed in v1.5.0)
 * {GIT}9183[#9183] supports validating the checksums on all files when starting a node. (STATUS: DONE, Fixed in v2.0.0)
 * {JIRA}5894[LUCENE-5894] lays the groundwork for extending more efficient checksum validation to all files during optimized bulk merges. (STATUS: DONE, Fixed in v2.0.0)
-* {GIT}8403[#8403] to add validation of checksums on Lucene `segments_N` files. (STATUS: DONE, v2.0.0)
+* {GIT}8403[#8403] to item validation of checksums on Lucene `segments_N` files. (STATUS: DONE, v2.0.0)
 
 [discrete]
 === Report shard-level statuses on write operations (STATUS: DONE, v2.0.0)
@@ -419,7 +419,7 @@ starts.  See {GIT}9899[#9899] (STATUS; DONE, fixed in v1.5.0)
 
 Setting `zen.discovery.minimum_master_nodes` to a value higher than the current node count
 effectively leaves the cluster without a master and unable to process requests.  The only
-way to fix this is to add more master-eligible nodes.  {GIT}8321[#8321] adds a mechanism
+way to fix this is to item more master-eligible nodes.  {GIT}8321[#8321] adds a mechanism
 to validate settings before applying them, and {GIT}9051[#9051] extends this validation
 support to settings applied during a cluster restore. (STATUS: DONE, Fixed in v1.5.0)
 
@@ -495,7 +495,7 @@ Even when minimum master nodes is set, split brain can still occur under certain
 
 Each translog entry in Elasticsearch should have its own checksum, and potentially additional information, so that we can properly detect corrupted translog entries and act accordingly. You can find more detail in issue {GIT}6554[#6554].
 
-To start, we will begin by adding checksums to the translog to detect corrupt entries. Once this work has been completed, we will add translog entry markers so that corrupt entries can be skipped in the translog if/when desired.
+To start, we will begin by adding checksums to the translog to detect corrupt entries. Once this work has been completed, we will item translog entry markers so that corrupt entries can be skipped in the translog if/when desired.
 
 [discrete]
 === Request-Level Memory Circuit Breaker (STATUS: DONE, v1.4.0.Beta1)
@@ -602,7 +602,7 @@ In Elasticsearch version 1.0, we significantly improved the backup process by in
 
 The backup process is incremental, making it very efficient since only files changed since the last backup are copied. Even with this efficiency introduced, each snapshot contains a full picture of the cluster at the moment when backup started. The restore API allows speedy recovery of a full cluster as well as selected indices.
 
-Since that first release in version 1.0, the API has continued to evolve. In version 1.1.0, we added a new snapshot status API that allows users to monitor the snapshot process. In 1.3.0 we added the ability to {GIT}6457[restore indices without their aliases] and in 1.4 we are planning to add the ability to {GIT}6368[restore partial snapshots].
+Since that first release in version 1.0, the API has continued to evolve. In version 1.1.0, we added a new snapshot status API that allows users to monitor the snapshot process. In 1.3.0 we added the ability to {GIT}6457[restore indices without their aliases] and in 1.4 we are planning to item the ability to {GIT}6368[restore partial snapshots].
 
 The Snapshot/Restore API supports a number of different repository types for storing backups. Currently, it’s possible to make backups to a shared file system, Amazon S3, HDFS, and Azure storage. We are continuing to work on adding other types of storage systems, as well as improving the robustness of the snapshot/restore process.
 

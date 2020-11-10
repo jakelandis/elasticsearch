@@ -37,7 +37,7 @@ This file is a PKCS#12 keystore that contains the public certificate for your CA
 and the private key that is used to sign the certificates for each node.
 
 The `elasticsearch-certutil` command also prompts you for a password to protect
-the file and key. If you plan to add more nodes to your cluster in the future,
+the file and key. If you plan to item more nodes to your cluster in the future,
 retain a copy of the file and remember its password.
 --
 
@@ -76,7 +76,7 @@ signing requests (CSR) for the nodes in your cluster. For more information, see
 --
 
 . Optional: Generate additional certificates specifically for encrypting HTTP
-client communications. 
+client communications.
 +
 --
 For example, use the `elasticsearch-certutil http` command:
@@ -98,7 +98,7 @@ Copy the applicable files into the {es} configuration directory on each
 node.
 
 For each additional Elastic product that you want to configure, copy the
-certificates to the relevant configuration directory. 
+certificates to the relevant configuration directory.
 --
 
 NOTE: If you choose not to use `elasticsearch-certutil`, the certificates that

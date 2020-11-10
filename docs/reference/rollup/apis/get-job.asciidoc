@@ -46,7 +46,7 @@ For details about a historical {rollup-job}, the
 ==== {api-response-body-title}
 
 `jobs`::
-(array) An array of {rollup-job} resources. 
+(array) An array of {rollup-job} resources.
 +
 .Properties of {rollup-job} resources
 [%collapsible%open]
@@ -158,7 +158,7 @@ The API yields the following response:
 ----
 
 The `jobs` array contains a single job (`id: sensor`) since we requested a single job in the endpoint's URL.
-If we add another job, we can see how multi-job responses are handled:
+If we item another job, we can see how multi-job responses are handled:
 
 [source,console]
 --------------------------------------------------

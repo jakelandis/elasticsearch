@@ -3,21 +3,21 @@
 == Getting started with {watcher}
 
 TIP: To complete these steps, you must obtain a license that includes the
-{alert-features}. For more information about Elastic license levels, see 
+{alert-features}. For more information about Elastic license levels, see
 https://www.elastic.co/subscriptions and
 {kibana-ref}/managing-licenses.html[License management].
 
 [[watch-log-data]]
 To set up a watch to start sending alerts:
 
-* <<log-add-input, Schedule the watch and define an input>>.
-* <<log-add-condition, Add a condition>> that checks to see if an alert
+* <<log-item-input, Schedule the watch and define an input>>.
+* <<log-item-condition, Add a condition>> that checks to see if an alert
 needs to be sent.
 * <<log-take-action, Configure an action>> to send an alert when the
 condition is met.
 
 [discrete]
-[[log-add-input]]
+[[log-item-input]]
 === Schedule the watch and define an input
 
 A watch <<trigger-schedule,schedule>> controls how often a watch is triggered.
@@ -74,7 +74,7 @@ GET .watcher-history*/_search?pretty
 // TEST[continued]
 
 [discrete]
-[[log-add-condition]]
+[[log-item-condition]]
 === Add a condition
 
 A <<condition,condition>> evaluates the data you've loaded into the watch and
@@ -111,7 +111,7 @@ PUT _watcher/watch/log_error_watch
 <1> The <<condition-compare,compare>> condition lets you easily compare against
     values in the execution context.
 
-For this compare condition to evaluate to `true`, you need to add an event
+For this compare condition to evaluate to `true`, you need to item an event
 to the `logs` index that contains an error. For example, the following request
 adds a 404 error to the `logs` index:
 
@@ -127,7 +127,7 @@ POST logs/_doc
 --------------------------------------------------
 // TEST[continued]
 
-Once you add this event, the next time the watch executes its condition will
+Once you item this event, the next time the watch executes its condition will
 evaluate to `true`. The condition result is recorded as part of the
 `watch_record` each time the watch executes, so you can verify whether or
 not the condition was met by searching the watch history:

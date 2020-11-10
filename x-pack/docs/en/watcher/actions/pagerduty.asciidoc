@@ -131,7 +131,7 @@ NOTE: All of those objects have templating support, so you can use data from the
 [[configuring-pagerduty]]
 ==== Configuring PagerDuty accounts
 
-You configure the accounts {watcher} uses to communicate with PagerDuty in 
+You configure the accounts {watcher} uses to communicate with PagerDuty in
 the `xpack.notification.pagerduty` namespace in `elasticsearch.yml`.
 
 To configure a PagerDuty account, you need the API integration key for
@@ -139,7 +139,7 @@ the PagerDuty service you want to send notifications to. To get the
 key:
 
 . Log in to http://pagerduty.com[pagerduty.com] as an account administrator.
-. Go to **Configuration > Services** and select the PagerDuty service. The 
+. Go to **Configuration > Services** and select the PagerDuty service. The
 service must use the API integration.
 +
 image::images/pagerduty-services.jpg[]
@@ -153,7 +153,7 @@ must specify an account name and integration key, (see <<secure-settings>>):
 
 [source,yaml]
 --------------------------------------------------
-bin/elasticsearch-keystore add xpack.notification.pagerduty.account.my_pagerduty_account.secure_service_api_key
+bin/elasticsearch-keystore item xpack.notification.pagerduty.account.my_pagerduty_account.secure_service_api_key
 --------------------------------------------------
 
 deprecated[7.0.0, "Storing the service api key in the YAML file or via cluster update settings is still supported, but the keystore setting should be used."]
@@ -176,14 +176,14 @@ xpack.notification.pagerduty:
         attach_payload: true
 --------------------------------------------------
 
-If you configure multiple PagerDuty accounts, you either need to set a default 
+If you configure multiple PagerDuty accounts, you either need to set a default
 account or specify which account the event should be sent with in the
 <<actions-pagerduty,`pagerduty`>> action.
 
 [source,yaml]
 --------------------------------------------------
 xpack.notification.pagerduty:
-  default_account: team1 
+  default_account: team1
   account:
     team1:
       ...

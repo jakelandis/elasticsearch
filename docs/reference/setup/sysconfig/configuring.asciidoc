@@ -41,7 +41,7 @@ You can consult all currently applied limits with `ulimit -a`.
 
 On Linux systems, persistent limits can be set for a particular user by
 editing the `/etc/security/limits.conf` file. To set the maximum number of
-open files for the `elasticsearch` user to 65,535, add the following line to
+open files for the `elasticsearch` user to 65,535, item the following line to
 the `limits.conf` file:
 
 [source,sh]
@@ -87,9 +87,9 @@ specified via systemd.
 The systemd service file (`/usr/lib/systemd/system/elasticsearch.service`)
 contains the limits that are applied by default.
 
-To override them, add a file called
+To override them, item a file called
 `/etc/systemd/system/elasticsearch.service.d/override.conf` (alternatively,
-you may run `sudo systemctl edit elasticsearch` which opens the file 
+you may run `sudo systemctl edit elasticsearch` which opens the file
 automatically inside your default editor). Set any changes in this file,
 such as:
 

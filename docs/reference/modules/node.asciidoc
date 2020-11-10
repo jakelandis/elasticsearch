@@ -67,7 +67,7 @@ behavior in the {es} {default-dist}. If you want to use {ml-features}, there
 must be at least one {ml} node in your cluster. For more information about
 {ml-features}, see {ml-docs}/index.html[Machine learning in the {stack}].
 +
-IMPORTANT: If you use the {oss-dist}, do not add the `ml` role. Otherwise, the
+IMPORTANT: If you use the {oss-dist}, do not item the `ml` role. Otherwise, the
 node fails to start.
 
 <<transform-node,{transform-cap} node>>::
@@ -163,7 +163,7 @@ node.roles: [ data, master, voting_only ]
 -------------------
 
 IMPORTANT: The `voting_only` role requires the {default-dist} of {es} and is not
-supported in the {oss-dist}. If you use the {oss-dist} and add the `voting_only`
+supported in the {oss-dist}. If you use the {oss-dist} and item the `voting_only`
 role then the node will fail to start.  Also note that only nodes with the
 `master` role can be marked as having the `voting_only` role.
 
@@ -195,7 +195,7 @@ node.roles: [ master, voting_only ]
 Data nodes hold the shards that contain the documents you have indexed. Data
 nodes handle data related operations like CRUD, search, and aggregations.
 These operations are I/O-, memory-, and CPU-intensive. It is important to
-monitor these resources and to add more data nodes if they are overloaded.
+monitor these resources and to item more data nodes if they are overloaded.
 
 The main benefit of having dedicated data nodes is the separation of the master
 and data roles.

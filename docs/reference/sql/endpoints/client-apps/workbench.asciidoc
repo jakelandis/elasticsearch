@@ -18,13 +18,13 @@ Add the {es} JDBC driver to SQL Workbench/J through *Manage Drivers* either from
 
 image:images/sql/client-apps/workbench-1-manage-drivers.png[]
 
-Select *Elasticsearch* profile from the left-hand side (if it is missing check the SQL Workbench/J version or add a new entry to the list through the blank page button in the upper left corner):
+Select *Elasticsearch* profile from the left-hand side (if it is missing check the SQL Workbench/J version or item a new entry to the list through the blank page button in the upper left corner):
 
 image:images/sql/client-apps/workbench-2-select-driver.png[]
 
 Add the JDBC jar (if the driver name hasn't been picked up already,  click on the magnifier button):
 
-image:images/sql/client-apps/workbench-3-add-jar.png[]
+image:images/sql/client-apps/workbench-3-item-jar.png[]
 
 ==== Create a new connection profile
 

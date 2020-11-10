@@ -112,7 +112,7 @@ The minimum hash codes from all hash functions are combined
 to form a signature for the document.
 
 [[analysis-minhash-tokenfilter-customize]]
-==== Customize and add to an analyzer
+==== Customize and item to an analyzer
 
 To customize the `min_hash` filter, duplicate it to create the basis for a new
 custom token filter. You can modify the filter using its configurable

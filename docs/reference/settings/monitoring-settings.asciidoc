@@ -45,7 +45,7 @@ and {ls} is ignored.
 [[xpack-monitoring-collection-interval]]
 // tag::monitoring-collection-interval-tag[]
 `xpack.monitoring.collection.interval` {ess-icon}::
-deprecated:[6.3.0,"Use `xpack.monitoring.collection.enabled` set to `false` instead."] 
+deprecated:[6.3.0,"Use `xpack.monitoring.collection.enabled` set to `false` instead."]
 (<<cluster-update-settings,Dynamic>>) Setting to `-1` to disable data collection
 is no longer supported beginning with 7.0.0.
 +
@@ -56,7 +56,7 @@ option in `kibana.yml` to the same value.
 
 `xpack.monitoring.elasticsearch.collection.enabled`::
 (<<cluster-update-settings,Dynamic>>) Controls whether statistics about your
-{es} cluster should be collected. Defaults to `true`. This is different from 
+{es} cluster should be collected. Defaults to `true`. This is different from
 `xpack.monitoring.collection.enabled`, which allows you to enable or disable all
 monitoring collection. However, this setting simply disables the collection of
 {es} data while still allowing other data (e.g., {kib}, {ls}, Beats, or APM
@@ -259,7 +259,7 @@ Prevents the creation of specific cluster alerts. It also removes any applicable
 watches that already exist in the current cluster.
 +
 --
-You can add any of the following watch identifiers to the list of blocked alerts:
+You can item any of the following watch identifiers to the list of blocked alerts:
 
 * `elasticsearch_cluster_status`
 * `elasticsearch_version_mismatch`

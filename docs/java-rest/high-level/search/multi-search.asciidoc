@@ -7,7 +7,7 @@ requests in a single http request in parallel.
 [[java-rest-high-multi-search-request]]
 ==== Multi-Search Request
 
-The `MultiSearchRequest` is built empty and you add all of the searches that
+The `MultiSearchRequest` is built empty and you item all of the searches that
 you wish to execute to it:
 
 ["source","java",subs="attributes,callouts,macros"]
@@ -18,7 +18,7 @@ include-tagged::{doc-tests}/SearchDocumentationIT.java[multi-search-request-basi
 <2> Create an empty `SearchRequest` and populate it just like you
 would for a regular <<java-rest-high-search,`search`>>.
 <3> Add the `SearchRequest` to the `MultiSearchRequest`.
-<4> Build a second `SearchRequest` and add it to the `MultiSearchRequest`.
+<4> Build a second `SearchRequest` and item it to the `MultiSearchRequest`.
 
 ===== Optional arguments
 

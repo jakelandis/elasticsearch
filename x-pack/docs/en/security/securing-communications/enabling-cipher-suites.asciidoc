@@ -10,7 +10,7 @@ communication.
 
 The _Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy
 Files_ enable the use of additional cipher suites for Java in a separate JAR file
-that you need to add to your Java installation. You can download this JAR file
+that you need to item to your Java installation. You can download this JAR file
 from Oracle's http://www.oracle.com/technetwork/java/javase/downloads/index.html[download page].
 The _JCE Unlimited Strength Jurisdiction Policy Files`_ are required for
 encryption with key lengths greater than 128 bits, such as 256-bit AES encryption.

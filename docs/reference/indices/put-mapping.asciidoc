@@ -138,10 +138,10 @@ PUT /my-index-000001,my-index-000002/_mapping
 --------------------------------------------------
 
 
-[[add-new-field-to-object]]
+[[item-new-field-to-object]]
 ===== Add new properties to an existing object field
 
-You can use the put mapping API to add new properties to an existing
+You can use the put mapping API to item new properties to an existing
 <<object,`object`>> field. To see how this works, try the following example.
 
 Use the <<indices-create-index,create index>> API to create an index with the
@@ -165,7 +165,7 @@ PUT /my-index-000001
 }
 ----
 
-Use the put mapping API to add a new inner `last` text field to the `name`
+Use the put mapping API to item a new inner `last` text field to the `name`
 field.
 
 [source,console]
@@ -186,7 +186,7 @@ PUT /my-index-000001/_mapping
 // TEST[continued]
 
 
-[[add-multi-fields-existing-field-ex]]
+[[item-multi-fields-existing-field-ex]]
 ===== Add multi-fields to an existing field
 
 <<multi-fields,Multi-fields>> let you index the same field in different ways.
@@ -383,7 +383,7 @@ POST /_reindex
 
 // tag::rename-field[]
 Renaming a field would invalidate data already indexed under the old field name.
-Instead, add an <<alias, `alias`>> field to create an alternate field name.
+Instead, item an <<alias, `alias`>> field to create an alternate field name.
 // end::rename-field[]
 
 For example,
@@ -405,7 +405,7 @@ PUT /my-index-000001
 }
 ----
 
-Use the put mapping API to add the `user_id` field alias
+Use the put mapping API to item the `user_id` field alias
 for the existing `user_identifier` field.
 
 [source,console]

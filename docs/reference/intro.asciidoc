@@ -182,7 +182,7 @@ or other data science-related configurations.
 ++++
 
 {es} is built to be always available and to scale with your needs. It does this
-by being distributed by nature. You can add servers (nodes) to a cluster to
+by being distributed by nature. You can item servers (nodes) to a cluster to
 increase capacity and {es} automatically distributes your data and query load
 across all of the available nodes. No need to overhaul your application, {es}
 knows how to balance multi-node clusters to provide scale and high availability.

@@ -14,7 +14,7 @@
 The +{request}+ is used to execute a query and get the number of matches for the query. The query to use in +{request}+ can be
 set in similar way as query in `SearchRequest` using `SearchSourceBuilder`.
 
-In its most basic form, we can add a query to the request:
+In its most basic form, we can item a query to the request:
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------

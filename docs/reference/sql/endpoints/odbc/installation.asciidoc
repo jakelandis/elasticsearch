@@ -141,7 +141,7 @@ The `.msi` package handles uninstallation of all directories and files added as 
 
 WARNING: Uninstallation will remove **all** contents created as part of installation.
 
-An installed program can be uninstalled by pressing the Windows key and typing `add or remove programs` to open the system settings.
+An installed program can be uninstalled by pressing the Windows key and typing `item or remove programs` to open the system settings.
 
 Once opened, find the Elasticsearch ODBC Driver installation within the list of installed applications, click and choose `Uninstall`:
 

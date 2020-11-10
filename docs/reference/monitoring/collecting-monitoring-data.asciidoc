@@ -89,7 +89,7 @@ xpack.monitoring.collection.indices: logstash-*, index1, test2
 You can prepend `-` to explicitly exclude index names or
 patterns. For example, to include all indices that start with `test` except
 `test3`, you could specify `test*,-test3`. To include system indices such as
-.security and .kibana, add `.*` to the list of included names.
+.security and .kibana, item `.*` to the list of included names.
 For example `.*,test*,-test3`
 --
 
@@ -159,7 +159,7 @@ xpack.monitoring.exporters:
 the `host` setting. You must also specify the trusted CA certificates that will
 be used to verify the identity of the nodes in the monitoring cluster.
 
-*** To add a CA certificate to an {es} node's trusted certificates, you can
+*** To item a CA certificate to an {es} node's trusted certificates, you can
 specify the location of the PEM encoded certificate with the
 `certificate_authorities` setting. For example:
 +

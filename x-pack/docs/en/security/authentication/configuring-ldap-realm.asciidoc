@@ -1,14 +1,14 @@
 To integrate with LDAP, you configure an `ldap` realm and map LDAP groups to
 user roles.
 
-. Determine which mode you want to use. The `ldap` realm supports two modes of 
-operation, a user search mode and a mode with specific templates for user DNs. 
+. Determine which mode you want to use. The `ldap` realm supports two modes of
+operation, a user search mode and a mode with specific templates for user DNs.
 +
 --
 LDAP user search is the most common mode of operation. In this mode, a specific
-user with permission to search the LDAP directory is used to search for the DN 
-of the authenticating user based on the provided username and an LDAP attribute. 
-Once found, the user is authenticated by attempting to bind to the LDAP server 
+user with permission to search the LDAP directory is used to search for the DN
+of the authenticating user based on the provided username and an LDAP attribute.
+Once found, the user is authenticated by attempting to bind to the LDAP server
 using the found DN and the provided password.
 
 If your LDAP environment uses a few specific standard naming conditions for
@@ -23,7 +23,7 @@ However, multiple bind operations might be needed to find the correct user DN.
 `xpack.security.authc.realms.ldap` namespace. At a minimum, you must specify
 the `url` and `order` of the LDAP server, and set `user_search.base_dn` to the
 container DN where the users are searched for.
-See <<ref-ldap-settings>> for all of the options you can set for 
+See <<ref-ldap-settings>> for all of the options you can set for
 an `ldap` realm.
 +
 --
@@ -56,7 +56,7 @@ For example, the following command adds the password for the example realm above
 
 [source, shell]
 ------------------------------------------------------------
-bin/elasticsearch-keystore add \
+bin/elasticsearch-keystore item \
 xpack.security.authc.realms.ldap.ldap1.secure_bind_password
 ------------------------------------------------------------
 
@@ -75,7 +75,7 @@ with the `user_dn_templates` option.
 See <<ref-ldap-settings>> for all of the options you can set for an `ldap` realm.
 +
 --
-For example, the following snippet shows an LDAP realm configured with user DN 
+For example, the following snippet shows an LDAP realm configured with user DN
 templates:
 
 [source, yaml]
@@ -104,25 +104,25 @@ All LDAP operations run as the authenticating user.
 --
 
 . (Optional) Configure how the {security-features} interact with multiple LDAP
-servers. 
-+ 
+servers.
++
 --
 The `load_balance.type` setting can be used at the realm level. The {es}
 {security-features} support both failover and load balancing modes of operation.
 See <<ref-ldap-settings>>.
 --
 
-. (Optional) To protect passwords, 
-<<tls-ldap,encrypt communications between {es} and the LDAP server>>. 
+. (Optional) To protect passwords,
+<<tls-ldap,encrypt communications between {es} and the LDAP server>>.
 
-. Restart {es}. 
+. Restart {es}.
 
-. Map LDAP groups to roles. 
+. Map LDAP groups to roles.
 +
 --
 The `ldap` realm enables you to map LDAP users to roles via their LDAP
 groups, or other metadata. This role mapping can be configured via the
-<<security-api-put-role-mapping,add role mapping API>> or by using a file stored
+<<security-api-put-role-mapping,item role mapping API>> or by using a file stored
 on each node. When a user authenticates with LDAP, the privileges
 for that user are the union of all privileges defined by the roles to which
 the user is mapped.
@@ -175,7 +175,7 @@ user:
 <2> The LDAP distinguished name (DN) of the `admins` group.
 <3> The LDAP distinguished name (DN) of the `users` group.
 
-For more information, see 
+For more information, see
 <<mapping-roles-ldap>> and <<mapping-roles>>.
 
 NOTE: The LDAP realm supports
@@ -184,13 +184,13 @@ alternative to role mapping.
 
 --
 
-. (Optional) Configure the `metadata` setting on the LDAP realm to include extra 
-fields in the user's metadata. 
+. (Optional) Configure the `metadata` setting on the LDAP realm to include extra
+fields in the user's metadata.
 +
 --
-By default, `ldap_dn` and `ldap_groups` are populated in the user's metadata. 
-For more information, see 
-<<ldap-user-metadata>>. 
+By default, `ldap_dn` and `ldap_groups` are populated in the user's metadata.
+For more information, see
+<<ldap-user-metadata>>.
 
 The example below includes the user's common name (`cn`) as an additional
 field in their metadata.
@@ -207,4 +207,4 @@ xpack:
 --------------------------------------------------
 --
 
-. Set up SSL to encrypt communications between {es} and LDAP. See <<tls-ldap>>. 
+. Set up SSL to encrypt communications between {es} and LDAP. See <<tls-ldap>>.

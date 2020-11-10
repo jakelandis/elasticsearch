@@ -1,7 +1,7 @@
 [[security]]
 == Security Plugins
 
-Security plugins add a security layer to  Elasticsearch.
+Security plugins item a security layer to  Elasticsearch.
 
 [discrete]
 === Core security plugins
@@ -10,7 +10,7 @@ The core security plugins are:
 
 link:/products/x-pack/security[X-Pack]::
 
-X-Pack is the Elastic product that makes it easy for anyone to add
+X-Pack is the Elastic product that makes it easy for anyone to item
 enterprise-grade security to their Elastic Stack. Designed to address the
 growing security needs of thousands of enterprises using the Elastic Stack
 today, X-Pack provides peace of mind when it comes to protecting your data.

@@ -91,7 +91,7 @@ documents without a timestamp and a `date_histogram` group. The
 +
 .Properties of `date_histogram`
 [%collapsible%open]
-===== 
+=====
 `calendar_interval` or `fixed_interval`::::
 (Required, <<time-units,time units>>) The interval of time buckets to be
 generated when rolling up. For example, `60m` produces 60 minute (hourly)
@@ -137,11 +137,11 @@ in `UTC`.
 //Begin histogram
 `histogram`:::
 (Optional, object) The histogram group aggregates one or more numeric fields
-into numeric histogram intervals. 
+into numeric histogram intervals.
 +
 .Properties of `histogram`
 [%collapsible%open]
-===== 
+=====
 `fields`::::
 (Required, array) The set of fields that you wish to build histograms for. All
 fields specified must be some kind of numeric. Order does not matter.
@@ -173,7 +173,7 @@ judicious which high-cardinality fields are included for that reason.
 +
 .Properties of `terms`
 [%collapsible%open]
-===== 
+=====
 
 `fields`::::
 (Required, string) The set of fields that you wish to collect terms for. This
@@ -204,7 +204,7 @@ prevent this behavior.
 `metrics`::
 (Optional, object) Defines the metrics to collect for each grouping tuple. By
 default, only the doc_counts are collected for each group. To make rollup useful,
-you will often add metrics like averages, mins, maxes, etc. Metrics are defined
+you will often item metrics like averages, mins, maxes, etc. Metrics are defined
 on a per-field basis and for each field you configure which metric should be
 collected.
 +

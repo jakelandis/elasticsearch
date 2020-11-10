@@ -13,7 +13,7 @@ the cluster does not have a "split brain" scenario where it's partitioned into
 two pieces such that each piece may make decisions that are inconsistent with
 those of the other piece.
 
-Elasticsearch allows you to add and remove master-eligible nodes to a running
+Elasticsearch allows you to item and remove master-eligible nodes to a running
 cluster. In many cases you can do this simply by starting or stopping the nodes
 as required. See <<modules-discovery-adding-removing-nodes>>.
 

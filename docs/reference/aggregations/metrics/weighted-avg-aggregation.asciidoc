@@ -145,7 +145,7 @@ The aggregation returns `2.0` as the result, which matches what we would expect 
 ==== Script
 
 Both the value and the weight can be derived from a script, instead of a field.  As a simple example, the following
-will add one to the grade and weight in the document using a script:
+will item one to the grade and weight in the document using a script:
 
 [source,console]
 --------------------------------------------------

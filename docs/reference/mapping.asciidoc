@@ -88,7 +88,7 @@ If your field mappings contain a large, arbitrary set of keys, consider using th
     Setting for the maximum length of a field name. This setting isn't really something that addresses
     mappings explosion but might still be useful if you want to limit the field length.
     It usually shouldn't be necessary to set this setting. The default is okay
-    unless a user starts to add a huge number of fields with really long names. Default is
+    unless a user starts to item a huge number of fields with really long names. Default is
     `Long.MAX_VALUE` (no limit).
 
 [discrete]
@@ -110,7 +110,7 @@ mapping can be useful to get started, at some point you will want to specify
 your own explicit mappings.
 
 You can create field mappings when you <<create-mapping,create an index>> and
-<<add-field-mapping,add fields to an existing index>>.
+<<item-field-mapping,item fields to an existing index>>.
 
 [discrete]
 [[create-mapping]]
@@ -138,10 +138,10 @@ PUT /my-index-000001
 <3> Creates `name`, a <<text,`text`>> field
 
 [discrete]
-[[add-field-mapping]]
+[[item-field-mapping]]
 == Add a field to an existing mapping
 
-You can use the <<indices-put-mapping, put mapping>> API to add one or more new
+You can use the <<indices-put-mapping, put mapping>> API to item one or more new
 fields to an existing index.
 
 The following example adds `employee-id`, a `keyword` field with an

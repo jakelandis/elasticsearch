@@ -6,11 +6,11 @@ under the `xpack.security.authc.realms.active_directory` namespace.
 At a minimum, you must specify the Active Directory `domain_name` and `order`.
 +
 --
-See <<ref-ad-settings>> for all of the options you can set for an 
+See <<ref-ad-settings>> for all of the options you can set for an
 `active_directory` realm.
 
 NOTE: Binding to Active Directory fails if the domain name is not mapped in DNS.
-      If DNS is not being provided by a Windows DNS server, add a mapping for
+      If DNS is not being provided by a Windows DNS server, item a mapping for
       the domain in the local `/etc/hosts` file.
 
 For example, the following realm configuration configures {es} to connect
@@ -37,19 +37,19 @@ realms you specify are used for authentication. If you also want to use the
 `native` or `file` realms, you must include them in the realm chain.
 --
 
-. If you are authenticating users across multiple domains in a forest, extra 
-steps are required. There are a few minor differences in the configuration and 
-the way that users authenticate. 
+. If you are authenticating users across multiple domains in a forest, extra
+steps are required. There are a few minor differences in the configuration and
+the way that users authenticate.
 +
 --
-Set the `domain_name` setting to the forest root domain name. 
+Set the `domain_name` setting to the forest root domain name.
 
-You must also set the `url` setting, since you must authenticate against the 
-Global Catalog, which uses a different port and might not be running on every 
+You must also set the `url` setting, since you must authenticate against the
+Global Catalog, which uses a different port and might not be running on every
 Domain Controller.
 
-For example, the following realm configuration configures {es} to connect 
-to specific Domain Controllers on the Global Catalog port with the domain name 
+For example, the following realm configuration configures {es} to connect
+to specific Domain Controllers on the Global Catalog port with the domain name
 set to the forest root:
 
 [source, yaml]
@@ -84,36 +84,36 @@ ports (389 or 636) in order to query the configuration container to retrieve the
 domain name from the NetBIOS name.
 --
 
-. (Optional) Configure how {es} should interact with multiple Active 
-Directory servers. 
-+ 
+. (Optional) Configure how {es} should interact with multiple Active
+Directory servers.
++
 --
 The `load_balance.type` setting can be used at the realm level. Two modes of
-operation are supported: failover and load balancing.  See <<ref-ad-settings>>. 
+operation are supported: failover and load balancing.  See <<ref-ad-settings>>.
 --
 
-. (Optional) To protect passwords, 
-<<tls-active-directory,encrypt communications between {es} and the Active Directory server>>. 
+. (Optional) To protect passwords,
+<<tls-active-directory,encrypt communications between {es} and the Active Directory server>>.
 
 . Restart {es}.
 
-. Configure a bind user. 
+. Configure a bind user.
 +
 --
-The Active Directory realm authenticates users using an LDAP bind request. By 
+The Active Directory realm authenticates users using an LDAP bind request. By
 default, all of the LDAP operations are run by the user that {es} is
 authenticating. In some cases, regular users may not be able to access all of the
 necessary items within Active Directory and a _bind user_ is needed. A bind user
-can be configured and is used to perform all operations other than the LDAP bind 
+can be configured and is used to perform all operations other than the LDAP bind
 request, which is required to authenticate the credentials provided by the user.
 
-The use of a bind user enables the 
-<<run-as-privilege,run as feature>> to be used with the Active 
-Directory realm and the ability to maintain a set of pooled connections to 
-Active Directory. These pooled connection reduce the number of resources that 
+The use of a bind user enables the
+<<run-as-privilege,run as feature>> to be used with the Active
+Directory realm and the ability to maintain a set of pooled connections to
+Active Directory. These pooled connection reduce the number of resources that
 must be created and destroyed with every user authentication.
 
-The following example shows the configuration of a bind user through the user of 
+The following example shows the configuration of a bind user through the user of
 the `bind_dn` and `secure_bind_password` settings:
 
 [source, yaml]
@@ -133,13 +133,13 @@ xpack:
     Without a bind user configured, all requests run as the user that is authenticating
     with {es}.
 
-The password for the `bind_dn` user should be configured by adding the 
-appropriate `secure_bind_password` setting to the {es} keystore. For example, 
+The password for the `bind_dn` user should be configured by adding the
+appropriate `secure_bind_password` setting to the {es} keystore. For example,
 the following command adds the password for the example realm above:
 
 [source, shell]
 ------------------------------------------------------------
-bin/elasticsearch-keystore add  \
+bin/elasticsearch-keystore item  \
 xpack.security.authc.realms.active_directory.my_ad.secure_bind_password
 ------------------------------------------------------------
 
@@ -147,7 +147,7 @@ When a bind user is configured, connection pooling is enabled by default.
 Connection pooling can be disabled using the `user_search.pool.enabled` setting.
 --
 
-. Map Active Directory users and groups to roles. 
+. Map Active Directory users and groups to roles.
 +
 --
 An integral part of a realm authentication process is to resolve the roles
@@ -223,15 +223,15 @@ user:
 <3> The Active Directory distinguished name (DN) of the `users` group.
 <4> The Active Directory distinguished name (DN) of the user `John Doe`.
 
-For more information, see 
+For more information, see
 <<mapping-roles>>.
 --
 
-. (Optional) Configure the `metadata` setting in the Active Directory realm to 
-include extra properties in the user's metadata. 
+. (Optional) Configure the `metadata` setting in the Active Directory realm to
+include extra properties in the user's metadata.
 +
 --
-By default, `ldap_dn` and `ldap_groups` are populated in the user's metadata. 
-For more information, see 
-<<ad-user-metadata>>. 
+By default, `ldap_dn` and `ldap_groups` are populated in the user's metadata.
+For more information, see
+<<ad-user-metadata>>.
 --

@@ -17,7 +17,7 @@ Even if Hadoop is already installed on the Elasticsearch nodes, for security rea
 
 Windows Users::
 Using Apache Hadoop on Windows is problematic and thus it is not recommended. For those _really_ wanting to use it, make sure you place the elusive `winutils.exe` under the
-plugin folder and point `HADOOP_HOME` variable to it; this should minimize the amount of permissions Hadoop requires (though one would still have to add some more).
+plugin folder and point `HADOOP_HOME` variable to it; this should minimize the amount of permissions Hadoop requires (though one would still have to item some more).
 
 [[repository-hdfs-config]]
 ==== Configuration Properties
@@ -83,7 +83,7 @@ include::repository-shared-settings.asciidoc[]
 When you initialize a repository, its settings are persisted in the cluster state. When a node comes online, it will
 attempt to initialize all repositories for which it has settings. If your cluster has an HDFS repository configured, then
 all nodes in the cluster must be able to reach HDFS when starting. If not, then the node will fail to initialize the
-repository at start up and the repository will be unusable. If this happens, you will need to remove and re-add the
+repository at start up and the repository will be unusable. If this happens, you will need to remove and re-item the
 repository or restart the offending node.
 
 [[repository-hdfs-security]]
@@ -140,7 +140,7 @@ host!
 [discrete]
 ===== Creating the Secure Repository
 Once your keytab files are in place and your cluster is started, creating a secured HDFS repository is simple. Just
-add the name of the principal that you will be authenticating as in the repository settings under the
+item the name of the principal that you will be authenticating as in the repository settings under the
 `security.principal` option:
 
 [source,console]

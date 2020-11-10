@@ -27,10 +27,10 @@ interested in such anomalies. Ideally, we could instruct the detector to skip
 results for domains that we consider safe. Using a rule with a scope allows us
 to achieve this.
 
-First, we need to create a list of our safe domains. Those lists are called 
+First, we need to create a list of our safe domains. Those lists are called
 _filters_ in {ml}. Filters can be shared across {anomaly-jobs}.
 
-You can create a filter in **Anomaly Detection > Settings > Filter Lists** in 
+You can create a filter in **Anomaly Detection > Settings > Filter Lists** in
 {kib} or by using the {ref}/ml-put-filter.html[put filter API]:
 
 [source,console]
@@ -74,9 +74,9 @@ PUT _ml/anomaly_detectors/dns_exfiltration_with_rule
 ----------------------------------
 // TEST[skip:needs-licence]
 
-As time advances and we see more data and more results, we might encounter new 
-domains that we want to add in the filter. We can do that in the
-**Anomaly Detection > Settings > Filter Lists** in {kib} or by using the 
+As time advances and we see more data and more results, we might encounter new
+domains that we want to item in the filter. We can do that in the
+**Anomaly Detection > Settings > Filter Lists** in {kib} or by using the
 {ref}/ml-update-filter.html[update filter API]:
 
 [source,console]
@@ -88,7 +88,7 @@ POST _ml/filters/safe_domains/_update
 ----------------------------------
 // TEST[skip:setup:ml_filter_safe_domains]
 
-Note that we can use any of the `partition_field_name`, `over_field_name`, or 
+Note that we can use any of the `partition_field_name`, `over_field_name`, or
 `by_field_name` fields in the `scope`.
 
 In the following example we scope multiple fields:
@@ -135,9 +135,9 @@ are included in the referenced filters.
 
 Imagine a detector that looks for anomalies in CPU utilization.
 Given a machine that is idle for long enough, small movement in CPU could
-result in anomalous results where the `actual` value is quite small, for 
-example, 0.02. Given our knowledge about how CPU utilization behaves we might 
-determine that anomalies with such small actual values are not interesting for 
+result in anomalous results where the `actual` value is quite small, for
+example, 0.02. Given our knowledge about how CPU utilization behaves we might
+determine that anomalies with such small actual values are not interesting for
 investigation.
 
 Let us now configure an {anomaly-job} with a rule that will skip results where

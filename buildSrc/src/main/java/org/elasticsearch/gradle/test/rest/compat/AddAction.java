@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -35,7 +36,7 @@ import static org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys.OBJECT;
 
 public class AddAction {
 
-    List<Add<?>> additions = new ArrayList<>();
+    private final List<Item<?>> additions = new ArrayList<>();
 
 
     public AddAction(List<ActionItem> actionItems) {
@@ -53,7 +54,7 @@ public class AddAction {
                 throw new IllegalStateException("found invalid key(s) in 'add' definition [" +
                     invalid.stream().map(a -> a.name().toLowerCase(Locale.ROOT)).collect(Collectors.joining(",")) + "]");
             }
-            additions.add(new LocationAdd(JsonPointer.compile(actionItem.getLocation().asText()), actionItem.getObject()));
+            additions.add(new LocationItem(JsonPointer.compile(actionItem.getLocation().asText()), actionItem.getObject()));
         }
     }
 
@@ -64,11 +65,15 @@ public class AddAction {
             '}';
     }
 
-    static class LocationAdd implements Add<JsonPointer> {
+    public List<Item<?>> getAdditions() {
+        return Collections.unmodifiableList(additions);
+    }
+
+    static class LocationItem implements Item<JsonPointer>, Find.ByLocation {
         private final JsonPointer location;
         private final JsonNode node;
 
-        LocationAdd(JsonPointer location, JsonNode node) {
+        LocationItem(JsonPointer location, JsonNode node) {
             this.location = location;
             this.node = node;
         }
@@ -90,7 +95,7 @@ public class AddAction {
         }
     }
 
-    interface Add<F> {
+    interface Item<F> extends Instruction{
         F find();
 
         JsonNode node();

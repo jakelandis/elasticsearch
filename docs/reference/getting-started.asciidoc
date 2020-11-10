@@ -32,8 +32,8 @@ trial of {ess}] in the cloud.
 [[getting-started-install]]
 == Get {es} up and running
 
-To take {es} for a test drive, you can create a 
-{ess-trial}[hosted deployment]  on 
+To take {es} for a test drive, you can create a
+{ess-trial}[hosted deployment]  on
 the {ess} or set up a multi-node {es} cluster on your own
 Linux, macOS, or Windows machine.
 
@@ -46,7 +46,7 @@ a three-node {es} cluster along with Kibana and APM.
 
 To create a deployment:
 
-. Sign up for a {ess-trial}[free trial] 
+. Sign up for a {ess-trial}[free trial]
 and verify your email address.
 . Set a password for your account.
 . Click **Create Deployment**.
@@ -58,8 +58,8 @@ Once you've created a deployment, you're ready to <<getting-started-index>>.
 === Run {es} locally on Linux, macOS, or Windows
 
 When you create a deployment on the {ess}, a master node and
-two data nodes are provisioned automatically. By installing from the tar or zip 
-archive, you can start multiple instances of {es} locally to see how a multi-node 
+two data nodes are provisioned automatically. By installing from the tar or zip
+archive, you can start multiple instances of {es} locally to see how a multi-node
 cluster behaves.
 
 To run a three-node {es} cluster locally:
@@ -224,7 +224,7 @@ name (and password) that has authority to run the API. For example, use the
 privileges are required to run each API, see <<rest-apis>>.
 
 {es} responds to each API request with an HTTP status code like `200 OK`. With
-the exception of `HEAD` requests, it also returns a JSON-encoded response body. 
+the exception of `HEAD` requests, it also returns a JSON-encoded response body.
 
 [discrete]
 [[gs-other-install]]
@@ -244,7 +244,7 @@ There are a variety of ingest options for {es}, but in the end they all
 do the same thing: put JSON documents into an {es} index.
 
 You can do this directly with a simple PUT request that specifies
-the index you want to add the document, a unique document ID, and one or more
+the index you want to item the document, a unique document ID, and one or more
 `"field": "value"` pairs in the request body:
 
 [source,console]
@@ -318,7 +318,7 @@ and shows the original source fields that were indexed.
 
 If you have a lot of documents to index, you can submit them in batches with
 the {ref}/docs-bulk.html[bulk API]. Using bulk to batch document
-operations is significantly faster than submitting requests individually as it minimizes network roundtrips. 
+operations is significantly faster than submitting requests individually as it minimizes network roundtrips.
 
 The optimal batch size depends on a number of factors: the document size and complexity, the indexing and search load, and the resources available to your cluster. A good place to start is with batches of 1,000 to 5,000 documents
 and a total payload between 5MB and 15MB. From there, you can experiment
@@ -382,7 +382,7 @@ yellow open   bank  l7sSYV2cQXmu6_4rJWVIww   5   1       1000            0    12
 Once you have ingested some data into an {es} index, you can search it
 by sending requests to the `_search` endpoint. To access the full suite of
 search capabilities, you use the {es} Query DSL to specify the
-search criteria in the request body. You specify the name of the index you 
+search criteria in the request body. You specify the name of the index you
 want to search in the request URI.
 
 For example, the following request retrieves all documents in the `bank`
@@ -445,7 +445,7 @@ The response also provides the following information about the search request:
 * `took` – how long it took {es} to run the query, in milliseconds
 * `timed_out` – whether or not the search request timed out
 * `_shards` – how many shards were searched and a breakdown of how many shards
-succeeded, failed, or were skipped. 
+succeeded, failed, or were skipped.
 * `max_score` – the score of the most relevant document found
 * `hits.total.value` - how many matching documents were found
 * `hits.sort` - the document's sort position (when not sorting by relevance score)
@@ -453,7 +453,7 @@ succeeded, failed, or were skipped.
 
 Each search request is self-contained: {es} does not maintain any
 state information across requests. To page through the search hits, specify
-the `from` and `size` parameters in your request. 
+the `from` and `size` parameters in your request.
 
 For example, the following request gets hits 10 through 19:
 
@@ -474,8 +474,8 @@ GET /bank/_search
 Now that you've seen how to submit a basic search request, you can start to
 construct queries that are a bit more interesting than `match_all`.
 
-To search for specific terms within a field, you can use a `match` query. 
-For example, the following request searches the `address` field to find 
+To search for specific terms within a field, you can use a `match` query.
+For example, the following request searches the `address` field to find
 customers whose addresses contain `mill` or `lane`:
 
 [source,console]
@@ -488,8 +488,8 @@ GET /bank/_search
 // TEST[continued]
 
 To perform a phrase search rather than matching individual terms, you use
-`match_phrase` instead of `match`. For example, the following request only 
-matches addresses that contain the phrase `mill lane`: 
+`match_phrase` instead of `match`. For example, the following request only
+matches addresses that contain the phrase `mill lane`:
 
 [source,console]
 --------------------------------------------------
@@ -501,7 +501,7 @@ GET /bank/_search
 // TEST[continued]
 
 To construct more complex queries, you can use a `bool` query to combine
-multiple query criteria. You can designate criteria as required (must match), 
+multiple query criteria. You can designate criteria as required (must match),
 desirable (should match), or undesirable (must not match).
 
 For example, the following request searches the `bank` index for accounts that
@@ -530,15 +530,15 @@ Each `must`, `should`, and `must_not` element in a Boolean query is referred
 to as a query clause. How well a document meets the criteria in each `must` or
 `should` clause contributes to the document's _relevance score_. The higher the
 score, the better the document matches your search criteria. By default, {es}
-returns documents ranked by these relevance scores. 
+returns documents ranked by these relevance scores.
 
 The criteria in a `must_not` clause is treated as a _filter_. It affects whether
 or not the document is included in the results, but does not contribute to
 how documents are scored. You can also explicitly specify arbitrary filters to
-include or exclude documents based on structured data. 
+include or exclude documents based on structured data.
 
 For example, the following request uses a range filter to limit the results to
-accounts with a balance between $20,000 and $30,000 (inclusive). 
+accounts with a balance between $20,000 and $30,000 (inclusive).
 
 [source,console]
 --------------------------------------------------
@@ -565,10 +565,10 @@ GET /bank/_search
 == Analyze results with aggregations
 
 {es} aggregations enable you to get meta-information about your search results
-and answer questions like, "How many account holders are in Texas?" or 
-"What's the average balance of accounts in Tennessee?" You can search 
+and answer questions like, "How many account holders are in Texas?" or
+"What's the average balance of accounts in Tennessee?" You can search
 documents, filter hits, and use aggregations to analyze the results all in one
-request. 
+request.
 
 For example, the following request uses a `terms` aggregation to group
 all of the accounts in the `bank` index by state, and returns the ten states
@@ -590,7 +590,7 @@ GET /bank/_search
 --------------------------------------------------
 // TEST[continued]
 
-The `buckets` in the response are the values of the `state` field. The 
+The `buckets` in the response are the values of the `state` field. The
 `doc_count` shows the number of accounts in each state. For example, you
 can see that there are 27 accounts in `ID` (Idaho). Because the request
 set `size=0`, the response only contains the aggregation results.
@@ -656,7 +656,7 @@ set `size=0`, the response only contains the aggregation results.
 // TESTRESPONSE[s/"took": 29/"took": $body.took/]
 
 
-You can combine aggregations to build more complex summaries of your data. For 
+You can combine aggregations to build more complex summaries of your data. For
 example, the following request nests an `avg` aggregation within the previous
 `group_by_state` aggregation to calculate the average account balances for
 each state.
@@ -714,13 +714,13 @@ GET /bank/_search
 // TEST[continued]
 
 In addition to basic bucketing and metrics aggregations like these, {es}
-provides specialized aggregations for operating on multiple fields and 
-analyzing particular types of data such as dates, IP addresses, and geo 
+provides specialized aggregations for operating on multiple fields and
+analyzing particular types of data such as dates, IP addresses, and geo
 data. You can also feed the results of individual aggregations into pipeline
 aggregations for further analysis.
 
 The core analysis capabilities provided by aggregations enable advanced
-features such as using machine learning to detect anomalies. 
+features such as using machine learning to detect anomalies.
 
 [[getting-started-next-steps]]
 == Where to go from here
@@ -732,7 +732,7 @@ searches and aggregations, you might want to:
 Stack Tutorial] to install Kibana, Logstash, and Beats and
 set up a basic system monitoring solution.
 
-* {kibana-ref}/add-sample-data.html[Load one of the sample data sets into Kibana]
+* {kibana-ref}/item-sample-data.html[Load one of the sample data sets into Kibana]
 to see how you can use {es} and Kibana together to visualize your data.
 
 * Try out one of the Elastic search solutions:

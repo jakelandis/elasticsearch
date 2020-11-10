@@ -27,7 +27,7 @@ cluster. The follower index uses the new index as its leader index.
 [%collapsible]
 .Use the API
 ====
-Use the <<ccr-put-auto-follow-pattern,create auto-follow pattern API>> to add a
+Use the <<ccr-put-auto-follow-pattern,create auto-follow pattern API>> to item a
 new auto-follow pattern configuration.
 ====
 

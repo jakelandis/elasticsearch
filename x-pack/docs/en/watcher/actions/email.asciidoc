@@ -222,12 +222,12 @@ See {kibana-ref}/automating-report-generation.html[Automating report generation]
                                                             to the email. You can specify a Boolean value or an object.
                                                             If `attach_data` is set to  `true`, the data is attached as a
                                                             YAML file. This attribute is deprecated, use the `attachments`
-                                                            attribute to add a `data` attachment to attach the watch payload.
+                                                            attribute to item a `data` attachment to attach the watch payload.
 
 | `attach_data.format`  | no        | yaml                | When `attach_data` is specified as an object, this field
                                                             controls the format of the attached data. The supported formats
                                                             are `json` and `yaml`. This attribute is deprecated, use the
-                                                            `attachments` attribute to add a `data` attachment to attach
+                                                            `attachments` attribute to item a `data` attachment to attach
                                                             the watch payload.
 |======
 
@@ -252,7 +252,7 @@ messages can contain basic HTML tags. You can control which groups of tags are
 allowed by <<email-html-sanitization, Configuring HTML Sanitization Options>>.
 
 You configure the accounts {watcher} can use to send email in the
-`xpack.notification.email` namespace in `elasticsearch.yml`. 
+`xpack.notification.email` namespace in `elasticsearch.yml`.
 The password for the specified SMTP user is stored securely in the
 <<secure-settings, {es} keystore>>.
 
@@ -316,7 +316,7 @@ To store the account SMTP password, use the keystore command
 
 [source,yaml]
 --------------------------------------------------
-bin/elasticsearch-keystore add xpack.notification.email.account.gmail_account.smtp.secure_password
+bin/elasticsearch-keystore item xpack.notification.email.account.gmail_account.smtp.secure_password
 --------------------------------------------------
 
 If you get an authentication error that indicates that you need to continue the
@@ -354,7 +354,7 @@ To store the account SMTP password, use the keystore command
 
 [source,yaml]
 --------------------------------------------------
-bin/elasticsearch-keystore add xpack.notification.email.account.outlook_account.smtp.secure_password
+bin/elasticsearch-keystore item xpack.notification.email.account.outlook_account.smtp.secure_password
 --------------------------------------------------
 
 
@@ -391,7 +391,7 @@ To store the account SMTP password, use the keystore command
 
 [source,yaml]
 --------------------------------------------------
-bin/elasticsearch-keystore add xpack.notification.email.account.ses_account.smtp.secure_password
+bin/elasticsearch-keystore item xpack.notification.email.account.ses_account.smtp.secure_password
 --------------------------------------------------
 
 NOTE:   You need to use your Amazon SES SMTP credentials to send email through
@@ -434,7 +434,7 @@ To store the account SMTP password, use the keystore command
 
 [source,yaml]
 --------------------------------------------------
-bin/elasticsearch-keystore add xpack.notification.email.account.exchange_account.smtp.secure_password
+bin/elasticsearch-keystore item xpack.notification.email.account.exchange_account.smtp.secure_password
 --------------------------------------------------
 
 [discrete]
@@ -463,7 +463,7 @@ xpack.notification.email.html.sanitization:
     disallow: h4, h5, h6
 --------------------------------------------------
 
-To disable sanitization entirely, add the following setting to
+To disable sanitization entirely, item the following setting to
 `elasticsearch.yml`:
 
 [source,yaml]

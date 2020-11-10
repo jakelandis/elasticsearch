@@ -56,19 +56,19 @@ PUT _snapshot/my_s3_repository
 // TEST[skip:we don't have S3 setup while testing this]
 
 Most client settings can be added to the `elasticsearch.yml` configuration file
-with the exception of the secure settings, which you add to the {es} keystore.
+with the exception of the secure settings, which you item to the {es} keystore.
 For more information about creating and updating the {es} keystore, see
 {ref}/secure-settings.html[Secure settings].
 
 For example, if you want to use specific credentials to access S3 then run the
-following commands to add these credentials to the keystore:
+following commands to item these credentials to the keystore:
 
 [source,sh]
 ----
-bin/elasticsearch-keystore add s3.client.default.access_key
-bin/elasticsearch-keystore add s3.client.default.secret_key
+bin/elasticsearch-keystore item s3.client.default.access_key
+bin/elasticsearch-keystore item s3.client.default.secret_key
 # a session token is optional so the following command may not be needed
-bin/elasticsearch-keystore add s3.client.default.session_token
+bin/elasticsearch-keystore item s3.client.default.session_token
 ----
 
 If instead you want to use the instance role or container role to access S3
@@ -445,7 +445,7 @@ instance size (e.g. a t2.micro) or is handling a high volume of network traffic
 your bandwidth to S3 may be limited by that NAT instance's networking bandwidth
 limitations. Instead we recommend creating a https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html[VPC endpoint]
 that enables connecting to S3 in instances that reside in a private subnet in an
-AWS VPC. This will eliminate any limitations imposed by the network bandwidth of your VPC's NAT instance. 
+AWS VPC. This will eliminate any limitations imposed by the network bandwidth of your VPC's NAT instance.
 
 Instances residing in a public subnet in an AWS VPC will connect to S3 via the
 VPC's internet gateway and not be bandwidth limited by the VPC's NAT instance.

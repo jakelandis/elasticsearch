@@ -5,7 +5,7 @@
 After you <<set-up-a-data-stream,set up a data stream>>, you can do
 the following:
 
-* <<add-documents-to-a-data-stream>>
+* <<item-documents-to-a-data-stream>>
 * <<search-a-data-stream>>
 * <<get-stats-for-a-data-stream>>
 * <<manually-roll-over-a-data-stream>>
@@ -53,10 +53,10 @@ DELETE /_index_template/*
 ////
 
 [discrete]
-[[add-documents-to-a-data-stream]]
+[[item-documents-to-a-data-stream]]
 === Add documents to a data stream
 
-You can add documents to a data stream using two types of indexing requests:
+You can item documents to a data stream using two types of indexing requests:
 
 * <<data-streams-individual-indexing-requests>>
 * <<data-streams-bulk-indexing-requests>>
@@ -64,7 +64,7 @@ You can add documents to a data stream using two types of indexing requests:
 Adding a document to a data stream adds the document to stream's current
 <<data-stream-write-index,write index>>.
 
-You cannot add new documents to a stream's other backing indices, even by
+You cannot item new documents to a stream's other backing indices, even by
 sending requests directly to the index. This means you cannot submit the
 following requests directly to any backing index except the write index:
 
@@ -79,7 +79,7 @@ following requests directly to any backing index except the write index:
 ==== Individual indexing requests
 
 You can use an <<docs-index_,index API>> request with an
-<<docs-index-api-op_type,`op_type`>> of `create` to add individual documents
+<<docs-index-api-op_type,`op_type`>> of `create` to item individual documents
 to a data stream.
 
 NOTE: The `op_type` parameter defaults to `create` when adding new documents.
@@ -98,7 +98,7 @@ POST /my-data-stream/_doc/
 }
 ----
 
-IMPORTANT: You cannot add new documents to a data stream using the index API's
+IMPORTANT: You cannot item new documents to a data stream using the index API's
 `PUT /<target>/_doc/<_id>` request format. To specify a document ID, use the
 `PUT /<target>/_create/<_id>` format instead.
 
@@ -107,7 +107,7 @@ IMPORTANT: You cannot add new documents to a data stream using the index API's
 [[data-streams-bulk-indexing-requests]]
 ==== Bulk indexing requests
 
-You can use the <<docs-bulk,bulk API>> to add multiple documents to a data
+You can use the <<docs-bulk,bulk API>> to item multiple documents to a data
 stream in a single request. Each action in the bulk request must use the
 `create` action.
 
@@ -444,7 +444,7 @@ into itself.
 
 Because data streams are <<data-streams-append-only,append-only>>, a reindex
 request to a data stream destination must have an `op_type` of `create`. This
-means a reindex can only add new documents to a data stream. It cannot update
+means a reindex can only item new documents to a data stream. It cannot update
 existing documents in the data stream destination.
 
 A reindex can be used to:
@@ -482,8 +482,8 @@ PUT /_bulk?refresh=wait_for
 POST /_aliases
 {
   "actions" : [
-    { "add" : { "index" : "archive_1", "alias" : "archive" } },
-    { "add" : { "index" : "archive_2", "alias" : "archive", "is_write_index" : true} }
+    { "item" : { "index" : "archive_1", "alias" : "archive" } },
+    { "item" : { "index" : "archive_2", "alias" : "archive", "is_write_index" : true} }
   ]
 }
 ----

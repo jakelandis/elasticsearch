@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -37,7 +38,7 @@ import static org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys.WITH;
 
 
 class ReplaceAction {
-    List<Replace<?, ?>> replacements = new ArrayList<>();
+    private final List<Item<?, ?>> replacements = new ArrayList<>();
 
     public ReplaceAction(List<ActionItem> actionItems) {
         for (ActionItem actionItem : actionItems) {
@@ -62,19 +63,23 @@ class ReplaceAction {
 
             switch (find.iterator().next()) {
                 case VALUE:
-                    replacements.add(new ValueReplace(actionItem.getValue().asText(), actionItem.getWith().asText()));
+                    replacements.add(new ValueItem(actionItem.getValue().asText(), actionItem.getWith().asText()));
                     break;
                 case OBJECT:
-                    replacements.add(new ObjectReplace(actionItem.getObject(), actionItem.getWith()));
+                    replacements.add(new ByObjectItem(actionItem.getObject(), actionItem.getWith()));
                     break;
                 case LOCATION:
-                    replacements.add(new LocationReplace(JsonPointer.compile(actionItem.getLocation().asText()), actionItem.getWith()));
+                    replacements.add(new ByLocationItem(JsonPointer.compile(actionItem.getLocation().asText()), actionItem.getWith()));
                     break;
                 default:
                     assert false : "unexpected replace value, this is a bug";
 
             }
         }
+    }
+
+    public List<Item<?, ?>> getReplacements() {
+        return Collections.unmodifiableList(replacements);
     }
 
     @Override
@@ -84,88 +89,87 @@ class ReplaceAction {
             '}';
     }
 
-    static class ValueReplace implements Replace<String, String> {
-        private final String replace;
-        private final String with;
+    static class ValueItem implements Item<String, String>, Find.ByValue {
+        private final String find;
+        private final String replacement;
 
-        ValueReplace(String replace, String with) {
-            this.replace = replace;
-            this.with = with;
+        ValueItem(String find, String replacement) {
+            this.find = find;
+            this.replacement = replacement;
         }
 
-        public String replace() {
-            return replace;
+        public String find() {
+            return find;
         }
 
-        public String with() {
-            return with;
+        public String replacement() {
+            return replacement;
         }
 
         @Override
         public String toString() {
             return "ValueReplace{" +
-                "replace='" + replace + '\'' +
-                ", with='" + with + '\'' +
+                "find='" + find + '\'' +
+                ", replacement='" + replacement + '\'' +
                 '}';
         }
     }
 
-    static class ObjectReplace implements Replace<JsonNode, JsonNode> {
-        private final JsonNode replace;
-        private final JsonNode with;
+    static class ByObjectItem implements Item<JsonNode, JsonNode>, Find.ByObject {
+        private final JsonNode find;
+        private final JsonNode replacement;
 
-        ObjectReplace(JsonNode replace, JsonNode with) {
-            this.replace = replace;
-            this.with = with;
+        ByObjectItem(JsonNode find, JsonNode replacement) {
+            this.find = find;
+            this.replacement = replacement;
         }
 
-        public JsonNode replace() {
-            return replace;
+        public JsonNode find() {
+            return find;
         }
 
-        public JsonNode with() {
-            return with;
+        public JsonNode replacement() {
+            return replacement;
         }
 
         @Override
         public String toString() {
             return "ObjectReplace{" +
-                "replace=" + replace +
-                ", with=" + with +
+                "find=" + find +
+                ", replacement=" + replacement +
                 '}';
         }
-
     }
 
-    static class LocationReplace implements Replace<JsonPointer, JsonNode> {
-        private final JsonPointer replace;
-        private final JsonNode with;
+    static class ByLocationItem implements Item<JsonPointer, JsonNode>, Find.ByLocation {
+        private final JsonPointer find;
+        private final JsonNode replacement;
 
-        LocationReplace(JsonPointer replace, JsonNode with) {
-            this.replace = replace;
-            this.with = with;
+        ByLocationItem(JsonPointer find, JsonNode replacement) {
+            this.find = find;
+            this.replacement = replacement;
         }
 
-        public JsonPointer replace() {
-            return replace;
+        public JsonPointer find() {
+            return find;
         }
 
-        public JsonNode with() {
-            return with;
+        public JsonNode replacement() {
+            return replacement;
         }
 
         @Override
         public String toString() {
             return "LocationReplace{" +
-                "replace=" + replace +
-                ", with=" + with +
+                "find=" + find +
+                ", replacement=" + replacement +
                 '}';
         }
     }
 
-    interface Replace<R, W> {
-        R replace();
+    interface Item<F, R> extends Instruction{
+        F find();
 
-        W with();
+        R replacement();
     }
 }

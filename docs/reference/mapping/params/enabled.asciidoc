@@ -93,7 +93,7 @@ The `enabled` setting for existing fields and the top-level mapping
 definition cannot be updated.
 
 Note that because Elasticsearch completely skips parsing the field
-contents, it is possible to add non-object data to a disabled field:
+contents, it is possible to item non-object data to a disabled field:
 
 [source,console]
 --------------------------------------------------

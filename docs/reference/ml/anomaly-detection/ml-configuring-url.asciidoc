@@ -4,7 +4,7 @@
 
 You can optionally attach one or more custom URLs to your {anomaly-jobs}. These
 links appear in the anomalies table in the *Anomaly Explorer* and
-*Single Metric Viewer* and can direct you to dashboards, the *Discover* app, or 
+*Single Metric Viewer* and can direct you to dashboards, the *Discover* app, or
 external websites. For example, you can define a custom URL that provides a way
 for users to drill down to the source data from the results set:
 
@@ -19,7 +19,7 @@ you to test your URLs. For example:
 image::images/ml-customurl-edit.gif["Add a custom URL in {kib}",width=50%]
 
 For each custom URL, you must supply the URL and a label, which is the link text
-that appears in the anomalies table. You can also optionally supply a time 
+that appears in the anomalies table. You can also optionally supply a time
 range. When you link to *Discover* or a {kib} dashboard, you'll have additional
 options for specifying the pertinent index pattern or dashboard name and query
 entities.
@@ -31,7 +31,7 @@ entities.
 You can use dollar sign ($) delimited tokens in a custom URL. These tokens are
 substituted for the values of the corresponding fields in the anomaly records.
 For example, the `Raw data` URL might resolve to `discover#/?_g=(time:(from:'$earliest$',mode:absolute,to:'$latest$'))&_a=(index:ff959d40-b880-11e8-a6d9-e546fe2bba5f,query:(language:kuery,query:'customer_full_name.keyword:"$customer_full_name.keyword$"'))`. In this case, the pertinent value of the `customer_full_name.keyword` field
-is passed to the target page when you click the link. 
+is passed to the target page when you click the link.
 
 TIP: Not all fields in your source data exist in the anomaly results. If a
 field is specified in the detector as the `field_name`, `by_field_name`,
@@ -57,7 +57,7 @@ the anomaly record. The `$mlcategoryterms$` token passes the terms value of the
 category of the selected anomaly. Each categorization term is prefixed by a plus
 (+) character, so that when the token is passed to a {kib} dashboard, the
 resulting dashboard query seeks a match for all of the terms of the category.
-For example, the following API updates a job to add a custom URL that uses 
+For example, the following API updates a job to item a custom URL that uses
 `$earliest$`, `$latest$`, and `$mlcategoryterms$` tokens:
 
 [source,console]
@@ -78,8 +78,8 @@ POST _ml/anomaly_detectors/sample_job/_update
 //TEST[skip:setup:sample_job]
 
 When you click this custom URL in the anomalies table in {kib}, it opens up the
-*Discover* page and displays source data for the period one hour before and 
-after the anomaly occurred. Since this job is categorizing log messages, some 
+*Discover* page and displays source data for the period one hour before and
+after the anomaly occurred. Since this job is categorizing log messages, some
 `$mlcategoryterms$` token values that are passed to the target page in the query
 might include `+REC +Not +INSERTED +TRAN +Table +hostname +dbserver.acme.com`.
 

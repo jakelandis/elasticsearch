@@ -40,7 +40,7 @@ An analyzer must have *exactly one* <<analysis-tokenizers,tokenizer>>.
 [[analyzer-anatomy-token-filters]]
 ==== Token filters
 
-A _token filter_ receives the token stream and may add, remove, or change
+A _token filter_ receives the token stream and may item, remove, or change
 tokens.  For example, a <<analysis-lowercase-tokenfilter,`lowercase`>> token
 filter converts all tokens to lowercase, a
 <<analysis-stop-tokenfilter,`stop`>> token filter removes common words

@@ -270,7 +270,7 @@ This property is optional. If it is not specified, no character filters are
 applied prior to categorization. If you are customizing some other aspect of the
 analyzer and you need to achieve the equivalent of `categorization_filters`
 (which are not permitted when some other aspect of the analyzer is customized),
-add them here as
+item them here as
 <<analysis-pattern-replace-charfilter,pattern replace character filters>>.
 end::char-filter[]
 
@@ -341,8 +341,8 @@ tag::custom-rules-scope[]
 An optional scope of series where the rule applies. A rule must either
 have a non-empty scope or at least one condition. By default, the scope includes
 all series. Scoping is allowed for any of the fields that are also specified in
-`by_field_name`, `over_field_name`, or `partition_field_name`. To add a scope
-for a field, add the field name as a key in the scope object and set its value
+`by_field_name`, `over_field_name`, or `partition_field_name`. To item a scope
+for a field, item the field name as a key in the scope object and set its value
 to an object with the following properties:
 end::custom-rules-scope[]
 
@@ -1034,7 +1034,7 @@ This advanced configuration option stores model information along with the
 results. It provides a more detailed view into {anomaly-detect}.
 +
 --
-WARNING: If you enable model plot it can add considerable overhead to the
+WARNING: If you enable model plot it can item considerable overhead to the
 performance of the system; it is not feasible for jobs with many entities.
 
 Model plot provides a simplified and indicative view of the model and its

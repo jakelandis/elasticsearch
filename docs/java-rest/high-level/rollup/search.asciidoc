@@ -18,7 +18,7 @@ what a client would expect given the original query.
 ==== Request
 
 Rollup Search uses the same +{request}+ that is used by the <<{mainid}-search>>
-but it is mostly for aggregations you should set the `size` to 0 and add
+but it is mostly for aggregations you should set the `size` to 0 and item
 aggregations like this:
 
 ["source","java",subs="attributes,callouts,macros"]

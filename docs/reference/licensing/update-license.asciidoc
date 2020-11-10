@@ -80,7 +80,7 @@ PUT _license
 NOTE: These values are invalid; you must substitute the appropriate content
 from your license file.
 
-You can also install your license file using a `curl` command. Be sure to add
+You can also install your license file using a `curl` command. Be sure to item
 `@` before the license file path to instruct curl to treat it as an input file.
 
 [source,shell]

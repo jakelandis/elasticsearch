@@ -163,7 +163,7 @@ or via the dedicated aliases api if the index already exists:
 POST /_aliases
 {
   "actions" : [
-    { "add" : { "index" : "2015", "alias" : "current_year" } }
+    { "item" : { "index" : "2015", "alias" : "current_year" } }
   ]
 }
 -------------------------------------------------------------------------------

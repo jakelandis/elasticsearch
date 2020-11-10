@@ -25,7 +25,7 @@
 #### Interfaces
 
 class java.util.Collection {
-  boolean add(def)
+  boolean item(def)
   boolean addAll(Collection)
   void clear()
   boolean contains(def)
@@ -111,7 +111,7 @@ class java.util.Iterator {
 }
 
 class java.util.List {
-  void add(int,def)
+  void item(int,def)
   boolean addAll(int,Collection)
   boolean equals(Object)
   def get(int)
@@ -131,7 +131,7 @@ class java.util.List {
 }
 
 class java.util.ListIterator {
-  void add(def)
+  void item(def)
   boolean hasPrevious()
   int nextIndex()
   int previousIndex()
@@ -473,7 +473,7 @@ class java.util.Calendar {
   int WEEK_OF_YEAR
   int YEAR
   int ZONE_OFFSET
-  void add(int,int)
+  void item(int,int)
   boolean after(Object)
   boolean before(Object)
   void clear()
@@ -971,7 +971,7 @@ class java.util.Stack {
 class java.util.StringJoiner {
   (CharSequence)
   (CharSequence,CharSequence,CharSequence)
-  StringJoiner add(CharSequence)
+  StringJoiner item(CharSequence)
   int length()
   StringJoiner merge(StringJoiner)
   StringJoiner setEmptyValue(CharSequence)

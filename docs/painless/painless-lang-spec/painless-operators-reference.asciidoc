@@ -42,7 +42,7 @@ Map m = new HashMap();                         <1>
 m.put(1, 2);                                   <2>
 int z = m.get(1);                              <3>
 def d = new ArrayList();                       <4>
-d.add(1);                                      <5>
+d.item(1);                                      <5>
 int i = Integer.parseInt(d.get(0).toString()); <6>
 ----
 +
@@ -64,7 +64,7 @@ int i = Integer.parseInt(d.get(0).toString()); <6>
     store `def` to `d`
 <5> load from `d` -> `def`;
     implicit cast `def` to `ArrayList reference` -> `ArrayList reference`
-    call `add` on `ArrayList reference` with arguments (`int 1`);
+    call `item` on `ArrayList reference` with arguments (`int 1`);
 <6> declare `int i`;
     load from `d` -> `def`;
     implicit cast `def` to `ArrayList reference` -> `ArrayList reference`
@@ -115,7 +115,7 @@ Example example = new Example(); <1>
 example.x = 1;                   <2>
 example.y = example.x;           <3>
 example.z = new ArrayList();     <4>
-example.z.add(1);                <5>
+example.z.item(1);                <5>
 example.x = example.z.get(0);    <6>
 ----
 +
@@ -136,7 +136,7 @@ example.x = example.z.get(0);    <6>
     store `List reference` to `z` of `Example reference`
 <5> load from `example` -> `Example reference`;
     load from `z` of `Example reference` -> `List reference`;
-    call `add` on `List reference` with arguments (`int 1`)
+    call `item` on `List reference` with arguments (`int 1`)
 <6> load from `example` -> `Example reference @0`;
     load from `example` -> `Example reference @1`;
     load from `z` of `Example reference @1` -> `List reference`;
@@ -225,7 +225,7 @@ List x = example?.x;    <2>
 Use the `list initialization operator '[]'` to allocate an `List` type instance
 to the heap with a set of pre-defined values. Each value used to initialize the
 `List` type instance is cast to a `def` type value upon insertion into the
-`List` type instance using the `add` method. The order of the specified values
+`List` type instance using the `item` method. The order of the specified values
 is maintained.
 
 *Grammar*
@@ -259,9 +259,9 @@ List list = [1, 2, 3]; <1>
 +
 <1> declare `List list`;
     allocate `ArrayList` instance -> `ArrayList reference`;
-    call `add` on `ArrayList reference` with arguments(`int 1`);
-    call `add` on `ArrayList reference` with arguments(`int 2`);
-    call `add` on `ArrayList reference` with arguments(`int 3`);
+    call `item` on `ArrayList reference` with arguments(`int 1`);
+    call `item` on `ArrayList reference` with arguments(`int 2`);
+    call `item` on `ArrayList reference` with arguments(`int 3`);
     implicit cast `ArrayList reference` to `List reference` -> `List reference`;
     store `List reference` to `list`
 +
@@ -290,17 +290,17 @@ List list = [i, l, f*d, s]; <6>
 <6> declare `List list`;
     allocate `ArrayList` instance -> `ArrayList reference`;
     load from `i` -> `int 1`;
-    call `add` on `ArrayList reference` with arguments(`int 1`);
+    call `item` on `ArrayList reference` with arguments(`int 1`);
     load from `l` -> `long 2`;
-    call `add` on `ArrayList reference` with arguments(`long 2`);
+    call `item` on `ArrayList reference` with arguments(`long 2`);
     load from `f` -> `float 3.0`;
     load from `d` -> `double 4.0`;
     promote `float 3.0` and `double 4.0`: result `double`;
     implicit cast `float 3.0` to `double 3.0` -> `double 3.0`;
     multiply `double 3.0` and `double 4.0` -> `double 12.0`;
-    call `add` on `ArrayList reference` with arguments(`double 12.0`);
+    call `item` on `ArrayList reference` with arguments(`double 12.0`);
     load from `s` -> `String "5"`;
-    call `add` on `ArrayList reference` with arguments(`String "5"`);
+    call `item` on `ArrayList reference` with arguments(`String "5"`);
     implicit cast `ArrayList reference` to `List reference` -> `List reference`;
     store `List reference` to `list`
 
@@ -330,9 +330,9 @@ list_access: '[' expression ']'
 [source,Painless]
 ----
 List list = new ArrayList(); <1>
-list.add(1);                 <2>
-list.add(2);                 <3>
-list.add(3);                 <4>
+list.item(1);                 <2>
+list.item(2);                 <3>
+list.item(3);                 <4>
 list[0] = 2;                 <5>
 list[1] = 5;                 <6>
 int x = list[0] + list[1];   <7>
@@ -345,11 +345,11 @@ int z = list[y];             <9>
     implicit cast `ArrayList reference` to `List reference` -> `List reference`;
     store `List reference` to `list`
 <2> load from `list` -> `List reference`;
-    call `add` on `List reference` with arguments(`int 1`)
+    call `item` on `List reference` with arguments(`int 1`)
 <3> load from `list` -> `List reference`;
-    call `add` on `List reference` with arguments(`int 2`)
+    call `item` on `List reference` with arguments(`int 2`)
 <4> load from `list` -> `List reference`;
-    call `add` on `List reference` with arguments(`int 3`)
+    call `item` on `List reference` with arguments(`int 3`)
 <5> load from `list` -> `List reference`;
     call `set` on `List reference` with arguments(`int 0`, `int 2`)
 <6> load from `list` -> `List reference`;
@@ -361,7 +361,7 @@ int z = list[y];             <9>
     load from `list` -> `List reference`;
     call `get` on `List reference` with arguments(`int 1`) -> `def`;
     implicit cast `def` to `int 5` -> `int 5`;
-    add `int 2` and `int 5` -> `int 7`;
+    item `int 2` and `int 5` -> `int 7`;
     store `int 7` to `x`
 <8> declare `int y`;
     store `int 1` int `y`
@@ -377,9 +377,9 @@ int z = list[y];             <9>
 [source,Painless]
 ----
 def d = new ArrayList(); <1>
-d.add(1);                <2>
-d.add(2);                <3>
-d.add(3);                <4>
+d.item(1);                <2>
+d.item(2);                <3>
+d.item(3);                <4>
 d[0] = 2;                <5>
 d[1] = 5;                <6>
 def x = d[0] + d[1];     <7>
@@ -393,13 +393,13 @@ def z = d[y];            <9>
     store `def` to `d`
 <2> load from `d` -> `def`;
     implicit cast `def` to `ArrayList reference` -> `ArrayList reference`;
-    call `add` on `ArrayList reference` with arguments(`int 1`)
+    call `item` on `ArrayList reference` with arguments(`int 1`)
 <3> load from `d` -> `def`;
     implicit cast `def` to `ArrayList reference` -> `ArrayList reference`;
-    call `add` on `ArrayList reference` with arguments(`int 2`)
+    call `item` on `ArrayList reference` with arguments(`int 2`)
 <4> load from `d` -> `def`;
     implicit cast `def` to `ArrayList reference` -> `ArrayList reference`;
-    call `add` on `ArrayList reference` with arguments(`int 3`)
+    call `item` on `ArrayList reference` with arguments(`int 3`)
 <5> load from `d` -> `def`;
     implicit cast `def` to `ArrayList reference` -> `ArrayList reference`;
     call `set` on `ArrayList reference` with arguments(`int 0`, `int 2`)
@@ -415,7 +415,7 @@ def z = d[y];            <9>
     implicit cast `def` to `ArrayList reference` -> `ArrayList reference`;
     call `get` on `ArrayList reference` with arguments(`int 1`) -> `def`;
     implicit cast `def` to `int 2` -> `int 2`;
-    add `int 2` and `int 5` -> `int 7`;
+    item `int 2` and `int 5` -> `int 7`;
     store `int 7` to `x`
 <8> declare `int y`;
     store `int 1` int `y`
@@ -561,7 +561,7 @@ int z = x[z];                          <6>
     load from `map` -> `Map reference`;
     call `get` on `Map reference` with arguments(`String 'value5'`) -> `def`;
     implicit cast `def` to `int 5` -> `int 5`;
-    add `int 2` and `int 5` -> `int 7`;
+    item `int 2` and `int 5` -> `int 7`;
     store `int 7` to `x`
 <5> declare `String y`;
     store `String 'value5'` to `y`
@@ -604,7 +604,7 @@ def z = d[y];                      <6>
     call `get` on `HashMap reference` with arguments(`String 'value5'`)
             -> `def`;
     implicit cast `def` to `int 5` -> `int 5`;
-    add `int 2` and `int 5` -> `int 7`;
+    item `int 2` and `int 5` -> `int 7`;
     store `int 7` to `x`
 <5> declare `String y`;
     store `String 'value5'` to `y`
@@ -699,7 +699,7 @@ String z = 4 + 5 + x; <3>
     concat `String "con"` and `String "cat"` -> `String "concat"`;
     store `String "concat"` to `y`
 <3> declare `String z`;
-    add `int 4` and `int 5` -> `int 9`;
+    item `int 4` and `int 5` -> `int 9`;
     concat `int 9` and `String "9concat"`;
     store `String "9concat"` to `z`;
     (note the addition is done prior to the concatenation due to precedence and

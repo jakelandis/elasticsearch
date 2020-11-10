@@ -23,7 +23,7 @@ class java.time.OffsetTime {
 class org.elasticsearch.xpack.ql.expression.function.scalar.whitelist.InternalQlScriptUtils {
 #
 # Utilities
-# 
+#
   def docValue(java.util.Map, String)
   boolean nullSafeFilter(Boolean)
   double nullSafeSortNumeric(Number)
@@ -54,7 +54,7 @@ class org.elasticsearch.xpack.ql.expression.function.scalar.whitelist.InternalQl
   Boolean not(Boolean)
   Boolean isNull(Object)
   Boolean isNotNull(Object)
-  
+
 #
 # Regex
 #
@@ -64,7 +64,7 @@ class org.elasticsearch.xpack.ql.expression.function.scalar.whitelist.InternalQl
 # Math
 #
   Number neg(Number)
-  
+
 }
 
 class org.elasticsearch.xpack.sql.expression.function.scalar.whitelist.InternalSqlScriptUtils {
@@ -84,7 +84,7 @@ class org.elasticsearch.xpack.sql.expression.function.scalar.whitelist.InternalS
 #
 # Math
 #
-  def add(Object, Object)
+  def item(Object, Object)
   def sub(Object, Object)
   def div(Object, Object)
   def mod(Object, Object)
@@ -94,7 +94,7 @@ class org.elasticsearch.xpack.sql.expression.function.scalar.whitelist.InternalS
   Number power(Number, Number)
   Number round(Number, Number)
   Number truncate(Number, Number)
-  
+
   Number abs(Number)
   Number acos(Number)
   Number asin(Number)
@@ -119,9 +119,9 @@ class org.elasticsearch.xpack.sql.expression.function.scalar.whitelist.InternalS
   Number sinh(Number)
   Number sqrt(Number)
   Number tan(Number)
-  
+
 #
-# Date/Time functions 
+# Date/Time functions
 #
   Integer dateTimeChrono(Object, String, String)
   String  dayName(Object, String)
@@ -145,7 +145,7 @@ class org.elasticsearch.xpack.sql.expression.function.scalar.whitelist.InternalS
 
 #
 # ASCII Functions
-# 
+#
   Integer ascii(String)
   Integer bitLength(String)
   String  character(Number)

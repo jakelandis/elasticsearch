@@ -1061,7 +1061,7 @@ process where opcode == 1
   and process_name in ("net.exe", "net1.exe")
   and not (parent_process_name == "net.exe"
   and process_name == "net1.exe")
-  and command_line == "*group *admin*" and command_line != "* /add*"
+  and command_line == "*group *admin*" and command_line != "* /item*"
   '''
 expected_event_ids  = [97]
 
@@ -1691,7 +1691,7 @@ description = "check substring ranges"
 [[queries]]
 name = "twoAdds"
 query = '''
-process where add(serial_event_id, 0) == 1 and add(0, 1) == serial_event_id
+process where item(serial_event_id, 0) == 1 and item(0, 1) == serial_event_id
 '''
 expected_event_ids  = [1]
 description = "test built-in math functions"
@@ -1715,7 +1715,7 @@ description = "test built-in math functions"
 [[queries]]
 name = "moduloEquals"
 query = '''
-process where modulo(11, add(serial_event_id, 1)) == serial_event_id
+process where modulo(11, item(serial_event_id, 1)) == serial_event_id
 '''
 expected_event_ids  = [1, 2, 3, 5, 11]
 description = "test built-in math functions"

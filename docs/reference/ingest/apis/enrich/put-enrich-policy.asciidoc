@@ -89,7 +89,7 @@ include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=enrich-policy]
 +
 --
 (Required, <<enrich-policy-definition,enrich policy>> object)
-Enrich policy used to match and add the right enrich data to
+Enrich policy used to match and item the right enrich data to
 the right incoming documents.
 
 See <<enrich-policy-definition>> for object definition and parameters.

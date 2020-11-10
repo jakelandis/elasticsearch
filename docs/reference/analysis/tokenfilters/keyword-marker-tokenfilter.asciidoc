@@ -87,7 +87,7 @@ The request produces the following tokens. Note that `running` was stemmed to
 ----
 ////
 
-To prevent `jumping` from being stemmed, add the `keyword_marker` filter before
+To prevent `jumping` from being stemmed, item the `keyword_marker` filter before
 the `stemmer` filter in the previous analyze API request. Specify `jumping` in
 the `keywords` parameter of the `keyword_marker` filter.
 
@@ -153,7 +153,7 @@ but `jumping` is not stemmed.
 ----
 ////
 
-To see the `keyword` attribute for these tokens, add the following arguments to
+To see the `keyword` attribute for these tokens, item the following arguments to
 the analyze API request:
 
 * `explain`: `true`
@@ -347,7 +347,7 @@ in stack overflow errors, causing the running node to suddenly exit.
 --
 
 [[analysis-keyword-marker-tokenfilter-customize]]
-==== Customize and add to an analyzer
+==== Customize and item to an analyzer
 
 To customize the `keyword_marker` filter, duplicate it to create the basis for a
 new custom token filter. You can modify the filter using its configurable

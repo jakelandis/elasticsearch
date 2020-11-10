@@ -3,18 +3,18 @@
 [[encrypting-communications-hosts]]
 === Add nodes to your cluster
 
-You can add more nodes to your cluster and optionally designate specific
+You can item more nodes to your cluster and optionally designate specific
 purposes for each node. For example, you can allocate master nodes, data nodes,
 ingest nodes, machine learning nodes, and dedicated coordinating nodes. For
 details about each node type, see <<modules-node>>.
 
-Let's add two nodes to our cluster!
+Let's item two nodes to our cluster!
 
 . Install two additional copies of {es}. It's possible to run multiple {es}
 nodes using a shared installation. In this tutorial, however, we're keeping
 things simple by using the `zip` or `tar.gz` packages and by putting each copy
 in a separate folder. You can simply repeat the steps that you used to install
-{es} in the 
+{es} in the
 {stack-gs}/get-started-elastic-stack.html#install-elasticsearch[Getting started with the {stack}]
 tutorial.
 
@@ -47,15 +47,15 @@ which contains the generated certificates and keys.
 --
 ["source","sh",subs="attributes,callouts"]
 ----------------------------------------------------------------------
-unzip certificate-bundle.zip 
+unzip certificate-bundle.zip
 
 Archive:  certificate-bundle.zip
    creating: node-2/
-  inflating: node-2/node-2.p12       
+  inflating: node-2/node-2.p12
    creating: node-3/
-  inflating: node-3/node-3.p12   
+  inflating: node-3/node-3.p12
 ----------------------------------------------------------------------
-  
+
 The `certificate-bundle.zip` file contains a folder for each of your nodes. Each
 folder contains a single PKCS#12 keystore that includes a node certificate,
 node key, and CA certificate.
@@ -72,7 +72,7 @@ node.
 . Specify the name of the cluster and give each node a unique name.
 +
 --
-For example, add the following settings to the `ES_PATH_CONF/elasticsearch.yml`
+For example, item the following settings to the `ES_PATH_CONF/elasticsearch.yml`
 file on the second node:
 
 [source,yaml]
@@ -99,7 +99,7 @@ same `cluster.name` value.
 which to form a cluster.
 +
 --
-For example, add the following setting in the `ES_PATH_CONF/elasticsearch.yml`
+For example, item the following setting in the `ES_PATH_CONF/elasticsearch.yml`
 file:
 
 [source,yaml]
@@ -165,10 +165,10 @@ node:
 [source,console]
 ----------------------------------
 GET _cat/nodes?v
----------------------------------- 
+----------------------------------
 
 The node that has an asterisk(*) in the `master` column is the elected master
-node. 
+node.
 --
 
 Now that you have multiple nodes, your data can be distributed across the
@@ -181,7 +181,7 @@ concepts of clusters, nodes, and shards, see
 === What's next?
 
 Congratulations! You've encrypted communications between the nodes in your
-cluster and can pass the 
+cluster and can pass the
 <<bootstrap-checks-tls,TLS bootstrap check>>.
 
 If you want to encrypt communications between other products in the {stack}, see

@@ -331,7 +331,7 @@ PUT my-index-000001
 }
 --------------------------------------------------
 
-Now we can add a document:
+Now we can item a document:
 
 [source,console]
 --------------------------------------------------

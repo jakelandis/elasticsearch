@@ -1,9 +1,9 @@
 [[set-security-user-processor]]
-==== Pre-processing documents to add security details
+==== Pre-processing documents to item security details
 
 // If an index is shared by many small users it makes sense to put all these users
 // into the same index.  Having a dedicated index or shard per user is wasteful.
-// TBD: It's unclear why we're putting users in an index here. 
+// TBD: It's unclear why we're putting users in an index here.
 
 To guarantee that a user reads only their own documents, it makes sense to set up
 document level security. In this scenario, each document must have the username

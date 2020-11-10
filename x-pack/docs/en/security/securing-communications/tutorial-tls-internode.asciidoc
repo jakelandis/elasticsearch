@@ -15,7 +15,7 @@ to meet the minimum requirements to pass the
 . (Optional) Name the cluster.
 +
 --
-For example, add the <<cluster.name,cluster.name>> setting in the
+For example, item the <<cluster.name,cluster.name>> setting in the
 `ES_PATH_CONF/elasticsearch.yml` file:
 
 [source,yaml]
@@ -36,7 +36,7 @@ however, to ensure that your nodes join the right cluster.
 . (Optional) Name the {es} node.
 +
 --
-For example, add the <<node.name,node.name>> setting in the
+For example, item the <<node.name,node.name>> setting in the
 `ES_PATH_CONF/elasticsearch.yml` file:
 
 [source,yaml]
@@ -64,7 +64,7 @@ To enable {es} to form a multi-node cluster, use the default value for the
 initial set of master-eligible nodes.
 +
 --
-For example, add the following setting in the `ES_PATH_CONF/elasticsearch.yml`
+For example, item the following setting in the `ES_PATH_CONF/elasticsearch.yml`
 file:
 
 [source,yaml]
@@ -77,7 +77,7 @@ discovery settings, it will start up in development mode and auto-bootstrap
 itself into a new cluster.
 
 TIP: If you are starting a cluster with multiple master-eligible nodes for the
-first time, add all of those node names to the `cluster.initial_master_nodes`
+first time, item all of those node names to the `cluster.initial_master_nodes`
 setting.
 
 See <<modules-discovery-bootstrap-cluster>> and
@@ -89,7 +89,7 @@ communications.
 +
 --
 // tag::enable-tls[]
-For example, add the following settings in the `ES_PATH_CONF/elasticsearch.yml`
+For example, item the following settings in the `ES_PATH_CONF/elasticsearch.yml`
 file:
 
 [source,yaml]
@@ -121,11 +121,11 @@ For example, run the following commands:
 ["source","sh",subs="attributes,callouts"]
 ----------------------------------------------------------------------
 ./bin/elasticsearch-keystore create <1>
-./bin/elasticsearch-keystore add xpack.security.transport.ssl.keystore.secure_password
-./bin/elasticsearch-keystore add xpack.security.transport.ssl.truststore.secure_password
+./bin/elasticsearch-keystore item xpack.security.transport.ssl.keystore.secure_password
+./bin/elasticsearch-keystore item xpack.security.transport.ssl.truststore.secure_password
 ----------------------------------------------------------------------
 <1> If the {es} keystore already exists, this command asks whether you want to
-overwrite it. You do not need to overwrite it; you can simply add settings to
+overwrite it. You do not need to overwrite it; you can simply item settings to
 your existing {es} keystore.
 // end::secure-passwords[]
 
@@ -157,7 +157,7 @@ include::{xes-repo-dir}/security/get-started-builtin-users.asciidoc[tag=create-u
 After you setup the password for the `kibana_system` built-in user,
 <<get-started-kibana-user,configure {kib} to use it>>.
 
-For example, run the following commands to create the {kib} keystore and add the
+For example, run the following commands to create the {kib} keystore and item the
 `kibana_system` built-in user and its password in secure settings:
 
 include::{xes-repo-dir}/security/get-started-kibana-users.asciidoc[tag=store-kibana-user]

@@ -7,7 +7,7 @@ decisions such as electing a new master or committing a new cluster state.
 Decisions are made only after a majority (more than half) of the nodes in the
 voting configuration respond.
 
-Usually the voting configuration is the same as the set of all the 
+Usually the voting configuration is the same as the set of all the
 master-eligible nodes that are currently in the cluster. However, there are some
 situations in which they may be different.
 
@@ -41,7 +41,7 @@ include some available nodes. In these situations, the voting configuration
 differs from the set of available master-eligible nodes in the cluster.
 
 Larger voting configurations are usually more resilient, so Elasticsearch
-normally prefers to add master-eligible nodes to the voting configuration after
+normally prefers to item master-eligible nodes to the voting configuration after
 they join the cluster. Similarly, if a node in the voting configuration
 leaves the cluster and there is another master-eligible node in the cluster that
 is not in the voting configuration then it is preferable to swap these two nodes
@@ -67,7 +67,7 @@ departed nodes from the voting configuration manually. Use the
 <<voting-config-exclusions,voting exclusions API>> to achieve the desired level
 of resilience.
 
-No matter how it is configured, Elasticsearch will not suffer from a 
+No matter how it is configured, Elasticsearch will not suffer from a
 "split-brain" inconsistency. The `cluster.auto_shrink_voting_configuration`
 setting affects only its availability in the event of the failure of some of its
 nodes and the administrative tasks that must be performed as nodes join and

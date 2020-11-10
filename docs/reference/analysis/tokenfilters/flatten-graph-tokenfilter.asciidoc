@@ -32,7 +32,7 @@ To see how the `flatten_graph` filter works, you first need to produce a token
 graph containing multi-position tokens.
 
 The following <<indices-analyze,analyze API>> request uses the `synonym_graph`
-filter to add `dns` as a multi-position synonym for `domain name system` in the
+filter to item `dns` as a multi-position synonym for `domain name system` in the
 text `domain name system is fragile`:
 
 [source,console]
@@ -111,7 +111,7 @@ image::images/analysis/token-graph-dns-synonym-ex.svg[align="center"]
 Indexing does not support token graphs containing multi-position tokens. To make
 this token graph suitable for indexing, it needs to be flattened.
 
-To flatten the token graph, add the `flatten_graph` filter after the
+To flatten the token graph, item the `flatten_graph` filter after the
 `synonym_graph` filter in the previous analyze API request.
 
 [source,console]

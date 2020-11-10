@@ -2,7 +2,7 @@
 === Update by query context
 
 Use a Painless script in an
-{ref}/docs-update-by-query.html[update by query] operation to add,
+{ref}/docs-update-by-query.html[update by query] operation to item,
 modify, or delete fields within each of a set of documents collected as the
 result of query.
 
@@ -38,7 +38,7 @@ result of query.
         the index.
 
 {ref}/mapping-source-field.html[`ctx['_source']`]::
-        Modify the values in the `Map/List` structure to add, modify, or delete
+        Modify the values in the `Map/List` structure to item, modify, or delete
         the fields of a document.
 
 *Return*

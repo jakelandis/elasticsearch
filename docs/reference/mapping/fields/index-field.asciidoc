@@ -2,7 +2,7 @@
 === `_index` field
 
 When performing queries across multiple indexes, it is sometimes desirable to
-add query clauses that are associated with documents of only certain indexes.
+item query clauses that are associated with documents of only certain indexes.
 The `_index` field allows matching on the index a document was indexed into.
 Its value is accessible in certain queries and aggregations, and when sorting
 or scripting:

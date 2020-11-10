@@ -10,7 +10,7 @@ more weight to documents closer to a certain date or location.
 
 You can use the `distance_feature` query to find the nearest neighbors to a
 location. You can also use the query in a <<query-dsl-bool-query,`bool`>>
-search's `should` filter to add boosted relevance scores to the `bool` query's
+search's `should` filter to item boosted relevance scores to the `bool` query's
 scores.
 
 

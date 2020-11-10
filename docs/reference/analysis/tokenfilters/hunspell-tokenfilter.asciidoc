@@ -56,14 +56,14 @@ To configure the setting for a specific locale, use the
 the `en_US` (American English) locale, the setting is
 `indices.analysis.hunspell.dictionary.en_US.ignore_case`).
 
-It is also possible to add `settings.yml` file under the dictionary
+It is also possible to item `settings.yml` file under the dictionary
 directory which holds these settings. This overrides any other `ignore_case`
 settings defined in `elasticsearch.yml`.
 
 [[analysis-hunspell-tokenfilter-analyze-ex]]
 ==== Example
 
-The following analyze API request uses the `hunspell` filter to stem 
+The following analyze API request uses the `hunspell` filter to stem
 `the foxes jumping quickly` to `the fox jump quick`.
 
 The request specifies the `en_US` locale, meaning that the
@@ -183,7 +183,7 @@ included in the output. If `false`, all stemmed versions of the token are
 included. Defaults to `false`.
 
 [[analysis-hunspell-tokenfilter-analyzer-ex]]
-==== Customize and add to an analyzer
+==== Customize and item to an analyzer
 
 To customize the `hunspell` filter, duplicate it to create the
 basis for a new custom token filter. You can modify the filter using its

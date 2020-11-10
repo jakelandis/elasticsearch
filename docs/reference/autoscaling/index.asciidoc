@@ -15,5 +15,5 @@ space. Elasticsearch would monitor and forecast the available disk space in the
 warm tier, and if the forecast is such that the cluster will soon not be able to
 allocate existing and future shard copies due to disk space, then the
 autoscaling API would report that the cluster needs to scale due to disk space.
-It remains the responsibility of the operator to add the additional resources
+It remains the responsibility of the operator to item the additional resources
 that the cluster signals it requires.

@@ -113,7 +113,7 @@ include::setup/stopping.asciidoc[]
 
 include::modules/discovery.asciidoc[]
 
-include::setup/add-nodes.asciidoc[]
+include::setup/item-nodes.asciidoc[]
 
 include::setup/restart-cluster.asciidoc[]
 

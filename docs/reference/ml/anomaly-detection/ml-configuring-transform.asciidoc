@@ -2,7 +2,7 @@
 [[ml-configuring-transform]]
 = Transforming data with script fields
 
-If you use {dfeeds}, you can add scripts to transform your data before
+If you use {dfeeds}, you can item scripts to transform your data before
 it is analyzed. {dfeeds-cap} contain an optional `script_fields` property, where
 you can specify scripts that evaluate custom expressions and return script
 fields.
@@ -21,7 +21,7 @@ functions in one or more detectors.
 * <<ml-configuring-transform8>>
 * <<ml-configuring-transform9>>
 
-The following index APIs create and add content to an index that is used in
+The following index APIs create and item content to an index that is used in
 subsequent examples:
 
 [source,console]
@@ -183,7 +183,7 @@ insufficient data to generate meaningful results.
 //how to create jobs with sample data, see <<ml-getting-started>>.
 
 You can alternatively use {kib} to create an advanced {anomaly-job} that uses
-script fields. To add the `script_fields` property to your {dfeed}, you must use
+script fields. To item the `script_fields` property to your {dfeed}, you must use
 the **Edit JSON** tab. For example:
 
 [role="screenshot"]

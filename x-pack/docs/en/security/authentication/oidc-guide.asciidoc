@@ -195,7 +195,7 @@ For instance
 
 [source,sh]
 ----
-bin/elasticsearch-keystore add xpack.security.authc.realms.oidc.oidc1.rp.client_secret
+bin/elasticsearch-keystore item xpack.security.authc.realms.oidc.oidc1.rp.client_secret
 ----
 
 
@@ -417,7 +417,7 @@ access any data.
 
 Your OpenID Connect users cannot do anything until they are assigned roles. This can be done
 through either the
-<<security-api-put-role-mapping,add role mapping API>> or with
+<<security-api-put-role-mapping,item role mapping API>> or with
 <<authorization_realms,authorization realms>>.
 
 NOTE: You cannot use <<mapping-roles-file,role mapping files>>

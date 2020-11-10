@@ -14,14 +14,14 @@ with a +{response}+ object.
 ==== Put {anomaly-jobs} in calendar request
 
 A +{request}+ is constructed referencing a non-null
-calendar ID, and JobIDs to which to add to the calendar
+calendar ID, and JobIDs to which to item to the calendar
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
 include-tagged::{doc-tests-file}[{api}-request]
 --------------------------------------------------
-<1> The ID of the calendar to which to add the jobs
-<2> The JobIds to add to the calendar
+<1> The ID of the calendar to which to item the jobs
+<2> The JobIds to item to the calendar
 
 [id="{upid}-{api}-response"]
 ==== Put {anomaly-jobs} in calendar response

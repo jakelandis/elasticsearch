@@ -177,7 +177,7 @@ for more options.
 Once the `BulkProcessor` is created requests can be added to it:
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
-include-tagged::{doc-tests-file}[{api}-processor-add]
+include-tagged::{doc-tests-file}[{api}-processor-item]
 --------------------------------------------------
 
 The requests will be executed by the `BulkProcessor`, which takes care of

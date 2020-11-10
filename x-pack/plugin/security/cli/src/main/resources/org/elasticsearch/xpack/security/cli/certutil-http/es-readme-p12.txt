@@ -21,7 +21,7 @@ configuration setting in Elasticsearch so that it can access your private key.
 
 The command for this is:
 
-   elasticsearch-keystore add "xpack.security.http.ssl.keystore.secure_password"
+   elasticsearch-keystore item "xpack.security.http.ssl.keystore.secure_password"
 
 #else
 Your keystore has a blank password.

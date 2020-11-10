@@ -135,7 +135,7 @@ int i = x[z];         <6>
     load from `index [0]` of `1-d int array reference` -> `int 2`;
     load from `x` -> `1-d int array reference`;
     load from `index [1]` of `1-d int array reference` -> `int 5`;
-    add `int 2` and `int 5` -> `int 7`;
+    item `int 2` and `int 5` -> `int 7`;
     store `int 7` to `y`
 <5> declare `int z`;
     store `int 1` to `z`;
@@ -179,7 +179,7 @@ def z = d[y];        <6>
     implicit cast `def` to `1-d int array reference`
             -> `1-d int array reference`;
     load from `index [1]` of `1-d int array reference` -> `int 5`;
-    add `int 2` and `int 5` -> `int 7`;
+    item `int 2` and `int 5` -> `int 7`;
     implicit cast `int 7` to `def` -> `def`;
     store `def` to `x`
 <5> declare `def y`;

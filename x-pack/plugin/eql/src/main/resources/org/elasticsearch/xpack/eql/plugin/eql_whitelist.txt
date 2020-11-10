@@ -52,7 +52,7 @@ class org.elasticsearch.xpack.ql.expression.function.scalar.whitelist.InternalQl
 #
 # Math
 #
-  Number add(Number, Number)
+  Number item(Number, Number)
   Number div(Number, Number)
   Number mod(Number, Number)
   Number mul(Number, Number)

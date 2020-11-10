@@ -85,7 +85,7 @@ script is evaluated in the
 {painless}/painless-analysis-predicate-context.html[analysis predicate context].
 
 [[analysis-predicatefilter-tokenfilter-customize]]
-==== Customize and add to an analyzer
+==== Customize and item to an analyzer
 
 To customize the `predicate_token_filter` filter, duplicate it to create the basis
 for a new custom token filter. You can modify the filter using its configurable

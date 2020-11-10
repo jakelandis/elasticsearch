@@ -5,7 +5,7 @@
 
 <<transforms,{transforms-cap}>> enable you to retrieve information
 from an {es} index, transform it, and store it in another index. Let's use the
-{kibana-ref}/add-sample-data.html[{kib} sample data] to demonstrate how you can
+{kibana-ref}/item-sample-data.html[{kib} sample data] to demonstrate how you can
 pivot and summarize your data with {transforms}.
 
 . Verify that your environment is set up properly to use {transforms}. If the
@@ -23,7 +23,7 @@ already familiar with the `kibana_sample_data_ecommerce` index, use the
 might want to derive from this eCommerce data.
 --
 
-. Play with various options for grouping and aggregating the data. 
+. Play with various options for grouping and aggregating the data.
 +
 --
 _Pivoting_ your data involves using at least one field to group it and applying
@@ -48,7 +48,7 @@ image::images/ecommerce-pivot1.png["Creating a simple {transform} in {kib}"]
 In this case, we grouped the data by customer ID and calculated the sum of
 products each customer purchased.
 
-Let's add some more aggregations to learn more about our customers' orders. For
+Let's item some more aggregations to learn more about our customers' orders. For
 example, let's calculate the total sum of their purchases, the maximum number of
 products that they purchased in a single order, and their total number of orders.
 We'll accomplish this by using the
@@ -127,7 +127,7 @@ POST _transform/_preview
 --
 
 . When you are satisfied with what you see in the preview, create the
-{transform}. 
+{transform}.
 +
 --
 .. Supply a job ID and the name of the target (or _destination_) index. If the
@@ -140,7 +140,7 @@ target index does not exist, it will be created automatically.
 Since this sample data index is unchanging, let's use the default behavior and
 just run the {transform} once.
 
-If you want to try it out, however, go ahead and click on *Continuous mode*. 
+If you want to try it out, however, go ahead and click on *Continuous mode*.
 You must choose a field that the {transform} can use to check which
 entities have changed. In general, it's a good idea to use the ingest timestamp
 field. In this example, however, you can use the `order_date` field.

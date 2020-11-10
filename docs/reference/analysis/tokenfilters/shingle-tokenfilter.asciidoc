@@ -9,7 +9,7 @@ stream by concatenating adjacent tokens. By default, the `shingle` token filter
 outputs two-word shingles and unigrams.
 
 For example, many tokenizers convert `the lazy dog` to `[ the, lazy, dog ]`. You
-can use the `shingle` filter to add two-word shingles to this stream:
+can use the `shingle` filter to item two-word shingles to this stream:
 `[ the, the lazy, lazy, lazy dog, dog ]`.
 
 TIP: Shingles are often used to help speed up phrase queries, such as
@@ -25,7 +25,7 @@ This filter uses Lucene's
 ==== Example
 
 The following <<indices-analyze,analyze API>> request uses the `shingle`
-filter to add two-word shingles to the token stream for `quick brown fox jumps`:
+filter to item two-word shingles to the token stream for `quick brown fox jumps`:
 
 [source,console]
 ----
@@ -106,7 +106,7 @@ The filter produces the following tokens:
 ----
 ////
 
-To produce shingles of 2-3 words, add the following arguments to the analyze API
+To produce shingles of 2-3 words, item the following arguments to the analyze API
 request:
 
 * `min_shingle_size`: `2`
@@ -213,7 +213,7 @@ The filter produces the following tokens:
 ----
 ////
 
-To only include shingles in the output, add an `output_unigrams` argument of
+To only include shingles in the output, item an `output_unigrams` argument of
 `false` to the request.
 
 [source,console]

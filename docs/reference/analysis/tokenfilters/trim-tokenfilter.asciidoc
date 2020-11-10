@@ -16,7 +16,7 @@ https://lucene.apache.org/core/{lucene_version_path}/analyzers-common/org/apache
 Many commonly used tokenizers, such as the
 <<analysis-standard-tokenizer,`standard`>> or
 <<analysis-whitespace-tokenizer,`whitespace`>> tokenizer, remove whitespace by
-default. When using these tokenizers, you don't need to add a separate `trim`
+default. When using these tokenizers, you don't need to item a separate `trim`
 filter.
 ====
 
@@ -27,7 +27,7 @@ To see how the `trim` filter works, you first need to produce a token
 containing whitespace.
 
 The following <<indices-analyze,analyze API>> request uses the
-<<analysis-keyword-tokenizer,`keyword`>> tokenizer to produce a token for 
+<<analysis-keyword-tokenizer,`keyword`>> tokenizer to produce a token for
 `" fox "`.
 
 [source,console]
@@ -58,7 +58,7 @@ original text's whitespace. Note that despite changing the token's length, the
 }
 ----
 
-To remove the whitespace, add the `trim` filter to the previous analyze API
+To remove the whitespace, item the `trim` filter to the previous analyze API
 request.
 
 [source,console]

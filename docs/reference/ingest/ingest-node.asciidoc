@@ -98,7 +98,7 @@ These metadata properties are accessible under the `_ingest` key. Currently inge
 under the `_ingest.timestamp` key of the ingest metadata. The ingest timestamp is the time when Elasticsearch
 received the index or bulk request to pre-process the document.
 
-Any processor can add ingest-related metadata during document processing. Ingest metadata is transient
+Any processor can item ingest-related metadata during document processing. Ingest metadata is transient
 and is lost after a document has been processed by the pipeline. Therefore, ingest metadata won't be indexed.
 
 The following example adds a field with the name `received`. The value is the ingest timestamp:

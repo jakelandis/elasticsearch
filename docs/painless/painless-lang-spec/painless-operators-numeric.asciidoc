@@ -54,7 +54,7 @@ k = j++;     <5>
     store `short 0` to `i`
 <2> load from `i` -> `short 0`;
     promote `short 0`: result `int`;
-    add `int 0` and `int 1` -> `int 1`;
+    item `int 0` and `int 1` -> `int 1`;
     implicit cast `int 1` to `short 1`;
     store `short 1` to `i`
 <3> declare `long j`;
@@ -64,7 +64,7 @@ k = j++;     <5>
     store default `long 0` to `k`
 <5> load from `j` -> `long 1`;
     store `long 1` to `k`;
-    add `long 1` and `long 1` -> `long 2`;
+    item `long 1` and `long 1` -> `long 2`;
     store `long 2` to `j`
 +
 * Post increment with the `def` type.
@@ -80,7 +80,7 @@ x++;       <2>
     store `def` to `x`
 <2> load from `x` -> `def`;
     implicit cast `def` to `int 1`;
-    add `int 1` and `int 1` -> `int 2`;
+    item `int 1` and `int 1` -> `int 2`;
     implicit cast `int 2` to `def`;
     store `def` to `x`
 
@@ -220,7 +220,7 @@ k = ++j;     <5>
     store `short 0` to `i`
 <2> load from `i` -> `short 0`;
     promote `short 0`: result `int`;
-    add `int 0` and `int 1` -> `int 1`;
+    item `int 0` and `int 1` -> `int 1`;
     implicit cast `int 1` to `short 1`;
     store `short 1` to `i`
 <3> declare `long j`;
@@ -229,7 +229,7 @@ k = ++j;     <5>
 <4> declare `long k`;
     store default `long 0` to `k`
 <5> load from `j` -> `long 1`;
-    add `long 1` and `long 1` -> `long 2`;
+    item `long 1` and `long 1` -> `long 2`;
     store `long 2` to `j`;
     store `long 2` to `k`
 +
@@ -246,7 +246,7 @@ def x = 1; <1>
     store `def` to `x`
 <2> load from `x` -> `def`;
     implicit cast `def` to `int 1`;
-    add `int 1` and `int 1` -> `int 2`;
+    item `int 1` and `int 1` -> `int 2`;
     implicit cast `int 2` to `def`;
     store `def` to `x`
 
@@ -778,13 +778,13 @@ double d = i+7.0; <2>
 ----
 +
 <1> declare `int i`;
-    add `int 29` and `int 4` -> `int 33`;
+    item `int 29` and `int 4` -> `int 33`;
     store `int 33` in `i`
 <2> declare `double d`;
     load from `int i` -> `int 33`;
     promote `int 33` and `double 7.0`: result `double`;
     implicit cast `int 33` to `double 33.0` -> `double 33.0`;
-    add `double 33.0` and `double 7.0` -> `double 40.0`;
+    item `double 33.0` and `double 7.0` -> `double 40.0`;
     store `double 40.0` to `d`
 +
 * Addition with the `def` type.
@@ -795,13 +795,13 @@ def x = 5+4; <1>
 def y = x+2; <2>
 ----
 <1> declare `def x`;
-    add `int 5` and `int 4` -> `int 9`;
+    item `int 5` and `int 4` -> `int 9`;
     implicit cast `int 9` to `def` -> `def`;
     store `def` in `x`
 <2> declare `def y`;
     load from `x` -> `def`;
     implicit cast `def` to `int 9`;
-    add `int 9` and `int 2` -> `int 11`;
+    item `int 9` and `int 2` -> `int 11`;
     implicit cast `int 11` to `def` -> `def`;
     store `def` to `y`
 

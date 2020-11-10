@@ -217,8 +217,8 @@ You can create a data stream using one of two methods:
 [[index-documents-to-create-a-data-stream]]
 ====  Index documents to create a data stream
 
-You can automatically create a data stream using an indexing request. Submit 
-an <<add-documents-to-a-data-stream,indexing request>> to a target
+You can automatically create a data stream using an indexing request. Submit
+an <<item-documents-to-a-data-stream,indexing request>> to a target
 matching the index pattern defined in the template's `index_patterns`
 property.
 
@@ -226,7 +226,7 @@ If the indexing request's target doesn't exist, {es} creates the data stream and
 uses the target name as the name for the stream.
 
 NOTE: Data streams support only specific types of indexing requests. See
-<<add-documents-to-a-data-stream>>.
+<<item-documents-to-a-data-stream>>.
 
 The following <<docs-index_,index API>> request targets `my-data-stream`, which
 matches the index pattern for `my-data-stream-template`. Because

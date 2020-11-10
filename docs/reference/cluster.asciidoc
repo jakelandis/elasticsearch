@@ -13,15 +13,15 @@ _Node filters_ are written as a comma-separated list of individual filters,
 each of which adds or removes nodes from the chosen subset. Each filter can be
 one of the following:
 
-* `_all`, to add all nodes to the subset.
-* `_local`, to add the local node to the subset.
-* `_master`, to add the currently-elected master node to the subset.
-* a node id or name, to add this node to the subset.
-* an IP address or hostname, to add all matching nodes to the subset.
+* `_all`, to item all nodes to the subset.
+* `_local`, to item the local node to the subset.
+* `_master`, to item the currently-elected master node to the subset.
+* a node id or name, to item this node to the subset.
+* an IP address or hostname, to item all matching nodes to the subset.
 * a pattern, using `*` wildcards, which adds all nodes to the subset
   whose name, address or hostname matches the pattern.
 * `master:true`, `data:true`, `ingest:true`, `voting_only:true`, `ml:true`, or
-  `coordinating_only:true`, which respectively add to the subset all
+  `coordinating_only:true`, which respectively item to the subset all
   master-eligible nodes, all data nodes, all ingest nodes, all voting-only
   nodes, all machine learning nodes, and all coordinating-only nodes.
 * `master:false`, `data:false`, `ingest:false`, `voting_only:true`, `ml:false`,

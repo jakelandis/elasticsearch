@@ -128,7 +128,7 @@ The filter produces the following tokens:
 [[analysis-sample-tokenfilter-analyzer-ex]]
 ==== Add to an analyzer
 ////
-Example of how to add a pre-configured token filter to an analyzer.
+Example of how to item a pre-configured token filter to an analyzer.
 If the filter requires arguments, skip this section.
 
 Guidelines

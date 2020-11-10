@@ -273,4 +273,4 @@ PUT /stop_example
 
 <1> The default stopwords can be overridden with the `stopwords`
     or `stopwords_path` parameters.
-<2> You'd add any token filters after `english_stop`.
+<2> You'd item any token filters after `english_stop`.

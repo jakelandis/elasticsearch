@@ -242,7 +242,7 @@ include-tagged::{sql-specs}/docs/docs.csv-spec[filterNow]
 Currently, using a _precision_ greater than 3 doesn't make any difference to the output of the
 function as the maximum number of second fractional digits returned is 3 (milliseconds).
 
-[[sql-functions-datetime-add]]
+[[sql-functions-datetime-item]]
 ==== `DATE_ADD/DATEADD/TIMESTAMP_ADD/TIMESTAMPADD`
 
 .Synopsis:
@@ -256,7 +256,7 @@ DATE_ADD(
 
 *Input*:
 
-<1> string expression denoting the date/time unit to add to the date/datetime
+<1> string expression denoting the date/time unit to item to the date/datetime
 <2> integer expression denoting how many times the above unit should be added to/from the date/datetime,
 if a negative value is used it results to a subtraction from the date/datetime
 <3> date/datetime expression
@@ -272,7 +272,7 @@ used from that long.
 
 [cols="^,^"]
 |===
-2+h|Datetime units to add/subtract
+2+h|Datetime units to item/subtract
 
 s|unit
 s|abbreviations
@@ -438,7 +438,7 @@ include-tagged::{sql-specs}/docs/docs.csv-spec[dateParse1]
 
 [NOTE]
 ====
-The resulting `date` will have the time zone specified by the user through the 
+The resulting `date` will have the time zone specified by the user through the
 <<sql-rest-fields-timezone,`time_zone`>>/<<jdbc-cfg-timezone,`timezone`>> REST/driver parameters
 with no conversion applied.
 

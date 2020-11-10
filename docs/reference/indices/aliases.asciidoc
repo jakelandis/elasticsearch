@@ -13,7 +13,7 @@ include::{es-repo-dir}/glossary.asciidoc[tag=index-alias-desc]
 POST /_aliases
 {
   "actions" : [
-    { "add" : { "index" : "my-index-000001", "alias" : "alias1" } }
+    { "item" : { "index" : "my-index-000001", "alias" : "alias1" } }
   ]
 }
 ----
@@ -55,7 +55,7 @@ include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=timeoutparms]
 Set of actions to perform.
 Valid actions include:
 
-`add`::
+`item`::
 Adds an alias to an index.
 
 `remove`::
@@ -76,7 +76,7 @@ used to perform the action.
 If the `indices` parameter is not specified,
 this parameter is required.
 +
-NOTE: You cannot add <<data-streams,data streams>> to an index alias.
+NOTE: You cannot item <<data-streams,data streams>> to an index alias.
 
 `indices`::
 (Array)
@@ -86,23 +86,23 @@ used to perform the action.
 If the `index` parameter is not specified,
 this parameter is required.
 +
-NOTE: You cannot add <<data-streams,data streams>> to an index alias.
+NOTE: You cannot item <<data-streams,data streams>> to an index alias.
 
 `alias`::
 (String)
 Comma-separated list or wildcard expression of index alias names to
-add, remove, or delete.
+item, remove, or delete.
 +
 If the `aliases` parameter is not specified,
-this parameter is required for the `add` or `remove` action.
+this parameter is required for the `item` or `remove` action.
 
 `aliases`::
 (Array of strings)
 Array of index alias names to
-add, remove, or delete.
+item, remove, or delete.
 +
 If the `alias` parameter is not specified,
-this parameter is required for the `add` or `remove` action.
+this parameter is required for the `item` or `remove` action.
 
 `filter`::
 (Optional, query object)
@@ -161,7 +161,7 @@ See <<aliases-routing>> for an example.
 [[indices-aliases-api-example]]
 ==== {api-examples-title}
 
-[[indices-aliases-api-add-alias-ex]]
+[[indices-aliases-api-item-alias-ex]]
 ===== Add an alias
 
 The following request adds the `alias1` alias to the `test1` index.
@@ -171,7 +171,7 @@ The following request adds the `alias1` alias to the `test1` index.
 POST /_aliases
 {
   "actions" : [
-    { "add" : { "index" : "test1", "alias" : "alias1" } }
+    { "item" : { "index" : "test1", "alias" : "alias1" } }
   ]
 }
 --------------------------------------------------
@@ -196,7 +196,7 @@ POST /_aliases
 [[indices-aliases-api-rename-alias-ex]]
 ===== Rename an alias
 
-Renaming an alias is a simple `remove` then `add` operation within the
+Renaming an alias is a simple `remove` then `item` operation within the
 same API. This operation is atomic, no need to worry about a short
 period of time where the alias does not point to an index:
 
@@ -206,16 +206,16 @@ POST /_aliases
 {
   "actions" : [
     { "remove" : { "index" : "test1", "alias" : "alias1" } },
-    { "add" : { "index" : "test1", "alias" : "alias2" } }
+    { "item" : { "index" : "test1", "alias" : "alias2" } }
   ]
 }
 --------------------------------------------------
 // TEST[continued]
 
-[[indices-aliases-api-add-multi-alias-ex]]
+[[indices-aliases-api-item-multi-alias-ex]]
 ===== Add an alias to multiple indices
 
-Associating an alias with more than one index is simply several `add`
+Associating an alias with more than one index is simply several `item`
 actions:
 
 [source,console]
@@ -223,8 +223,8 @@ actions:
 POST /_aliases
 {
   "actions" : [
-    { "add" : { "index" : "test1", "alias" : "alias1" } },
-    { "add" : { "index" : "test2", "alias" : "alias1" } }
+    { "item" : { "index" : "test1", "alias" : "alias1" } },
+    { "item" : { "index" : "test2", "alias" : "alias1" } }
   ]
 }
 --------------------------------------------------
@@ -237,7 +237,7 @@ Multiple indices can be specified for an action with the `indices` array syntax:
 POST /_aliases
 {
   "actions" : [
-    { "add" : { "indices" : ["test1", "test2"], "alias" : "alias1" } }
+    { "item" : { "indices" : ["test1", "test2"], "alias" : "alias1" } }
   ]
 }
 --------------------------------------------------
@@ -254,7 +254,7 @@ more than one index that share a common name:
 POST /_aliases
 {
   "actions" : [
-    { "add" : { "index" : "test*", "alias" : "all_test_indices" } }
+    { "item" : { "index" : "test*", "alias" : "all_test_indices" } }
   ]
 }
 --------------------------------------------------
@@ -279,7 +279,7 @@ PUT test_2   <2>
 POST /_aliases
 {
   "actions" : [
-    { "add":  { "index": "test_2", "alias": "test" } },
+    { "item":  { "index": "test_2", "alias": "test" } },
     { "remove_index": { "index": "test" } }  <3>
   ]
 }
@@ -326,7 +326,7 @@ POST /_aliases
 {
   "actions": [
     {
-      "add": {
+      "item": {
         "index": "my-index-000001",
         "alias": "alias2",
         "filter": { "term": { "user.id": "kimchy" } }
@@ -354,7 +354,7 @@ POST /_aliases
 {
   "actions": [
     {
-      "add": {
+      "item": {
         "index": "test",
         "alias": "alias1",
         "routing": "1"
@@ -374,7 +374,7 @@ POST /_aliases
 {
   "actions": [
     {
-      "add": {
+      "item": {
         "index": "test",
         "alias": "alias2",
         "search_routing": "1,2",
@@ -421,14 +421,14 @@ POST /_aliases
 {
   "actions": [
     {
-      "add": {
+      "item": {
         "index": "test",
         "alias": "alias1",
         "is_write_index": true
       }
     },
     {
-      "add": {
+      "item": {
         "index": "test2",
         "alias": "alias1"
       }
@@ -468,13 +468,13 @@ POST /_aliases
 {
   "actions": [
     {
-      "add": {
+      "item": {
         "index": "test",
         "alias": "alias1",
         "is_write_index": false
       }
     }, {
-      "add": {
+      "item": {
         "index": "test2",
         "alias": "alias1",
         "is_write_index": true

@@ -26,5 +26,5 @@ typed parameters.
 behave like Groovy if any `def` typed parameters were involved and Java
 otherwise. It'd be slow for it to behave like Groovy all the time.
 3. It keeps Painless maintainable. Adding the Java or Groovy like method
-dispatch *feels* like it'd add a ton of complexity which'd make maintenance and
+dispatch *feels* like it'd item a ton of complexity which'd make maintenance and
 other improvements much more difficult.

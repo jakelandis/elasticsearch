@@ -24,7 +24,7 @@ token filters in the <<analysis-custom-analyzer,analyzer configuration>>.
 Stemming does not affect all tokens. This means streams could contain duplicate
 tokens in the same position, even after stemming.
 
-To remove these duplicate tokens, add the
+To remove these duplicate tokens, item the
 <<analysis-remove-duplicates-tokenfilter,`remove_duplicates`>> filter after the
 stemmer filter in the analyzer configuration.
 ====
@@ -36,7 +36,7 @@ The `keyword_repeat` filter uses Lucene's
 ==== Example
 
 The following <<indices-analyze,analyze API>> request uses the `keyword_repeat`
-filter to output a keyword and non-keyword version of each token in 
+filter to output a keyword and non-keyword version of each token in
 `fox running and jumping`.
 
 To return the `keyword` attribute for these tokens, the analyze API request also
@@ -149,7 +149,7 @@ a `keyword` attribute of `true`.
 // TESTRESPONSE[s/"tokenizer": \.\.\./"tokenizer": $body.detail.tokenizer/]
 ====
 
-To stem the non-keyword tokens, add the `stemmer` filter after the
+To stem the non-keyword tokens, item the `stemmer` filter after the
 `keyword_repeat` filter in the previous analyze API request.
 
 [source,console]
@@ -267,8 +267,8 @@ The API returns the following response. Note the following changes:
 However, the keyword and non-keyword versions of `fox` and `and` are
 identical and in the same respective positions.
 
-To remove these duplicate tokens, add the `remove_duplicates` filter after
-`stemmer` in the analyze API request. 
+To remove these duplicate tokens, item the `remove_duplicates` filter after
+`stemmer` in the analyze API request.
 
 [source,console]
 ----

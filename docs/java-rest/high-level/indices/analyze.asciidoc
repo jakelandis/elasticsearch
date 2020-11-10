@@ -69,7 +69,7 @@ The following arguments can also optionally be provided:
 ---------------------------------------------------
 include-tagged::{doc-tests-file}[{api}-request-explain]
 ---------------------------------------------------
-<1> Setting `explain` to true will add further details to the response
+<1> Setting `explain` to true will item further details to the response
 <2> Setting `attributes` allows you to return only token attributes that you are
 interested in
 

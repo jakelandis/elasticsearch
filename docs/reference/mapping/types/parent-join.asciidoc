@@ -139,8 +139,8 @@ it makes sense to model the product as parent document and the offer as child do
   <<docs-get,getting>>, <<docs-delete,deleting>>, or <<docs-update,updating>>
   a child document.
 * An element can have multiple children but only one parent.
-* It is possible to add a new relation to an existing `join` field.
-* It is also possible to add a child to an existing element
+* It is possible to item a new relation to an existing `join` field.
+* It is also possible to item a child to an existing element
   but only if the element is already a parent.
 
 ==== Searching with parent-join
@@ -311,7 +311,7 @@ global ordinals for the `join` field.
 
 Global ordinals, by default, are built eagerly: if the index has changed,
 global ordinals for the `join` field will be rebuilt as part of the refresh.
-This can add significant time to the refresh. However most of the times this is the
+This can item significant time to the refresh. However most of the times this is the
 right trade-off, otherwise global ordinals are rebuilt when the first parent-join
 query or aggregation is used. This can introduce a significant latency spike for
 your users and usually this is worse as multiple global ordinals for the `join`

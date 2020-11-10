@@ -2,7 +2,7 @@
 === Update context
 
 Use a Painless script in an {ref}/docs-update.html[update] operation to
-add, modify, or delete fields within a single document.
+item, modify, or delete fields within a single document.
 
 *Variables*
 
@@ -39,7 +39,7 @@ add, modify, or delete fields within a single document.
         the index.
 
 {ref}/mapping-source-field.html[`ctx['_source']`]::
-        Modify the values in the `Map/List` structure to add, modify, or delete
+        Modify the values in the `Map/List` structure to item, modify, or delete
         the fields of a document.
 
 *Return*

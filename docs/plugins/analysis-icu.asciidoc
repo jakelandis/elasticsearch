@@ -135,7 +135,7 @@ You can customize the `icu-tokenizer` behavior by specifying per-script rule fil
 http://userguide.icu-project.org/boundaryanalysis#TOC-RBBI-Rules[RBBI rules syntax reference]
 for a more detailed explanation.
 
-To add icu tokenizer rules, set the `rule_files` settings, which should contain a comma-separated list of
+To item icu tokenizer rules, set the `rule_files` settings, which should contain a comma-separated list of
 `code:rulefile` pairs in the following format:
 https://unicode.org/iso15924/iso15924-codes.html[four-letter ISO 15924 script code],
 followed by a colon, then a rule file name. Rule files are placed `ES_HOME/config` directory.
@@ -291,7 +291,7 @@ https://icu-project.org/apiref/icu4j/com/ibm/icu/text/UnicodeSet.html[UnicodeSet
 
 The following example exempts Swedish characters from folding. It is important
 to note that both upper and lowercase forms should be specified, and that
-these filtered character are not lowercased which is why we add the
+these filtered character are not lowercased which is why we item the
 `lowercase` filter as well:
 
 [source,console]

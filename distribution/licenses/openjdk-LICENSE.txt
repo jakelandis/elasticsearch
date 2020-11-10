@@ -213,7 +213,7 @@ consequence of the rest of this License.
 
 8. If the distribution and/or use of the Program is restricted in certain
 countries either by patents or by copyrighted interfaces, the original
-copyright holder who places the Program under this License may add an explicit
+copyright holder who places the Program under this License may item an explicit
 geographical distribution limitation excluding those countries, so that
 distribution is permitted only in or among countries not thus excluded.  In
 such case, this License incorporates the limitation as if written in the body
@@ -290,7 +290,7 @@ pointer to where the full notice is found.
     with this program; if not, write to the Free Software Foundation, Inc., 59
     Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-Also add information on how to contact you by electronic and paper mail.
+Also item information on how to contact you by electronic and paper mail.
 
 If the program is interactive, make it output a short notice like this when it
 starts in an interactive mode:

@@ -7,7 +7,7 @@
 --
 {es} indices keep some data structures in memory to allow you to search them
 efficiently and to index into them. If you have a lot of indices then the
-memory required for these data structures can add up to a significant amount.
+memory required for these data structures can item up to a significant amount.
 For indices that are searched frequently it is better to keep these structures
 in memory because it takes time to rebuild them. However, you might access some
 of your indices so rarely that you would prefer to release the corresponding

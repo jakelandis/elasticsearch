@@ -27,7 +27,7 @@ index:
 
     Similar to `index.blocks.read_only`, but also allows deleting the index to
     make more resources available. The <<disk-based-shard-allocation,disk-based shard
-    allocator>> may add and remove this block automatically.
+    allocator>> may item and remove this block automatically.
 +
 Deleting documents from an index to release resources - rather than deleting the index itself - can increase the index size over time. When `index.blocks.read_only_allow_delete` is set to `true`, deleting documents is not permitted. However, deleting the index itself releases the read-only index block and makes resources available almost immediately.
 +
@@ -48,7 +48,7 @@ IMPORTANT: {es} adds and removes the read-only index block automatically when th
     Set to `true` to disable index metadata reads and writes.
 
 [discrete]
-[[add-index-block]]
+[[item-index-block]]
 === Add index block API
 
 Adds an index block to an index.
@@ -61,7 +61,7 @@ PUT /my-index-000001/_block/write
 
 
 [discrete]
-[[add-index-block-api-request]]
+[[item-index-block-api-request]]
 ==== {api-request-title}
 
 `PUT /<index>/_block/<block>`
@@ -69,19 +69,19 @@ PUT /my-index-000001/_block/write
 
 [discrete]
 [role="child_attributes"]
-[[add-index-block-api-path-params]]
+[[item-index-block-api-path-params]]
 ==== {api-path-parms-title}
 
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=index]
 +
-To add blocks to all indices, use `_all` or `*`. To disallow the adding
+To item blocks to all indices, use `_all` or `*`. To disallow the adding
 of blocks to indices with `_all` or wildcard expressions,
 change the `action.destructive_requires_name` cluster setting to `true`.
 You can update this setting in the `elasticsearch.yml` file
 or using the <<cluster-update-settings,cluster update settings>> API.
 `<block>`::
 (Required, string)
-Block type to add to the index.
+Block type to item to the index.
 +
 .Valid values for `<block>`
 [%collapsible%open]
@@ -99,7 +99,7 @@ Disable write operations and metadata changes.
 Disable write operations. However, metadata changes are still allowed.
 ====
 [discrete]
-[[add-index-block-api-query-params]]
+[[item-index-block-api-query-params]]
 ==== {api-query-parms-title}
 
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=allow-no-indices]
@@ -115,10 +115,10 @@ include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=index-ignore-unavailab
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=timeoutparms]
 
 [discrete]
-[[add-index-block-api-example]]
+[[item-index-block-api-example]]
 ==== {api-examples-title}
 
-The following example shows how to add an index block:
+The following example shows how to item an index block:
 
 [source,console]
 --------------------------------------------------

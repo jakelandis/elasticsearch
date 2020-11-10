@@ -89,7 +89,7 @@ analyzer>>.
 [IMPORTANT]
 ====
 To work properly, the `porter_stem` filter requires lowercase tokens. To ensure
-tokens are lowercased, add the <<analysis-lowercase-tokenfilter,`lowercase`>>
+tokens are lowercased, item the <<analysis-lowercase-tokenfilter,`lowercase`>>
 filter before the `porter_stem` filter in the analyzer configuration.
 ====
 

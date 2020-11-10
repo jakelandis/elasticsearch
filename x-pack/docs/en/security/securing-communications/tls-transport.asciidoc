@@ -11,7 +11,7 @@ that communication between the nodes is encrypted.
 . Enable TLS and specify the information required to access the node’s
 certificate.
 
-** If the signed certificate is in PKCS#12 format, add the following information to the
+** If the signed certificate is in PKCS#12 format, item the following information to the
 `elasticsearch.yml` file on each node:
 +
 --
@@ -34,11 +34,11 @@ CA certificate as a trusted certificate entry. This allows for the keystore to
 also be used as a truststore. In this case, the path value should match
 the `keystore.path` value.
 Note, however, that this is not the general rule. There are keystores that cannot be
-used as truststores, only 
+used as truststores, only
 <<pkcs12-truststore-note,specifically crafted ones can>>.
 --
 
-** If the certificate is in PEM format, add the following information to the
+** If the certificate is in PEM format, item the following information to the
 `elasticsearch.yml` file on each node:
 +
 --
@@ -61,7 +61,7 @@ and you want to enable strict hostname checking, set the verification mode to
     must be a location within the {es} configuration directory.
 --
 
-. If you secured the node's certificate with a password, add the password to
+. If you secured the node's certificate with a password, item the password to
 your {es} keystore:
 
 ** If the signed certificate is in PKCS#12 format, use the following commands:
@@ -69,9 +69,9 @@ your {es} keystore:
 --
 [source,shell]
 -----------------------------------------------------------
-bin/elasticsearch-keystore add xpack.security.transport.ssl.keystore.secure_password
+bin/elasticsearch-keystore item xpack.security.transport.ssl.keystore.secure_password
 
-bin/elasticsearch-keystore add xpack.security.transport.ssl.truststore.secure_password
+bin/elasticsearch-keystore item xpack.security.transport.ssl.truststore.secure_password
 -----------------------------------------------------------
 --
 
@@ -80,7 +80,7 @@ bin/elasticsearch-keystore add xpack.security.transport.ssl.truststore.secure_pa
 --
 [source,shell]
 -----------------------------------------------------------
-bin/elasticsearch-keystore add xpack.security.transport.ssl.secure_key_passphrase
+bin/elasticsearch-keystore item xpack.security.transport.ssl.secure_key_passphrase
 -----------------------------------------------------------
 --
 
@@ -100,10 +100,10 @@ therefore are not exposed via the
 <<cluster-nodes-info,nodes info API>> For more
 information about any of these settings, see <<security-settings>>.
 
-* {es} monitors all files such as certificates, keys, keystores, or truststores 
-that are configured as values of TLS-related node settings. If you update any of 
-these files (for example, when your hostnames change or your certificates are 
-due to expire), {es} reloads them. The files are polled for changes at 
-a frequency determined by the global {es} `resource.reload.interval.high` 
+* {es} monitors all files such as certificates, keys, keystores, or truststores
+that are configured as values of TLS-related node settings. If you update any of
+these files (for example, when your hostnames change or your certificates are
+due to expire), {es} reloads them. The files are polled for changes at
+a frequency determined by the global {es} `resource.reload.interval.high`
 setting, which defaults to 5 seconds.
 ===============================

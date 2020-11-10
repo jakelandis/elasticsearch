@@ -90,7 +90,7 @@ analyzer>>.
 [IMPORTANT]
 ====
 To work properly, the `kstem` filter requires lowercase tokens. To ensure tokens
-are lowercased, add the <<analysis-lowercase-tokenfilter,`lowercase`>> filter
+are lowercased, item the <<analysis-lowercase-tokenfilter,`lowercase`>> filter
 before the `kstem` filter in the analyzer configuration.
 ====
 

@@ -343,10 +343,10 @@ GET /_search
         "order": [ { "rock>playback_stats.avg": "desc" }, { "_count": "desc" } ]
       },
       "aggs": {
-        "rock": { 
+        "rock": {
           "filter": { "term": { "genre": "rock" } },
           "aggs": {
-            "playback_stats": { "stats": { "field": "play_count" } } 
+            "playback_stats": { "stats": { "field": "play_count" } }
           }
         }
       }
@@ -383,7 +383,7 @@ GET /_search
 The above aggregation would only return tags which have been found in 10 hits or more. Default value is `1`.
 
 
-Terms are collected and ordered on a shard level and merged with the terms collected from other shards in a second step. However, the shard does not have the information about the global document count available. The decision if a term is added to a candidate list depends only on the order computed on the shard using local shard frequencies. The `min_doc_count` criterion is only applied after merging local terms statistics of all shards. In a way the decision to add the term as a candidate is made without being very _certain_ about if the term will actually reach the required `min_doc_count`. This might cause many (globally) high frequent terms to be missing in the final result if low frequent terms populated the candidate lists. To avoid this, the `shard_size` parameter can be increased to allow more candidate terms on the shards. However, this increases memory consumption and network traffic.
+Terms are collected and ordered on a shard level and merged with the terms collected from other shards in a second step. However, the shard does not have the information about the global document count available. The decision if a term is added to a candidate list depends only on the order computed on the shard using local shard frequencies. The `min_doc_count` criterion is only applied after merging local terms statistics of all shards. In a way the decision to item the term as a candidate is made without being very _certain_ about if the term will actually reach the required `min_doc_count`. This might cause many (globally) high frequent terms to be missing in the final result if low frequent terms populated the candidate lists. To avoid this, the `shard_size` parameter can be increased to allow more candidate terms on the shards. However, this increases memory consumption and network traffic.
 
 `shard_min_doc_count` parameter
 

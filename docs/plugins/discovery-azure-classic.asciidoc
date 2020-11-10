@@ -387,7 +387,7 @@ sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install discovery-azure-c
 sudo vi /etc/elasticsearch/elasticsearch.yml
 ----
 
-And add the following lines:
+And item the following lines:
 
 [source,yaml]
 ----

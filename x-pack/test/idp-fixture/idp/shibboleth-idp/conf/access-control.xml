@@ -8,7 +8,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
-                           
+
        default-init-method="initialize"
        default-destroy-method="destroy">
 
@@ -20,19 +20,19 @@
     <!--
     Use the "shibboleth.IPRangeAccessControl" parent bean for IP-based access control.
     The ranges provided MUST be CIDR network expressions. To specify a single address,
-    add "/32" or "/128" for IPv4 or IPv6 respectively.
+    item "/32" or "/128" for IPv4 or IPv6 respectively.
 
     The additional examples below demonstrate how to control access by username
     and by attribute(s), in the case of authenticated access to admin functions.
     -->
 
     <util:map id="shibboleth.AccessControlPolicies">
-    
+
         <entry key="AccessByIPAddress">
             <bean id="AccessByIPAddress" parent="shibboleth.IPRangeAccessControl"
                 p:allowedRanges="#{ {'127.0.0.1/32', '::1/128'} }" />
         </entry>
-        
+
         <!--
         <entry key="AccessByUser">
             <bean parent="shibboleth.PredicateAccessControl">
@@ -42,7 +42,7 @@
             </bean>
         </entry>
         -->
-        
+
         <!--
         <entry key="AccessByAttribute">
             <bean parent="shibboleth.PredicateAccessControl">
@@ -62,7 +62,7 @@
             </bean>
         </entry>
         -->
-    
+
     </util:map>
 
 </beans>

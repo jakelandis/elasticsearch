@@ -98,7 +98,7 @@ def add_pending_files(*files):
   for file in files:
     if file:
       # print("Adding file: %s" % (file))
-      run('git add %s' % (file))
+      run('git item %s' % (file))
 
 # Updates documentation feature flags
 def commit_feature_flags(release):
@@ -128,7 +128,7 @@ if __name__ == "__main__":
   ensure_checkout_is_clean()
 
   pending_files = update_reference_docs(release_version)
-  
+
   if pending_files:
     add_pending_files(*pending_files) # expects var args use * to expand
     commit_feature_flags(release_version)

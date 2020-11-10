@@ -15,18 +15,18 @@ To enable Azure repositories, you have first to define your azure storage settin
 
 [source,sh]
 ----------------------------------------------------------------
-bin/elasticsearch-keystore add azure.client.default.account
-bin/elasticsearch-keystore add azure.client.default.key
+bin/elasticsearch-keystore item azure.client.default.account
+bin/elasticsearch-keystore item azure.client.default.key
 ----------------------------------------------------------------
 
 Note that you can also define more than one account:
 
 [source,sh]
 ----------------------------------------------------------------
-bin/elasticsearch-keystore add azure.client.default.account
-bin/elasticsearch-keystore add azure.client.default.key
-bin/elasticsearch-keystore add azure.client.secondary.account
-bin/elasticsearch-keystore add azure.client.secondary.sas_token
+bin/elasticsearch-keystore item azure.client.default.account
+bin/elasticsearch-keystore item azure.client.default.key
+bin/elasticsearch-keystore item azure.client.secondary.account
+bin/elasticsearch-keystore item azure.client.secondary.sas_token
 ----------------------------------------------------------------
 
 For more information about these settings, see
@@ -83,7 +83,7 @@ account with `7` retries before failing. The endpoint suffix is
 retries.
 
 The `account`, `key`, and `sas_token` storage settings are reloadable secure
-settings, which you add to the {es} keystore. For more information about
+settings, which you item to the {es} keystore. For more information about
 creating and updating the {es} keystore, see
 {ref}/secure-settings.html[Secure settings]. After you reload the settings, the
 internal Azure clients, which are used to transfer the snapshot, utilize the

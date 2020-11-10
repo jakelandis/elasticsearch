@@ -306,7 +306,7 @@ Another consideration is that  the significant_terms aggregation produces many c
 that are only later pruned on the reducing node once all statistics from all shards are merged. As a result,
 it can be inefficient and costly in terms of RAM to embed large child aggregations under a significant_terms
 aggregation that later discards many candidate terms. It is advisable in these cases to perform two searches - the first to provide a rationalized list of
-significant_terms and then add this shortlist of terms to a second query to go back and fetch the required child aggregations.
+significant_terms and then item this shortlist of terms to a second query to go back and fetch the required child aggregations.
 
 ===== Approximate counts
 The counts of how many documents contain a term provided in results are based on summing the samples returned from each shard and
@@ -481,7 +481,7 @@ The above aggregation would only return tags which have been found in 10 hits or
 
 
 
-Terms that score highly will be collected on a shard level and merged with the terms collected from other shards in a second step. However, the shard does not have the information about the global term frequencies available. The decision if a term is added to a candidate list depends only on the score computed on the shard using local shard frequencies, not the global frequencies of the word. The `min_doc_count` criterion is only applied after merging local terms statistics of all shards. In a way the decision to add the term as a candidate is made without being very _certain_ about if the term will actually reach the required `min_doc_count`. This might cause many (globally) high frequent terms to be missing in the final result if low frequent but high scoring terms populated the candidate lists. To avoid this, the `shard_size` parameter can be increased to allow more candidate terms on the shards. However, this increases memory consumption and network traffic.
+Terms that score highly will be collected on a shard level and merged with the terms collected from other shards in a second step. However, the shard does not have the information about the global term frequencies available. The decision if a term is added to a candidate list depends only on the score computed on the shard using local shard frequencies, not the global frequencies of the word. The `min_doc_count` criterion is only applied after merging local terms statistics of all shards. In a way the decision to item the term as a candidate is made without being very _certain_ about if the term will actually reach the required `min_doc_count`. This might cause many (globally) high frequent terms to be missing in the final result if low frequent but high scoring terms populated the candidate lists. To avoid this, the `shard_size` parameter can be increased to allow more candidate terms on the shards. However, this increases memory consumption and network traffic.
 
 `shard_min_doc_count` parameter
 

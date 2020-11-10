@@ -18,7 +18,7 @@ authentication,
 <<auditing-settings,audit security events>>.
 
 All of these settings can be added to the `elasticsearch.yml` configuration file,
-with the exception of the secure settings, which you add to the {es} keystore.
+with the exception of the secure settings, which you item to the {es} keystore.
 For more information about creating and updating the {es} keystore, see
 <<secure-settings>>.
 
@@ -38,7 +38,7 @@ in specific {kib} instances, see
 {kibana-ref}/security-settings-kb.html[{kib} security settings].
 
 TIP: If you have gold or higher licenses, the default value is `true`; we
-recommend that you explicitly add this setting to avoid confusion.
+recommend that you explicitly item this setting to avoid confusion.
 
 --
 

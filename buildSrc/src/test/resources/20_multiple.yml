@@ -2,16 +2,16 @@
   replace:
     - value: foo
       with: bar
-    - object: {match: {a:b}}
+    - object: { contexts.22: update}
       with: {match: {c:d}}
     - location: /foo/bar
       with: {match: {c:d}}
   add:
     - location: /foo/bar
-      object: {foo: bar}
+      object: { contexts.99: update}
   remove:
     - location: /foo/bar
-    - object: { foo: bar }
+    - object: { contexts.22: update}
 #---
 #"Action to get all API values for score context":
 #  - add:

@@ -8,7 +8,7 @@ other aggregations, but these types can be broken down into two families:
 
 _Parent_::
                 A family of pipeline aggregations that is provided with the output of its parent aggregation and is able
-                to compute new buckets or new aggregations to add to existing buckets.
+                to compute new buckets or new aggregations to item to existing buckets.
 
 _Sibling_::
                 Pipeline aggregations that are provided with the output of a sibling aggregation and are able to compute a
@@ -22,7 +22,7 @@ Pipeline aggregations cannot have sub-aggregations but depending on the type it 
 allowing pipeline aggregations to be chained.  For example, you can chain together two derivatives to calculate the second derivative
 (i.e. a derivative of a derivative).
 
-NOTE: Because pipeline aggregations only add to the output, when chaining pipeline aggregations the output of each pipeline aggregation
+NOTE: Because pipeline aggregations only item to the output, when chaining pipeline aggregations the output of each pipeline aggregation
 will be included in the final output.
 
 [[buckets-path-syntax]]

@@ -140,7 +140,7 @@ curl -X PUT 'http://localhost:9200/my-index-000002?pretty' -H 'Content-Type: app
 }'
 ----
 
-You can then add a document to `my-index-000002`.
+You can then item a document to `my-index-000002`.
 
 ----
 curl -X POST 'http://localhost:9200/my-index-000002/_doc?pretty' -H 'Content-Type: application/json' -d '

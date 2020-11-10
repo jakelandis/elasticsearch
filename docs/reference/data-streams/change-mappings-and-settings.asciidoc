@@ -13,7 +13,7 @@ mappings and settings to include in this template.
 If you later need to change the mappings or settings for a data stream, you have
 a few options:
 
-* <<add-new-field-mapping-to-a-data-stream>>
+* <<item-new-field-mapping-to-a-data-stream>>
 * <<change-existing-field-mapping-in-a-data-stream>>
 * <<change-dynamic-index-setting-for-a-data-stream>>
 * <<change-static-index-setting-for-a-data-stream>>
@@ -21,7 +21,7 @@ a few options:
 TIP: If your changes include modifications to existing field mappings or
 <<index-modules-settings,static index settings>>, a reindex is often required to
 apply the changes to a data stream's backing indices. If you are already
-performing a reindex, you can use the same process to add new field
+performing a reindex, you can use the same process to item new field
 mappings and change <<index-modules-settings,dynamic index settings>>. See
 <<data-streams-use-reindex-to-change-mappings-settings>>.
 
@@ -81,10 +81,10 @@ DELETE /_ilm/policy/my-data-stream-policy
 ////
 
 [discrete]
-[[add-new-field-mapping-to-a-data-stream]]
+[[item-new-field-mapping-to-a-data-stream]]
 === Add a new field mapping to a data stream
 
-To add a mapping for a new field to a data stream, following these steps:
+To item a mapping for a new field to a data stream, following these steps:
 
 . Update the index template used by the data stream. This ensures the new
 field mapping is added to future backing indices created for the stream.
@@ -117,7 +117,7 @@ PUT /_index_template/my-data-stream-template
 <1> Adds a mapping for the new `message` field.
 --
 
-. Use the <<indices-put-mapping,put mapping API>> to add the new field mapping
+. Use the <<indices-put-mapping,put mapping API>> to item the new field mapping
 to the data stream. By default, this adds the mapping to the stream's existing
 backing indices, including the write index.
 +
@@ -138,7 +138,7 @@ PUT /my-data-stream/_mapping
 ----
 --
 +
-To add the mapping only to the stream's write index, set the put mapping API's
+To item the mapping only to the stream's write index, set the put mapping API's
 `write_index_only` query parameter to `true`.
 +
 --

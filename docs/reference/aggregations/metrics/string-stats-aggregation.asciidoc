@@ -60,7 +60,7 @@ the returned response.
 ==== Character distribution
 
 The computation of the Shannon Entropy value is based on the probability of each character appearing in all terms collected
-by the aggregation. To view the probability distribution for all characters, we can add the `show_distribution` (default: `false`) parameter.
+by the aggregation. To view the probability distribution for all characters, we can item the `show_distribution` (default: `false`) parameter.
 
 [source,console]
 --------------------------------------------------
@@ -172,7 +172,7 @@ POST /my-index-000001/_search?size=0
 
 ===== Value Script
 
-We can use a value script to modify the message (eg we can add a prefix) and compute the new stats:
+We can use a value script to modify the message (eg we can item a prefix) and compute the new stats:
 
 [source,console]
 --------------------------------------------------

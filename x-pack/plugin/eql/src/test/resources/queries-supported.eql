@@ -165,7 +165,7 @@ process where opcode == 1
   and process_name in ("net.exe", "net1.exe")
   and not (parent_process_name == "net.exe"
   and process_name == "net1.exe")
-  and command_line == "*group *admin*" and command_line != "* /add*";
+  and command_line == "*group *admin*" and command_line != "* /item*";
 
 
 
@@ -240,13 +240,13 @@ file where serial_event_id==88 and substring(file_name, -4) == ".exe"
 file where serial_event_id==88 and substring(file_name, -4, -1) == ".ex"
 ;
 
-process where add(serial_event_id, 0) == 1 and add(0, 1) == serial_event_id;
+process where item(serial_event_id, 0) == 1 and item(0, 1) == serial_event_id;
 
 process where subtract(serial_event_id, -5) == 6;
 
 process where multiply(6, serial_event_id) == 30 and divide(30, 4.0) == 7.5;
 
-process where modulo(11, add(serial_event_id, 1)) == serial_event_id;
+process where modulo(11, item(serial_event_id, 1)) == serial_event_id;
 
 process where serial_event_id == number("5");
 
@@ -365,14 +365,14 @@ join
   [file where file_path == "*"]
 ;
 
-join by pid 
+join by pid
     [process where name == "*"]
-    [file where path == "*"] 
+    [file where path == "*"]
 until [process where opcode == 2]
 ;
 
-join 
-    [process where process_name == "*"] by process_path 
+join
+    [process where process_name == "*"] by process_path
     [file where file_path == "*"] by image_path
 ;
 
@@ -446,48 +446,48 @@ sequence by user_name with maxspan=5m
 
 //
 
-sequence 
-    [process where name == "*"] 
-    [file where path == "*"] 
+sequence
+    [process where name == "*"]
+    [file where path == "*"]
 until [process where opcode == 2]
 ;
 
-sequence by pid 
-    [process where name == "*"] 
-    [file where path == "*"] 
+sequence by pid
+    [process where name == "*"]
+    [file where path == "*"]
 until [process where opcode == 2]
 ;
 
 
-sequence 
-    [process where process_name == "*"] by process_path 
+sequence
+    [process where process_name == "*"] by process_path
     [file where file_path == "*"] by image_path
 ;
 
-sequence by pid 
-    [process where process_name == "*"] 
+sequence by pid
+    [process where process_name == "*"]
     [file where file_path == "*"]
 ;
 
 sequence by field1
-    [file where true] by f1 
+    [file where true] by f1
     [process where true] by f1
 ;
 
-sequence by a,b,c,d 
-    [file where true] by f1,f2 
+sequence by a,b,c,d
+    [file where true] by f1,f2
     [process where true] by f1,f2
 ;
 
-sequence 
-    [file where 1] by f1,f2 
-    [process where 1] by f1,f2 
+sequence
+    [file where 1] by f1,f2
+    [process where 1] by f1,f2
 until [process where 1] by f1,f2
 ;
 
-sequence by f 
-    [file where true] by a,b 
-    [process where true] by c,d 
+sequence by f
+    [file where true] by a,b
+    [process where true] by c,d
 until [process where 1] by e,f
 ;
 
@@ -541,28 +541,28 @@ sequence by user_name
 until [process where opcode==2] by ppid,process_path
 ;
 
-sequence by unique_pid 
+sequence by unique_pid
     [process where opcode==1 and process_name == "msbuild.exe"]
     [network where true]
 ;
 
 sequence by pid with maxspan=200s
-    [process where process_name == "*" ] 
+    [process where process_name == "*" ]
     [file where file_path == "*"]
 ;
 
-sequence by pid with maxspan=2s 
-    [process where process_name == "*" ] 
+sequence by pid with maxspan=2s
+    [process where process_name == "*" ]
     [file where file_path == "*"]
 ;
 
-sequence by pid with maxspan=500ms 
-    [process where process_name == "*" ] 
+sequence by pid with maxspan=500ms
+    [process where process_name == "*" ]
     [file where file_path == "*"]
 ;
 
 sequence by pid with maxspan=2h
-    [process where process_name == "*" ] 
+    [process where process_name == "*" ]
     [file where file_path == "*"]
 ;
 

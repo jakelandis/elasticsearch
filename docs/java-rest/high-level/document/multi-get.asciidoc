@@ -13,7 +13,7 @@ requests in a single http request in parallel.
 [id="{upid}-{api}-request"]
 ==== Multi-Get Request
 
-A +{request}+ is built empty and you add `MultiGetRequest.Item`s to configure
+A +{request}+ is built empty and you item `MultiGetRequest.Item`s to configure
 what to fetch:
 
 ["source","java",subs="attributes,callouts,macros"]

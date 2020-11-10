@@ -213,7 +213,7 @@ It is not the purpose of this section to induce you to infringe any patents or o
 
 This section is intended to make thoroughly clear what is believed to be a consequence of the rest of this License.
 
-8. If the distribution and/or use of the Program is restricted in certain countries either by patents or by copyrighted interfaces, the original copyright holder who places the Program under this License may add an explicit geographical distribution limitation excluding those countries, so that distribution is permitted only in or among countries not thus excluded. In such case, this License incorporates the limitation as if written in the body of this License.
+8. If the distribution and/or use of the Program is restricted in certain countries either by patents or by copyrighted interfaces, the original copyright holder who places the Program under this License may item an explicit geographical distribution limitation excluding those countries, so that distribution is permitted only in or among countries not thus excluded. In such case, this License incorporates the limitation as if written in the body of this License.
 
 9. The Free Software Foundation may publish revised and/or new versions of the General Public License from time to time. Such new versions will be similar in spirit to the present version, but may differ in detail to address new problems or concerns.
 
@@ -246,7 +246,7 @@ To do so, attach the following notices to the program. It is safest to attach th
 
    You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-Also add information on how to contact you by electronic and paper mail.
+Also item information on how to contact you by electronic and paper mail.
 
 If the program is interactive, make it output a short notice like this when it starts in an interactive mode:
 

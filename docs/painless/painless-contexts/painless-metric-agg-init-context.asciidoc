@@ -13,7 +13,7 @@ full metric aggregation.
         User-defined parameters passed in as part of the query.
 
 `state` (`Map`)::
-        Empty `Map` used to add values for use in a
+        Empty `Map` used to item values for use in a
         <<painless-metric-agg-map-context, map script>>.
 
 *Side Effects*

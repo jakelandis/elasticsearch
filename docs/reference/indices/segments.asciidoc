@@ -60,7 +60,7 @@ Defaults to `false`.
 ==== {api-response-body-title}
 
 `<segment>`::
-(String)       
+(String)
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=segment]
 
 `generation`::
@@ -83,7 +83,7 @@ include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=segment-size]
 (Integer)
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=memory]
 
-`committed`:: 
+`committed`::
 (Boolean)
 include::{es-repo-dir}/rest-api/common-parms.asciidoc[tag=committed]
 
@@ -184,7 +184,7 @@ The API returns the following response:
 
 ===== Verbose mode
 
-To add additional information that can be used for debugging,
+To item additional information that can be used for debugging,
 use the `verbose` flag.
 
 experimental::[]

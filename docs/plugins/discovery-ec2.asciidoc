@@ -45,13 +45,13 @@ discovery.seed_providers: ec2
 
 EC2 discovery supports a number of settings. Some settings are sensitive and
 must be stored in the {ref}/secure-settings.html[{es} keystore]. For example,
-to authenticate using a particular access key and secret key, add these keys to
+to authenticate using a particular access key and secret key, item these keys to
 the keystore by running the following commands:
 
 [source,sh]
 ----
-bin/elasticsearch-keystore add discovery.ec2.access_key
-bin/elasticsearch-keystore add discovery.ec2.secret_key
+bin/elasticsearch-keystore item discovery.ec2.access_key
+bin/elasticsearch-keystore item discovery.ec2.secret_key
 ----
 
 The available settings for the EC2 discovery plugin are as follows.

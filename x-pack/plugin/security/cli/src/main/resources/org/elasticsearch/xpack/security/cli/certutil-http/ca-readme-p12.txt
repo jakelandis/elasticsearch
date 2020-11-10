@@ -10,7 +10,7 @@ It contains a copy of the certificate and private key for your Certificate Autho
 
 You should keep this file secure, and should not provide it to anyone else.
 
-The sole purpose for this keystore is to generate new certificates if you add additional nodes to your Elasticsearch cluster, or need to
+The sole purpose for this keystore is to generate new certificates if you item additional nodes to your Elasticsearch cluster, or need to
 update the server names (hostnames or IP addresses) of your nodes.
 
 This keystore is not required in order to operate any Elastic product or client.

@@ -6,10 +6,10 @@
 <titleabbrev>Examples</titleabbrev>
 ++++
 
-These examples demonstrate how to use {transforms} to derive useful 
-insights from your data. All the examples use one of the 
-{kibana-ref}/add-sample-data.html[{kib} sample datasets]. For a more detailed, 
-step-by-step example, see 
+These examples demonstrate how to use {transforms} to derive useful
+insights from your data. All the examples use one of the
+{kibana-ref}/item-sample-data.html[{kib} sample datasets]. For a more detailed,
+step-by-step example, see
 <<ecommerce-transforms>>.
 
 * <<example-best-customers>>
@@ -19,10 +19,10 @@ step-by-step example, see
 [[example-best-customers]]
 == Finding your best customers
 
-In this example, we use the eCommerce orders sample dataset to find the 
-customers who spent the most in our hypothetical webshop. Let's transform the 
-data such that the destination index contains the number of orders, the total 
-price of the orders, the amount of unique products and the average price per 
+In this example, we use the eCommerce orders sample dataset to find the
+customers who spent the most in our hypothetical webshop. Let's transform the
+data such that the destination index contains the number of orders, the total
+price of the orders, the amount of unique products and the average price per
 order, and the total amount of ordered products for each customer.
 
 [source,console]
@@ -37,7 +37,7 @@ POST _transform/_preview
   },
   "pivot": {
     "group_by": { <2>
-      "user": { "terms": { "field": "user" }}, 
+      "user": { "terms": { "field": "user" }},
       "customer_id": { "terms": { "field": "customer_id" }}
     },
     "aggregations": {
@@ -59,7 +59,7 @@ contain a unique row per `user` and `customer_id` combination. Within this
 dataset both these fields are unique. By including both in the {transform} it
 gives more context to the final results.
 
-NOTE: In the example above, condensed JSON formatting has been used for easier 
+NOTE: In the example above, condensed JSON formatting has been used for easier
 readability of the pivot object.
 
 The preview {transforms} API enables you to see the layout of the
@@ -94,20 +94,20 @@ This {transform} makes it easier to answer questions such as:
 
 * Which customers ordered the least number of different products?
 
-It's possible to answer these questions using aggregations alone, however 
-{transforms} allow us to persist this data as a customer centric index. This 
-enables us to analyze data at scale and gives more flexibility to explore and 
-navigate data from a customer centric perspective. In some cases, it can even 
+It's possible to answer these questions using aggregations alone, however
+{transforms} allow us to persist this data as a customer centric index. This
+enables us to analyze data at scale and gives more flexibility to explore and
+navigate data from a customer centric perspective. In some cases, it can even
 make creating visualizations much simpler.
 
 [[example-airline]]
 == Finding air carriers with the most delays
 
-In this example, we use the Flights sample dataset to find out which air carrier 
-had the most delays. First, we filter the source data such that it excludes all 
-the cancelled flights by using a query filter. Then we transform the data to 
-contain the distinct number of flights, the sum of delayed minutes, and the sum 
-of the flight minutes by air carrier. Finally, we use a 
+In this example, we use the Flights sample dataset to find out which air carrier
+had the most delays. First, we filter the source data such that it excludes all
+the cancelled flights by using a query filter. Then we transform the data to
+contain the distinct number of flights, the sum of delayed minutes, and the sum
+of the flight minutes by air carrier. Finally, we use a
 <<search-aggregations-pipeline-bucket-script-aggregation,`bucket_script`>>
 to determine what percentage of the flight time was actually delay.
 
@@ -155,11 +155,11 @@ POST _transform/_preview
 <2> This is the destination index for the {transform}. It is ignored by
 `_preview`.
 <3> The data is grouped by the `Carrier` field which contains the airline name.
-<4> This `bucket_script` performs calculations on the results that are returned 
-by the aggregation. In this particular example, it calculates what percentage of 
+<4> This `bucket_script` performs calculations on the results that are returned
+by the aggregation. In this particular example, it calculates what percentage of
 travel time was taken up by delays.
 
-The preview shows you that the new index would contain data like this for each 
+The preview shows you that the new index would contain data like this for each
 carrier:
 
 [source,js]
@@ -183,19 +183,19 @@ This {transform} makes it easier to answer questions such as:
 
 * Which air carrier has the most delays as a percentage of flight time?
 
-NOTE: This data is fictional and does not reflect actual delays 
+NOTE: This data is fictional and does not reflect actual delays
 or flight stats for any of the featured destination or origin airports.
 
 
 [[example-clientips]]
 == Finding suspicious client IPs
 
-In this example, we use the web log sample dataset to identify suspicious client 
-IPs. We transform the data such that the new index contains the sum of bytes and 
-the number of distinct URLs, agents, incoming requests by location, and 
-geographic destinations for each client IP. We also use filter aggregations to 
-count the specific types of HTTP responses that each client IP receives. 
-Ultimately, the example below transforms web log data into an entity centric 
+In this example, we use the web log sample dataset to identify suspicious client
+IPs. We transform the data such that the new index contains the sum of bytes and
+the number of distinct URLs, agents, incoming requests by location, and
+geographic destinations for each client IP. We also use filter aggregations to
+count the specific types of HTTP responses that each client IP receives.
+Ultimately, the example below transforms web log data into an entity centric
 index where the entity is `clientip`.
 
 [source,console]
@@ -226,15 +226,15 @@ PUT _transform/suspicious_client_ips
       "geo.dest_dc": { "cardinality": { "field": "geo.dest" }},
       "responses.total": { "value_count": { "field": "timestamp" }},
       "success" : { <4>
-         "filter": { 
-            "term": { "response" : "200"}} 
+         "filter": {
+            "term": { "response" : "200"}}
         },
       "error404" : {
-         "filter": { 
+         "filter": {
             "term": { "response" : "404"}}
         },
       "error503" : {
-         "filter": { 
+         "filter": {
             "term": { "response" : "503"}}
         },
       "timestamp.min": { "min": { "field": "timestamp" }},
@@ -259,8 +259,8 @@ PUT _transform/suspicious_client_ips
 to synchronize the source and destination indices. The worst case
 ingestion delay is 60 seconds.
 <3> The data is grouped by the `clientip` field.
-<4> Filter aggregation that counts the occurrences of successful (`200`) 
-responses in the `response` field. The following two aggregations (`error404` 
+<4> Filter aggregation that counts the occurrences of successful (`200`)
+responses in the `response` field. The following two aggregations (`error404`
 and `error503`) count the error responses by error codes.
 <5> This `bucket_script` calculates the duration of the `clientip` access based
 on the results of the aggregation.
@@ -321,9 +321,9 @@ The search result shows you data like this for each client IP:
 // NOTCONSOLE
 
 NOTE: Like other Kibana sample data sets, the web log sample dataset contains
-timestamps relative to when you installed it, including timestamps in the 
-future. The {ctransform} will pick up the data points once they are in the past. 
-If you installed the web log sample dataset some time ago, you can uninstall and 
+timestamps relative to when you installed it, including timestamps in the
+future. The {ctransform} will pick up the data points once they are in the past.
+If you installed the web log sample dataset some time ago, you can uninstall and
 reinstall it and the timestamps will change.
 
 

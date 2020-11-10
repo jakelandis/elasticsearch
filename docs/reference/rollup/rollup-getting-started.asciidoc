@@ -94,7 +94,7 @@ simply go back to sleep.  But there's nothing wrong with it either, the job will
 
 After defining which groups should be generated for the data, you next configure
 which metrics should be collected. By default, only the `doc_counts` are
-collected for each group. To make rollup useful, you will often add metrics
+collected for each group. To make rollup useful, you will often item metrics
 like averages, mins, maxes, etc. In this example, the metrics are fairly
 straightforward: we want to save the min/max/sum of the `temperature`
 field, and the average of the `voltage` field.

@@ -7,7 +7,7 @@ requests in a single http request in parallel.
 [[java-rest-high-multi-search-template-request]]
 ==== Multi-Search-Template Request
 
-The `MultiSearchTemplateRequest` is built empty and you add all of the searches that
+The `MultiSearchTemplateRequest` is built empty and you item all of the searches that
 you wish to execute to it:
 
 ["source","java",subs="attributes,callouts,macros"]

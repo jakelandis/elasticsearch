@@ -53,7 +53,7 @@
 ** <<sql-functions-current-date>>
 ** <<sql-functions-current-time>>
 ** <<sql-functions-current-timestamp>>
-** <<sql-functions-datetime-add>>
+** <<sql-functions-datetime-item>>
 ** <<sql-functions-datetime-diff>>
 ** <<sql-functions-datetime-dateparse>>
 ** <<sql-functions-datetime-datetimeformat>>

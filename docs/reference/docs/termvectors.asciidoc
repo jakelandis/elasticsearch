@@ -4,7 +4,7 @@
 <titleabbrev>Term vectors</titleabbrev>
 ++++
 
-Retrieves information and statistics for terms in the fields of a particular document. 
+Retrieves information and statistics for terms in the fields of a particular document.
 
 [source,console]
 --------------------------------------------------
@@ -20,11 +20,11 @@ GET /my-index-000001/_termvectors/1
 [[docs-termvectors-api-desc]]
 ==== {api-description-title}
 
-You can retrieve term vectors for documents stored in the index or 
-for _artificial_ documents passed in the body of the request. 
+You can retrieve term vectors for documents stored in the index or
+for _artificial_ documents passed in the body of the request.
 
 You can specify the fields you are interested in through the `fields` parameter,
-or by adding the fields to the request body. 
+or by adding the fields to the request body.
 
 [source,console]
 --------------------------------------------------
@@ -34,7 +34,7 @@ GET /my-index-000001/_termvectors/1?fields=message
 
 Fields can be specified using wildcards, similar to the <<query-dsl-multi-match-query,multi match query>>.
 
-Term vectors are <<realtime,real-time>> by default, not near real-time. 
+Term vectors are <<realtime,real-time>> by default, not near real-time.
 This can be changed by setting `realtime` parameter to `false`.
 
 You can request three types of values: _term information_, _term statistics_
@@ -206,7 +206,7 @@ PUT /my-index-000001
 }
 --------------------------------------------------
 
-Second, we add some documents:
+Second, we item some documents:
 
 [source,console]
 --------------------------------------------------

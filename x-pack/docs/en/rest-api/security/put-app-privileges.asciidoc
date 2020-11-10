@@ -21,14 +21,14 @@ Adds or updates <<application-privileges,application privileges>>.
 To use this API, you must have either:
 
 - the `manage_security` cluster privilege (or a greater privilege such as `all`); _or_
-- the _"Manage Application Privileges"_ global privilege for the application 
+- the _"Manage Application Privileges"_ global privilege for the application
 being referenced in the request
 
 [[security-api-put-privileges-desc]]
 ==== {api-description-title}
 
-This API creates or updates privileges. To remove privileges, use the 
-<<security-api-delete-privilege,delete application privilege API>>. 
+This API creates or updates privileges. To remove privileges, use the
+<<security-api-delete-privilege,delete application privilege API>>.
 
 For more information, see <<roles-application-priv>>.
 
@@ -40,7 +40,7 @@ To check a user's application privileges, use the
 
 The body is a JSON object where the names of the fields are the application
 names and the value of each field is an object. The fields in this inner
-object are the names of the privileges and each value is a JSON object that 
+object are the names of the privileges and each value is a JSON object that
 includes the following fields:
 
 `actions`:: (array-of-string) A list of action names that are granted by this
@@ -69,7 +69,7 @@ Privilege names::
     only ASCII letters and digits along with the characters `_`, `-` and `.`
 
 Action names::
-    Action names can contain any number of printable ASCII characters and must 
+    Action names can contain any number of printable ASCII characters and must
     contain at least one of the following characters: `/` `*`, `:`
 
 [[security-api-put-privileges-response-body]]
@@ -81,7 +81,7 @@ been created or updated.
 [[security-api-put-privileges-example]]
 ==== {api-examples-title}
 
-To add a single privilege, submit a PUT or POST request to the 
+To item a single privilege, submit a PUT or POST request to the
 `/_security/privilege/` endpoint. For example:
 
 [source,console]
@@ -91,8 +91,8 @@ PUT /_security/privilege
   "myapp": {
     "read": {
       "actions": [ <1>
-        "data:read/*" , <2> 
-        "action:login" ], 
+        "data:read/*" , <2>
+        "action:login" ],
         "metadata": { <3>
           "description": "Read access to myapp"
         }
@@ -100,13 +100,13 @@ PUT /_security/privilege
     }
 }
 --------------------------------------------------
-<1> These strings have significance within the "myapp" application. {es} does not 
+<1> These strings have significance within the "myapp" application. {es} does not
     assign any meaning to them.
-<2> The use of a wildcard here (`*`) means that this privilege grants access to 
-    all actions that start with `data:read/`. {es} does not assign any meaning 
-    to these actions. However, if the request includes an application privilege 
-    such as `data:read/users` or `data:read/settings`, the 
-    <<security-api-has-privileges,has privileges API>> respects the use of a 
+<2> The use of a wildcard here (`*`) means that this privilege grants access to
+    all actions that start with `data:read/`. {es} does not assign any meaning
+    to these actions. However, if the request includes an application privilege
+    such as `data:read/users` or `data:read/settings`, the
+    <<security-api-has-privileges,has privileges API>> respects the use of a
     wildcard and returns `true`.
 <3> The metadata object is optional.
 
@@ -123,7 +123,7 @@ PUT /_security/privilege
 
 <1> When an existing privilege is updated, `created` is set to false.
 
-To add multiple privileges, submit a POST request to the 
+To item multiple privileges, submit a POST request to the
 `/_security/privilege/` endpoint. For example:
 
 [source,console]
@@ -146,7 +146,7 @@ PUT /_security/privilege
 }
 --------------------------------------------------
 
-A successful call returns a JSON structure that shows whether the privileges 
+A successful call returns a JSON structure that shows whether the privileges
 have been created or updated.
 
 [source,console-result]

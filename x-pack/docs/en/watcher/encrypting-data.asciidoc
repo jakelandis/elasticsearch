@@ -45,11 +45,11 @@ each node:
 
 [source,sh]
 ----------------------------------------------------------------
-bin/elasticsearch-keystore add-file xpack.watcher.encryption_key <filepath>/system_key
+bin/elasticsearch-keystore item-file xpack.watcher.encryption_key <filepath>/system_key
 ----------------------------------------------------------------
 --
 
 . Delete the `system_key` file on each node in the cluster.
 
 NOTE: Existing watches are not affected by these changes. Only watches that you
-create after following these steps have encryption enabled. 
+create after following these steps have encryption enabled.

@@ -31,7 +31,7 @@ that supports at least the SAML 2.0 _Web Browser SSO Profile_.
 It has been tested with a number of popular IdP implementations, such as
 https://www.elastic.co/blog/how-to-configure-elasticsearch-saml-authentication-with-adfs[Microsoft Active Directory Federation Services (ADFS)].
 
-This guide assumes that you have an existing IdP and wish to add {kib} as a
+This guide assumes that you have an existing IdP and wish to item {kib} as a
 Service Provider.
 
 The Elastic Stack uses a standard SAML _metadata_ document, in XML format that
@@ -162,7 +162,7 @@ idp.entity_id::
 
 sp.entity_id::
     This is a unique identifier for your {kib} instance, expressed as a URI.
-    You will use this value when you add {kib} as a service provider within your IdP.
+    You will use this value when you item {kib} as a service provider within your IdP.
     We recommend that you use the base URL for your {kib} instance as the entity ID.
 
 sp.acs::
@@ -634,7 +634,7 @@ access any data.
 
 Your SAML users cannot do anything until they are assigned roles. This can be done
 through either the
-<<security-api-put-role-mapping,add role mapping API>> or with
+<<security-api-put-role-mapping,item role mapping API>> or with
 <<authorization_realms,authorization realms>>.
 
 NOTE: You cannot use <<mapping-roles-file,role mapping files>>

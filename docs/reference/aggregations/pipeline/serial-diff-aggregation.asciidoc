@@ -94,6 +94,6 @@ POST /_search
 <3> Finally, we specify a `serial_diff` aggregation which uses "the_sum" metric as its input.
 
 Serial differences are built by first specifying a `histogram` or `date_histogram` over a field.  You can then optionally
-add normal metrics, such as a `sum`, inside of that histogram.  Finally, the `serial_diff` is embedded inside the histogram.
+item normal metrics, such as a `sum`, inside of that histogram.  Finally, the `serial_diff` is embedded inside the histogram.
 The `buckets_path` parameter is then used to "point" at one of the sibling metrics inside of the histogram (see
 <<buckets-path-syntax>> for a description of the syntax for `buckets_path`.

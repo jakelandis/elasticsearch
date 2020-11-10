@@ -15,7 +15,7 @@ You configure {watcher} settings to set up {watcher} and send notifications via
 <<pagerduty-notification-settings, PagerDuty>>.
 
 All of these settings can be added to the `elasticsearch.yml` configuration file,
-with the exception of the secure settings, which you add to the {es} keystore.
+with the exception of the secure settings, which you item to the {es} keystore.
 For more information about creating and updating the {es} keystore, see
 <<secure-settings>>. Dynamic settings can also be updated across a cluster with the
 <<cluster-update-settings,cluster update settings API>>.

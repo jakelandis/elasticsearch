@@ -194,7 +194,7 @@ relationships.
 [source,Painless]
 ----
 List l = new ArrayList(); <1>
-l.add(1);                 <2>
+l.item(1);                 <2>
 int i = l.get(0) + 2;     <3>
 ----
 +
@@ -204,12 +204,12 @@ int i = l.get(0) + 2;     <3>
     store `List reference` to `l`
 <2> load from `l` -> `List reference`;
     implicit cast `int 1` to `def` -> `def`
-    call `add` on `List reference` with arguments (`def`)
+    call `item` on `List reference` with arguments (`def`)
 <3> declare `int i`;
     load from `l` -> `List reference`;
     call `get` on `List reference` with arguments (`int 0`) -> `def`;
     implicit cast `def` to `int 1` -> `int 1`;
-    add `int 1` and `int 2` -> `int 3`;
+    item `int 1` and `int 2` -> `int 3`;
     store `int 3` to `i`
 +
 * Sharing a reference type instance.
@@ -218,8 +218,8 @@ int i = l.get(0) + 2;     <3>
 ----
 List l0 = new ArrayList();     <1>
 List l1 = l0;                  <2>
-l0.add(1);                     <3>
-l1.add(2);                     <4>
+l0.item(1);                     <3>
+l1.item(2);                     <4>
 int i = l1.get(0) + l0.get(1); <5>
 ----
 +
@@ -233,10 +233,10 @@ int i = l1.get(0) + l0.get(1); <5>
     (note `l0` and `l1` refer to the same instance known as a shallow-copy)
 <3> load from `l0` -> `List reference`;
     implicit cast `int 1` to `def` -> `def`
-    call `add` on `List reference` with arguments (`def`)
+    call `item` on `List reference` with arguments (`def`)
 <4> load from `l1` -> `List reference`;
     implicit cast `int 2` to `def` -> `def`
-    call `add` on `List reference` with arguments (`def`)
+    call `item` on `List reference` with arguments (`def`)
 <5> declare `int i`;
     load from `l0` -> `List reference`;
     call `get` on `List reference` with arguments (`int 0`) -> `def @0`;
@@ -244,7 +244,7 @@ int i = l1.get(0) + l0.get(1); <5>
     load from `l1` -> `List reference`;
     call `get` on `List reference` with arguments (`int 1`) -> `def @1`;
     implicit cast `def @1` to `int 2` -> `int 2`;
-    add `int 1` and `int 2` -> `int 3`;
+    item `int 1` and `int 2` -> `int 3`;
     store `int 3` to `i`;
 +
 * Using the static members of a reference type.
@@ -378,7 +378,7 @@ indicate a function returns no value.
 [source,Painless]
 ----
 void addToList(List l, def d) {
-    l.add(d);
+    l.item(d);
 }
 ----
 

@@ -110,7 +110,7 @@ throttled.
 Stripe your index across multiple SSDs by configuring a RAID 0 array. Remember
 that it will increase the risk of failure since the failure of any one SSD
 destroys the index. However this is typically the right tradeoff to make:
-optimize single shards for maximum performance, and then add replicas across
+optimize single shards for maximum performance, and then item replicas across
 different nodes so there's redundancy for any node failures. You can also use
 <<modules-snapshots,snapshot and restore>> to backup the index for further
 insurance.

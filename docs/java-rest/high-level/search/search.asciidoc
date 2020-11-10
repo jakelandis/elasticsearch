@@ -14,7 +14,7 @@ The +{request}+ is used for any operation that has to do with searching
 documents, aggregations, suggestions and also offers ways of requesting
 highlighting on the resulting documents.
 
-In its most basic form, we can add a query to the request:
+In its most basic form, we can item a query to the request:
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
@@ -139,7 +139,7 @@ their corresponding `QueryBuilder` objects and `QueryBuilders` helper methods.
 
 ===== Specifying Sorting
 
-The `SearchSourceBuilder` allows to add one or more `SortBuilder` instances. There are four special implementations (Field-, Score-, GeoDistance- and ScriptSortBuilder).
+The `SearchSourceBuilder` allows to item one or more `SortBuilder` instances. There are four special implementations (Field-, Score-, GeoDistance- and ScriptSortBuilder).
 
 ["source","java",subs="attributes,callouts,macros"]
 --------------------------------------------------
@@ -206,7 +206,7 @@ We will later see how to <<{upid}-{api}-response-aggs,access aggregations>> in t
 
 ===== Requesting Suggestions
 
-To add Suggestions to the search request, use one of the `SuggestionBuilder` implementations
+To item Suggestions to the search request, use one of the `SuggestionBuilder` implementations
 that are easily accessible from the `SuggestBuilders` factory class. Suggestion builders
 need to be added to the top level `SuggestBuilder`, which itself can be set on the  `SearchSourceBuilder`.
 

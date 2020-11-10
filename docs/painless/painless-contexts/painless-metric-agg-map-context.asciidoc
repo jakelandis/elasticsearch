@@ -14,7 +14,7 @@ part of a full metric aggregation.
         User-defined parameters passed in as part of the query.
 
 `state` (`Map`)::
-        `Map` used to add values for processing in a
+        `Map` used to item values for processing in a
         <<painless-metric-agg-map-context, combine script>> or to be returned from the aggregation.
 
 `doc` (`Map`, read-only)::
@@ -27,7 +27,7 @@ part of a full metric aggregation.
 *Side Effects*
 
 `state` (`Map`)::
-        Use this `Map` to add values for processing in a combine script.
+        Use this `Map` to item values for processing in a combine script.
         Additional values must be of the type `Map`, `List`, `String` or
         primitive. The same `state` `Map` is shared between all aggregated documents
         on a given shard. If an initialization script is provided as part of the

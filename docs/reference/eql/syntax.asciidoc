@@ -120,7 +120,7 @@ Returns `true` if the value to the left of the operator is greater than the
 value to the right. Otherwise returns `false`.
 ====
 
-NOTE: `=` is not supported as an equality operator. Use `==` instead. 
+NOTE: `=` is not supported as an equality operator. Use `==` instead.
 
 You cannot chain comparison operators. Instead, use a
 <<eql-syntax-logical-operators,logical operator>> between comparisons. For
@@ -220,7 +220,7 @@ Returns `true` if the value is not contained in the provided list.
 .*Definitions*
 [%collapsible]
 ====
-`+` (add)::
+`+` (item)::
 Adds the values to the left and right of the operator.
 
 `-` (Subtract)::
@@ -349,7 +349,7 @@ double quote (`"`), must be escaped with a preceding backslash (`\`).
 
 IMPORTANT: The single quote (`'`) character is reserved for future use. You
 cannot use an escaped single quote (`\'`) for literal strings. Use an escaped
-double quote (`\"`) instead. 
+double quote (`\"`) instead.
 
 [discrete]
 [[eql-syntax-raw-strings]]
@@ -699,12 +699,12 @@ sub-fields of a `nested` field. However, data streams and indices containing
 [[single-quote-strings]]
 ==== Single quote strings
 
-In {es} EQL, the single quote (`'`) character is reserved for future use. 
+In {es} EQL, the single quote (`'`) character is reserved for future use.
 Strings enclosed in single quotes are not supported. Enclose strings in
 double quotes (`"`) instead.
 
 You cannot use an escaped single quote (`\'`) for literal strings. Use an
-escaped double quote (`\"`) instead. 
+escaped double quote (`\"`) instead.
 
 [discrete]
 [[eql-unsupported-syntax]]
