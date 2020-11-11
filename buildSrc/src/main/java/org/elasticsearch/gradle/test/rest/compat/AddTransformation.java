@@ -21,7 +21,7 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys;
+import org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,30 +31,29 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys.LOCATION;
-import static org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys.OBJECT;
+import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.LOCATION;
+import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.OBJECT;
 
-public class AddAction {
+public class AddTransformation implements Transformation {
 
-    private final List<Item<?>> additions = new ArrayList<>();
+    private final List<Transform> additions = new ArrayList<>();
 
-
-    public AddAction(List<ActionItem> actionItems) {
-        for (ActionItem actionItem : actionItems) {
-            EnumSet<Keys> actions = EnumSet.copyOf(actionItem.getNonNull());
+    public AddTransformation(List<TransformKeyValue> rawTransforms) {
+        for (TransformKeyValue rawTransform : rawTransforms) {
+            EnumSet<Key> actions = EnumSet.copyOf(rawTransform.getAllKeys());
             if (actions.stream().noneMatch(action -> action.equals(LOCATION))) {
                 throw new IllegalStateException("'add' requires 'location' defined");
             }
             if (actions.stream().noneMatch(action -> action.equals(OBJECT))) {
                 throw new IllegalStateException("'add' requires 'object' defined");
             }
-            EnumSet<Keys> invalidActions = EnumSet.complementOf(EnumSet.of(LOCATION, OBJECT));
-            Set<Keys> invalid = actions.stream().filter(invalidActions::contains).collect(Collectors.toSet());
+            EnumSet<TransformKeyValue.Key> invalidActions = EnumSet.complementOf(EnumSet.of(LOCATION, OBJECT));
+            Set<Key> invalid = actions.stream().filter(invalidActions::contains).collect(Collectors.toSet());
             if (invalid.isEmpty() == false) {
                 throw new IllegalStateException("found invalid key(s) in 'add' definition [" +
                     invalid.stream().map(a -> a.name().toLowerCase(Locale.ROOT)).collect(Collectors.joining(",")) + "]");
             }
-            additions.add(new LocationItem(JsonPointer.compile(actionItem.getLocation().asText()), actionItem.getObject()));
+            additions.add(new AddNodeAfterLocation(JsonPointer.compile(rawTransform.getLocation().asText()), rawTransform.getObject()));
         }
     }
 
@@ -65,39 +64,28 @@ public class AddAction {
             '}';
     }
 
-    public List<Item<?>> getAdditions() {
+    @Override
+    public List<Transform> getTransforms() {
         return Collections.unmodifiableList(additions);
     }
 
-    static class LocationItem implements Item<JsonPointer>, Find.ByLocation {
+    static class AddNodeAfterLocation implements Transform.FindByLocation {
         private final JsonPointer location;
         private final JsonNode node;
 
-        LocationItem(JsonPointer location, JsonNode node) {
+        AddNodeAfterLocation(JsonPointer location, JsonNode node) {
             this.location = location;
             this.node = node;
         }
 
-        public JsonPointer find() {
+        @Override
+        public JsonPointer location() {
             return location;
         }
 
-        public JsonNode node() {
-            return node;
-        }
-
         @Override
-        public String toString() {
-            return "LocationAdd{" +
-                "location=" + location +
-                ", node=" + node +
-                '}';
+        public JsonNode transform(JsonNode input) {
+            return null;
         }
-    }
-
-    interface Item<F> extends Instruction{
-        F find();
-
-        JsonNode node();
     }
 }

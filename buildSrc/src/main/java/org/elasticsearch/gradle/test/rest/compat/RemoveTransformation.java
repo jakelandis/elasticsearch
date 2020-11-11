@@ -21,7 +21,10 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key;
+
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,27 +34,21 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys.LOCATION;
-import static org.elasticsearch.gradle.test.rest.compat.ActionItem.Keys.OBJECT;
+import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.LOCATION;
+import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.OBJECT;
 
-public class RemoveAction {
+public class RemoveTransformation implements Transformation {
 
-    private final List<Item<?>> removals = new ArrayList<>();
+    private final List<Transform> removals = new ArrayList<>();
 
-    @Override
-    public String toString() {
-        return "RemoveAction{" +
-            "removals=" + removals +
-            '}';
-    }
 
-    public RemoveAction(List<ActionItem> actionItems) {
-        for (ActionItem actionItem : actionItems) {
+    public RemoveTransformation(List<TransformKeyValue> rawTransforms) {
+        for (TransformKeyValue rawTransform : rawTransforms) {
 
-            EnumSet<ActionItem.Keys> actions = EnumSet.copyOf(actionItem.getNonNull());
-            EnumSet<Keys> validActions = EnumSet.of(LOCATION, OBJECT);
+            EnumSet<Key> actions = EnumSet.copyOf(rawTransform.getAllKeys());
+            EnumSet<Key> validActions = EnumSet.of(LOCATION, OBJECT);
 
-            Set<Keys> valid = actions.stream().filter(validActions::contains).collect(Collectors.toSet());
+            Set<Key> valid = actions.stream().filter(validActions::contains).collect(Collectors.toSet());
             if (valid.isEmpty()) {
                 throw new IllegalStateException("'remove' requires one of the following defined 'location' or 'object'");
             } else if (valid.size() != 1) {
@@ -59,18 +56,18 @@ public class RemoveAction {
                     valid.stream().map(a -> a.name().toLowerCase(Locale.ROOT)).collect(Collectors.joining(",")) + "]");
             }
 
-            EnumSet<Keys> invalidActions = EnumSet.complementOf(validActions);
-            Set<Keys> invalid = actions.stream().filter(invalidActions::contains).collect(Collectors.toSet());
+            EnumSet<Key> invalidActions = EnumSet.complementOf(validActions);
+            Set<Key> invalid = actions.stream().filter(invalidActions::contains).collect(Collectors.toSet());
             if (invalid.isEmpty() == false) {
                 throw new IllegalStateException("found invalid key(s) in 'add' definition [" +
                     invalid.stream().map(a -> a.name().toLowerCase(Locale.ROOT)).collect(Collectors.joining(",")) + "]");
             }
             switch (valid.iterator().next()) {
                 case LOCATION:
-                    removals.add(new LocationItem(JsonPointer.compile(actionItem.getLocation().asText())));
+                    removals.add(new RemoveAtLocation(JsonPointer.compile(rawTransform.getLocation().asText())));
                     break;
                 case OBJECT:
-                    removals.add(new ObjectItem(actionItem.getObject()));
+                    removals.add(new RemoveObject(rawTransform.getObject()));
                     break;
                 default:
                     assert false : "unexpected remove value, this is a bug";
@@ -79,52 +76,45 @@ public class RemoveAction {
 
     }
 
-    public List<Item<?>> getRemovals() {
+
+    @Override
+    public List<Transform> getTransforms() {
         return Collections.unmodifiableList(removals);
     }
 
-    static class LocationItem implements Item<JsonPointer>, Find.ByLocation {
+    static class RemoveAtLocation implements Transform.FindByLocation {
         private final JsonPointer location;
 
-        LocationItem(JsonPointer location) {
+        RemoveAtLocation(JsonPointer location) {
             this.location = location;
         }
 
         @Override
-        public JsonPointer find() {
+        public JsonPointer location() {
             return location;
         }
 
         @Override
-        public String toString() {
-            return "LocationRemove{" +
-                "location=" + location +
-                '}';
+        public JsonNode transform(JsonNode input) {
+            return null;
         }
     }
 
-    static class ObjectItem implements Item<JsonNode>, Find.ByObject {
-        private final JsonNode object;
+    static class RemoveObject implements Transform.FindByNode<ObjectNode> {
+        private final ObjectNode object;
 
-        ObjectItem(JsonNode object) {
+        RemoveObject(ObjectNode object) {
             this.object = object;
         }
 
         @Override
-        public JsonNode find() {
+        public ObjectNode nodeToFind() {
             return object;
         }
 
         @Override
-        public String toString() {
-            return "ObjectRemove{" +
-                "object=" + object +
-                '}';
+        public JsonNode transform(JsonNode input) {
+            return null;
         }
     }
-
-    interface Item<F> extends Instruction{
-        F find();
-    }
-
 }

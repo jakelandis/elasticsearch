@@ -35,22 +35,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class MutateTest {
+public class TransformTest {
     private static final YAMLFactory yaml = new YAMLFactory();
     private static final ObjectMapper mapper = new ObjectMapper(yaml);
 
-    public static Map<String, TestMutations> readInstructions(File file) throws IOException {
+    public static Map<String, TestTransformation> readInstructions(File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
-        Map<String, TestMutations> mutations = new HashMap<>();
-        MappingIterator<TestMutations> it = mapper.readValues(yamlParser, TestMutations.class);
+        Map<String, TestTransformation> mutations = new HashMap<>();
+        MappingIterator<TestTransformation> it = mapper.readValues(yamlParser, TestTransformation.class);
         while (it.hasNext()) {
-            TestMutations testMutations = it.next();
-            mutations.put(testMutations.getTestName(), testMutations);
+            TestTransformation testTransformation = it.next();
+            mutations.put(testTransformation.getTestName(), testTransformation);
         }
         return mutations;
     }
 
-    public static List<ObjectNode> mutateTest(File file, Map<String, TestMutations> mutations) throws IOException {
+    public static List<ObjectNode> mutateTest(File file, Map<String, TestTransformation> mutations) throws IOException {
 
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
@@ -63,25 +63,17 @@ public class MutateTest {
                 String testName = testObject.getKey();
                 System.out.println("@@ test:" + testName );
                 JsonNode currentTest = testObject.getValue();
-                TestMutations testMutations = mutations.get(testName);
-                if(testMutations == null ){
+                TestTransformation testTransformation = mutations.get(testName);
+                if(testTransformation == null ){
                     continue;
                 }
                 System.out.println(currentTest);
 
-                //Get the instructions
-                AddAction additions = testMutations.getAddAction();
-                RemoveAction remove = testMutations.getRemoveAction();
-                ReplaceAction replace = testMutations.getReplaceAction();
-                //build a map of find by objects to the instruction
-                Map<ObjectNode, Instruction> findByObjects = additions.getAdditions().stream()
-                    .filter(a -> a instanceof Find.ByObject).collect(Collectors.toMap(e -> ((ObjectNode) e.find()), e -> e));
-                findByObjects.putAll(remove.getRemovals().stream()
-                    .filter(a -> a instanceof Find.ByObject).collect(Collectors.toMap(e -> ((ObjectNode) e.find()), e -> e)));
-                findByObjects.putAll(replace.getReplacements().stream()
-                    .filter(a -> a instanceof Find.ByObject).collect(Collectors.toMap(e -> ((ObjectNode) e.find()), e -> e)));
+                //Get all of the FindByNodes into a keyed map for quick lookup
+                Map<JsonNode, Transform.FindByNode<? extends JsonNode>> findByNodeMap = testTransformation.getAllTransforms().stream().filter(a -> a instanceof Transform.FindByNode)
+                    .map(e -> (Transform.FindByNode<? extends JsonNode>) e).collect(Collectors.toMap(Transform.FindByNode::nodeToFind, f -> f));
 
-                process(currentTest, findByObjects);
+                process(currentTest, findByNodeMap);
 
             }
         }
@@ -104,24 +96,27 @@ public class MutateTest {
         }
     }
 
-    private static void process(JsonNode currentNode, Map<ObjectNode, Instruction> findByObjects) {
+    private static void process(JsonNode currentNode, Map<JsonNode, Transform.FindByNode<? extends JsonNode>> findByNodeMap) {
         if (currentNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) currentNode;
             Iterator<JsonNode> node = arrayNode.elements();
 
             while (node.hasNext()) {
 
-                process(node.next(), findByObjects);
+                process(node.next(), findByNodeMap);
 
             }
         }
         else if (currentNode.isObject()) {
-            Instruction instruction = findByObjects.get(currentNode);
-            System.out.println(currentNode);
-            if(instruction != null){
-                System.out.println("********************* found it!! [" + instruction + "]");
+            //find by node
+            Transform.FindByNode<? extends JsonNode> findByNode =  findByNodeMap.get(currentNode);
+
+            if(findByNode != null){
+                System.out.println("********************* found it!! [" + findByNode + "]");
+               // findByNodeMap.transform(currentNode);
+
             }
-            currentNode.fields().forEachRemaining(entry -> process(entry.getValue(), findByObjects));
+            currentNode.fields().forEachRemaining(entry -> process(entry.getValue(), findByNodeMap));
         }
         else {
             System.out.println("value: "  +currentNode);

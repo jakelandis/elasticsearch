@@ -19,5 +19,12 @@
 
 package org.elasticsearch.gradle.test.rest.compat;
 
-public interface Instruction {
+import java.util.List;
+
+/**
+ * A Transformation is a grouping of {@link Transform}'s to change a test by a specified means. For example a "add" is a Transformation
+ * which can group together 0 to N additions (Transform's).
+ */
+public interface Transformation {
+    List<Transform> getTransforms();
 }

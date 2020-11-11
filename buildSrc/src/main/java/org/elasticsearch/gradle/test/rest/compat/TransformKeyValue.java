@@ -20,24 +20,29 @@
 package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A superset of all the possible key/values for all of the actions. Each action (replace, add, remove) is responsible for validation
- * of the supported set of keys and the key/value pairings.
+ * The key/value pairing that describes a single {@link Transform}.
  */
-class ActionItem {
+class TransformKeyValue {
 
-    enum Keys {
+    /**
+     * An enumeration to record which keys are set for any given {@link Transform}. This can be used to for quick validation of acceptable
+     * keys defined with the scope of a given {@link Transformation}
+     */
+    enum Key {
         VALUE, WITH, LOCATION, OBJECT
     }
-    private Set<Keys> nonNull = new HashSet<>(2);
+
+    private Set<Key> all = new HashSet<>(2);
     private JsonNode value;
     private JsonNode with;
     private JsonNode location;
-    private JsonNode object;
+    private ObjectNode object;
 
     public JsonNode getValue() {
         return value;
@@ -45,7 +50,7 @@ class ActionItem {
 
     public void setValue(JsonNode value) {
         this.value = value;
-        nonNull.add(Keys.VALUE);
+        all.add(Key.VALUE);
     }
 
     public JsonNode getWith() {
@@ -54,9 +59,8 @@ class ActionItem {
 
     public void setWith(JsonNode with) {
         this.with = with;
-        nonNull.add(Keys.WITH);
+        all.add(Key.WITH);
     }
-
 
     public JsonNode getLocation() {
         return location;
@@ -64,19 +68,18 @@ class ActionItem {
 
     public void setLocation(JsonNode location) {
         this.location = location;
-        nonNull.add(Keys.LOCATION);
+        all.add(Key.LOCATION);
     }
 
-    public JsonNode getObject() {
+    public ObjectNode getObject() {
         return object;
     }
 
-    public void setObject(JsonNode object) {
+    public void setObject(ObjectNode object) {
         this.object = object;
-        nonNull.add(Keys.OBJECT);
-    }
+        all.add(Key.OBJECT);    }
 
-    public Set<Keys> getNonNull() {
-        return nonNull;
+    public Set<Key> getAllKeys() {
+        return all;
     }
 }
