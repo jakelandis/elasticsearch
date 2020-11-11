@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * The key/value pairing that describes a single {@link Transform}.
+ * The set of key/value pairings that describes a single {@link Transform}.
  */
 class TransformKeyValue {
 

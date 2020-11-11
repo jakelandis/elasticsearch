@@ -21,6 +21,7 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ContainerNode;
 import org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key;
 
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ public class AddTransformation implements Transformation {
         }
 
         @Override
-        public JsonNode transform(JsonNode input) {
+        public ContainerNode<?> transform(ContainerNode<?> input) {
             return null;
         }
     }

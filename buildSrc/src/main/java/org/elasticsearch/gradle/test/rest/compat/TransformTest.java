@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
@@ -72,7 +73,8 @@ public class TransformTest {
                 }
                 System.out.println(currentTest);
 
-                //transform by location first.
+                //transform by location first, push results to a copy so for multiple location transformations the JSON Pointer is always in
+                //reference to the original un-transformed document.
 
 
                 //collect all of the FindByNodes
@@ -94,23 +96,23 @@ public class TransformTest {
         return null;
     }
 
-    private static void transformByEquality(JsonNode parentNode, JsonNode currentNode, Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap) {
+    private static void transformByEquality(ContainerNode<?> parentNode, JsonNode currentNode, Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap) {
         if (currentNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) currentNode;
             Iterator<JsonNode> node = arrayNode.elements();
 
             while (node.hasNext()) {
 
-                transformByEquality(currentNode, node.next(), findByNodeMap);
+                transformByEquality(arrayNode, node.next(), findByNodeMap);
 
             }
         } else if (currentNode.isObject()) {
-            //find by node
+            ObjectNode objectNode = (ObjectNode) currentNode;
+
             Set<Transform.FindByNode<? extends JsonNode>> findByNodes = findByNodeMap.get(currentNode);
 
             if (findByNodes != null) {
                 findByNodes.forEach(findByNode -> {
-
                     System.out.println("********************* found it!! [" + findByNode + "]");
                     JsonNode result = findByNode.transform(parentNode);
                     if(result != null) {
@@ -123,7 +125,7 @@ public class TransformTest {
                     }
                 });
             }
-            currentNode.fields().forEachRemaining(entry -> transformByEquality(currentNode, entry.getValue(), findByNodeMap));
+            currentNode.fields().forEachRemaining(entry -> transformByEquality(objectNode, entry.getValue(), findByNodeMap));
         } else {
             System.out.println("value: " + currentNode);
 

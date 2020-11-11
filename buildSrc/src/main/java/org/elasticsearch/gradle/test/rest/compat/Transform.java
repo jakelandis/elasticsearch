@@ -22,6 +22,7 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ContainerNode;
 
 /**
  * A Transform is a single instruction when applied in the context of {@link Transformation} defines a single specific action that
@@ -32,11 +33,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 @FunctionalInterface
 public interface Transform {
     /**
-     * Perform the transformation. Implementations will likely pass in the parent of the Node to transform, create copy, then transform
-     * the copy of the parent to return as the result of the function.
+     * Perform the transformation. Implementations will likely pass in the parent of the Node to transform
+     * (which must be an object or array), create copy, then transform the copy of the parent to return as the result of the function.
      */
-    //TODO: change this to ContainerNode for input and output ??
-    JsonNode transform(JsonNode input);
+    ContainerNode<?> transform(ContainerNode<?> input);
 
     /**
      * Find the node to transform via a given value. Value here is defined as the value in a key/value pairing.

@@ -77,7 +77,7 @@ class ReplaceTransformation implements Transformation {
                     replacements.add(new ReplaceAtLocation(JsonPointer.compile(rawTransform.getLocation().asText()), rawTransform.getWith()));
                     break;
                 default:
-                    assert false : "unexpected replace value, this is a bug";
+                    assert false : "unexpected replace value, this is a bug with validation";
             }
         }
     }
@@ -110,7 +110,7 @@ class ReplaceTransformation implements Transformation {
         }
 
         @Override
-        public JsonNode transform(JsonNode input) {
+        public ContainerNode<?> transform(ContainerNode<?> input) {
             return null;
         }
     }
@@ -125,7 +125,7 @@ class ReplaceTransformation implements Transformation {
         }
 
         @Override
-        public JsonNode transform(JsonNode input) {
+        public ContainerNode<?> transform(ContainerNode<?> input) {
             if (input.isObject()) {
                 ObjectNode copy = new ObjectNode(jsonNodeFactory);
                 Iterator<Map.Entry<String, JsonNode>> it = input.fields();
@@ -141,7 +141,8 @@ class ReplaceTransformation implements Transformation {
             } else if (input.isArray()) {
                 throw new UnsupportedOperationException("TODO: support transforming arrays");
             }
-            throw new IllegalStateException("only container nodes (array/objects) may be transformed");
+            //impossible since object/arrays are the only types of container nodes
+            throw new IllegalStateException("Only Object/Array container nodes are supported");
         }
 
         @Override
@@ -173,7 +174,7 @@ class ReplaceTransformation implements Transformation {
         }
 
         @Override
-        public JsonNode transform(JsonNode input) {
+        public ContainerNode<?> transform(ContainerNode<?> input) {
             return null;
         }
     }

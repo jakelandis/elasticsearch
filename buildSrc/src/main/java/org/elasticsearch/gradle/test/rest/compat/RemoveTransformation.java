@@ -20,11 +20,9 @@
 package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key;
-
-
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,7 +68,7 @@ public class RemoveTransformation implements Transformation {
                     removals.add(new RemoveObject(rawTransform.getObject()));
                     break;
                 default:
-                    assert false : "unexpected remove value, this is a bug";
+                    assert false : "unexpected remove value, this is a bug with validation";
             }
         }
 
@@ -95,7 +93,7 @@ public class RemoveTransformation implements Transformation {
         }
 
         @Override
-        public JsonNode transform(JsonNode input) {
+        public ContainerNode<?> transform(ContainerNode<?> input) {
             return null;
         }
     }
@@ -110,12 +108,11 @@ public class RemoveTransformation implements Transformation {
 
         @Override
         public ObjectNode nodeToFind() {
-
             return objectNode;
         }
 
         @Override
-        public JsonNode transform(JsonNode input) {
+        public ContainerNode<?> transform(ContainerNode<?> input) {
             return null;
         }
 
