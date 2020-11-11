@@ -101,20 +101,29 @@ public class RemoveTransformation implements Transformation {
     }
 
     static class RemoveObject implements Transform.FindByNode<ObjectNode> {
-        private final ObjectNode object;
+        private final ObjectNode objectNode;
 
-        RemoveObject(ObjectNode object) {
-            this.object = object;
+        RemoveObject(ObjectNode objectNode) {
+            System.out.println("Found removal " + objectNode);
+            this.objectNode = objectNode;
         }
 
         @Override
         public ObjectNode nodeToFind() {
-            return object;
+
+            return objectNode;
         }
 
         @Override
         public JsonNode transform(JsonNode input) {
             return null;
+        }
+
+        @Override
+        public String toString() {
+            return "RemoveObject{" +
+                "objectNode=" + objectNode +
+                '}';
         }
     }
 }

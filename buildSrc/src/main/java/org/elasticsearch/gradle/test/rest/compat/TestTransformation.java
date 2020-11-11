@@ -42,11 +42,11 @@ public class TestTransformation {
         this.addTransformation = new AddTransformation(actions.get("add"));
         this.removeTransformation = new RemoveTransformation(actions.get("remove"));
         allTransforms = new ArrayList<>(
-            removeTransformation.getTransforms().size()
+            replaceTransformation.getTransforms().size()
                 + addTransformation.getTransforms().size()
                 + removeTransformation.getTransforms().size()
         );
-        allTransforms.addAll(removeTransformation.getTransforms());
+        allTransforms.addAll(replaceTransformation.getTransforms());
         allTransforms.addAll(addTransformation.getTransforms());
         allTransforms.addAll(removeTransformation.getTransforms());
     }
@@ -56,7 +56,7 @@ public class TestTransformation {
     }
 
     public List<Transform> getAllTransforms() {
-        return replaceTransformation.getTransforms();
+        return allTransforms;
     }
 }
 

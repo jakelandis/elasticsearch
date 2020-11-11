@@ -26,13 +26,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import org.jcodings.util.Hash;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TransformTest {
@@ -61,65 +64,57 @@ public class TransformTest {
             while (testsIterator.hasNext()) {
                 Map.Entry<String, JsonNode> testObject = testsIterator.next();
                 String testName = testObject.getKey();
-                System.out.println("@@ test:" + testName );
+                System.out.println("@@ test:" + testName);
                 JsonNode currentTest = testObject.getValue();
                 TestTransformation testTransformation = mutations.get(testName);
-                if(testTransformation == null ){
+                if (testTransformation == null) {
                     continue;
                 }
                 System.out.println(currentTest);
 
-                //Get all of the FindByNodes into a keyed map for quick lookup
-                Map<JsonNode, Transform.FindByNode<? extends JsonNode>> findByNodeMap = testTransformation.getAllTransforms().stream().filter(a -> a instanceof Transform.FindByNode)
-                    .map(e -> (Transform.FindByNode<? extends JsonNode>) e).collect(Collectors.toMap(Transform.FindByNode::nodeToFind, f -> f));
+                //collect all of the FindByNodes
+                Set<Transform.FindByNode<? extends JsonNode>> findByNodeSet = testTransformation.getAllTransforms()
+                    .stream().filter(a -> a instanceof Transform.FindByNode)
+                    .map(e -> (Transform.FindByNode<? extends JsonNode>) e).collect(Collectors.toSet());
+                // map them by the node to find for quick lookups
+                Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap = new HashMap<>(findByNodeSet.size());
+                findByNodeSet.forEach(t -> {
+                    findByNodeMap.computeIfAbsent(t.nodeToFind(), k -> new HashSet<>()).add(t);
+                });
 
-                process(currentTest, findByNodeMap);
+                process(test, currentTest, findByNodeMap);
 
             }
         }
         return null;
     }
 
-    private static void print(final JsonNode node) throws IOException {
-        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = node.fields();
-
-        while (fieldsIterator.hasNext()) {
-            Map.Entry<String, JsonNode> field = fieldsIterator.next();
-            final String key = field.getKey();
-            System.out.println("Key: " + key);
-            final JsonNode value = field.getValue();
-            if (value.isContainerNode()) {
-                print(value); // RECURSIVE CALL
-            } else {
-                System.out.println("Value: " + value);
-            }
-        }
-    }
-
-    private static void process(JsonNode currentNode, Map<JsonNode, Transform.FindByNode<? extends JsonNode>> findByNodeMap) {
+    private static void process(JsonNode parentNode, JsonNode currentNode, Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap) {
         if (currentNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) currentNode;
             Iterator<JsonNode> node = arrayNode.elements();
 
             while (node.hasNext()) {
 
-                process(node.next(), findByNodeMap);
+                process(currentNode, node.next(), findByNodeMap);
 
             }
-        }
-        else if (currentNode.isObject()) {
+        } else if (currentNode.isObject()) {
             //find by node
-            Transform.FindByNode<? extends JsonNode> findByNode =  findByNodeMap.get(currentNode);
+            Set<Transform.FindByNode<? extends JsonNode>> findByNodes = findByNodeMap.get(currentNode);
 
-            if(findByNode != null){
-                System.out.println("********************* found it!! [" + findByNode + "]");
-               // findByNodeMap.transform(currentNode);
+            if (findByNodes != null) {
+                findByNodes.forEach(findByNode -> {
 
+                    System.out.println("********************* found it!! [" + findByNode + "]");
+                    findByNode.transform(parentNode);
+
+
+                });
             }
-            currentNode.fields().forEachRemaining(entry -> process(entry.getValue(), findByNodeMap));
-        }
-        else {
-            System.out.println("value: "  +currentNode);
+            currentNode.fields().forEachRemaining(entry -> process(currentNode, entry.getValue(), findByNodeMap));
+        } else {
+            System.out.println("value: " + currentNode);
 
         }
     }

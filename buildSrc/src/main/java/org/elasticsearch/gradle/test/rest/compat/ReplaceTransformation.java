@@ -128,6 +128,14 @@ class ReplaceTransformation implements Transformation {
         public ObjectNode nodeToFind() {
             return toReplace;
         }
+
+        @Override
+        public String toString() {
+            return "ReplaceObject{" +
+                "toReplace=" + toReplace +
+                ", replacement=" + replacement +
+                '}';
+        }
     }
 
     static class ReplaceAtLocation implements Transform.FindByLocation {

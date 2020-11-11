@@ -8,7 +8,7 @@
       with: {match: {c: d}}
   add:
     - location: /foo/bar
-      object: { contexts.99: update}
+      object: { contexts.22: update}
   remove:
     - location: /foo/bar
     - object: { contexts.22: update}
