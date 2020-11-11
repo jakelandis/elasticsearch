@@ -107,7 +107,7 @@ public class TransformTest {
                 findByNodes.forEach(findByNode -> {
 
                     System.out.println("********************* found it!! [" + findByNode + "]");
-                    findByNode.transform(parentNode);
+                    System.out.println("*** result: " + findByNode.transform(parentNode));
 
 
                 });

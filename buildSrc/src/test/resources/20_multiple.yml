@@ -3,9 +3,9 @@
     - value: foo
       with: bar
     - object: { contexts.22: update}
-      with: {match: {c: d}}
-    - location: /foo/bar
-      with: {match: {c: d}}
+      with: {c: d}
+    - location: /foo/bar/match/0
+      with: {c: d}
   add:
     - location: /foo/bar
       object: { contexts.22: update}

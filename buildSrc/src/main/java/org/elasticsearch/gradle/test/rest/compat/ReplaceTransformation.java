@@ -21,13 +21,17 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,6 +43,7 @@ import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.WI
 
 class ReplaceTransformation implements Transformation {
     private final List<Transform> replacements = new ArrayList<>();
+    private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
 
     public ReplaceTransformation(List<TransformKeyValue> rawTransforms) {
         for (TransformKeyValue rawTransform : rawTransforms) {
@@ -121,7 +126,22 @@ class ReplaceTransformation implements Transformation {
 
         @Override
         public JsonNode transform(JsonNode input) {
-            return null;
+            if (input.isObject()) {
+                ObjectNode copy = new ObjectNode(jsonNodeFactory);
+                Iterator<Map.Entry<String, JsonNode>> it = input.fields();
+                while (it.hasNext()) {
+                    Map.Entry<String, JsonNode> currentKeyValue = it.next();
+                    if (currentKeyValue.getValue().equals(toReplace)) {
+                        copy.set(currentKeyValue.getKey(), replacement);
+                    } else {
+                        copy.set(currentKeyValue.getKey(), currentKeyValue.getValue());
+                    }
+                }
+                return copy;
+            } else if (input.isArray()) {
+                throw new UnsupportedOperationException("TODO: support transforming arrays");
+            }
+            throw new IllegalStateException("only container nodes (array/objects) may be transformed");
         }
 
         @Override
