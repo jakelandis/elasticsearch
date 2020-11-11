@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-import org.jcodings.util.Hash;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +41,7 @@ public class TransformTest {
     private static final YAMLFactory yaml = new YAMLFactory();
     private static final ObjectMapper mapper = new ObjectMapper(yaml);
 
-    public static Map<String, TestTransformation> readInstructions(File file) throws IOException {
+    public static Map<String, TestTransformation> readTransformations(File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
         Map<String, TestTransformation> mutations = new HashMap<>();
         MappingIterator<TestTransformation> it = mapper.readValues(yamlParser, TestTransformation.class);
@@ -53,11 +52,12 @@ public class TransformTest {
         return mutations;
     }
 
-    public static List<ObjectNode> mutateTest(File file, Map<String, TestTransformation> mutations) throws IOException {
+    public static List<ObjectNode> transformTest(File file, Map<String, TestTransformation> mutations) throws IOException {
 
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
 
+        //A YAML file can have multiple tests
         for (ObjectNode test : tests) {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
             //each file can have multiple tests
@@ -72,6 +72,9 @@ public class TransformTest {
                 }
                 System.out.println(currentTest);
 
+                //transform by location first.
+
+
                 //collect all of the FindByNodes
                 Set<Transform.FindByNode<? extends JsonNode>> findByNodeSet = testTransformation.getAllTransforms()
                     .stream().filter(a -> a instanceof Transform.FindByNode)
@@ -82,21 +85,23 @@ public class TransformTest {
                     findByNodeMap.computeIfAbsent(t.nodeToFind(), k -> new HashSet<>()).add(t);
                 });
 
-                process(test, currentTest, findByNodeMap);
+               transformByEquality(test, currentTest, findByNodeMap);
+
+               System.out.println(test.toPrettyString());
 
             }
         }
         return null;
     }
 
-    private static void process(JsonNode parentNode, JsonNode currentNode, Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap) {
+    private static void transformByEquality(JsonNode parentNode, JsonNode currentNode, Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap) {
         if (currentNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) currentNode;
             Iterator<JsonNode> node = arrayNode.elements();
 
             while (node.hasNext()) {
 
-                process(currentNode, node.next(), findByNodeMap);
+                transformByEquality(currentNode, node.next(), findByNodeMap);
 
             }
         } else if (currentNode.isObject()) {
@@ -107,12 +112,18 @@ public class TransformTest {
                 findByNodes.forEach(findByNode -> {
 
                     System.out.println("********************* found it!! [" + findByNode + "]");
-                    System.out.println("*** result: " + findByNode.transform(parentNode));
-
-
+                    JsonNode result = findByNode.transform(parentNode);
+                    if(result != null) {
+                        System.out.println("*** result: " + result);
+                        if (parentNode.isObject()) {
+                            ObjectNode parentObject = (ObjectNode) parentNode;
+                            parentObject.removeAll();
+                            parentObject.setAll((ObjectNode) result);
+                        }
+                    }
                 });
             }
-            currentNode.fields().forEachRemaining(entry -> process(currentNode, entry.getValue(), findByNodeMap));
+            currentNode.fields().forEachRemaining(entry -> transformByEquality(currentNode, entry.getValue(), findByNodeMap));
         } else {
             System.out.println("value: " + currentNode);
 

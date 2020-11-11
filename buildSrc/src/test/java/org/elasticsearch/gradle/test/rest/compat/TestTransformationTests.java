@@ -29,7 +29,7 @@ public class TestTransformationTests extends GradleUnitTestCase {
     public void testSingleTest() throws Exception {
 
         File singleTest = new File(getClass().getResource("/10_single.yml").toURI());
-        TransformTest.readInstructions(singleTest);
+        TransformTest.readTransformations(singleTest);
 
 
     }
@@ -39,9 +39,9 @@ public class TestTransformationTests extends GradleUnitTestCase {
         File instructions = new File(getClass().getResource("/20_multiple.yml").toURI());
 
         File originalTest = new File(getClass().getResource("/71_context_api.yml").toURI());
-        Map<String, TestTransformation> mutations = TransformTest.readInstructions(instructions);
+        Map<String, TestTransformation> mutations = TransformTest.readTransformations(instructions);
         mutations.forEach((k,v) -> System.out.println("** Found mutations for test: " + k + "\n" + v) );
-        TransformTest.mutateTest(originalTest, mutations );
+        TransformTest.transformTest(originalTest, mutations );
 
 
 

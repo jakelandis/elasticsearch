@@ -35,6 +35,7 @@ public interface Transform {
      * Perform the transformation. Implementations will likely pass in the parent of the Node to transform, create copy, then transform
      * the copy of the parent to return as the result of the function.
      */
+    //TODO: change this to ContainerNode for input and output ??
     JsonNode transform(JsonNode input);
 
     /**
