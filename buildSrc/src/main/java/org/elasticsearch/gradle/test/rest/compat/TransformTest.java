@@ -54,10 +54,8 @@ public class TransformTest {
     }
 
     public static List<ObjectNode> transformTest(File file, Map<String, TestTransformation> mutations) throws IOException {
-
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
-
         //A YAML file can have multiple tests
         for (ObjectNode test : tests) {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
@@ -75,7 +73,17 @@ public class TransformTest {
 
                 //transform by location first, push results to a copy so for multiple location transformations the JSON Pointer is always in
                 //reference to the original un-transformed document.
+                //transformByLocation(test);
 
+                //collect all of the FindByValues
+                Set<Transform.FindByValue<?>> findByValueSet = testTransformation.getAllTransforms()
+                    .stream().filter(a -> a instanceof Transform.FindByValue)
+                    .map(e -> (Transform.FindByValue<?>) e).collect(Collectors.toSet());
+                // map them by the value to find for quick lookups
+                Map<Object, Set<Transform.FindByValue<?>>> findByValueMap = new HashMap<>(findByValueSet.size());
+                findByValueSet.forEach(t -> {
+                    findByValueMap.computeIfAbsent(t.valueToFind(), k -> new HashSet<>()).add(t);
+                });
 
                 //collect all of the FindByNodes
                 Set<Transform.FindByNode<? extends JsonNode>> findByNodeSet = testTransformation.getAllTransforms()
@@ -87,50 +95,64 @@ public class TransformTest {
                     findByNodeMap.computeIfAbsent(t.nodeToFind(), k -> new HashSet<>()).add(t);
                 });
 
-               transformByEquality(test, currentTest, findByNodeMap);
+                transformByEquality(test, currentTest, findByNodeMap, findByValueMap);
 
-               System.out.println(test.toPrettyString());
-
+                System.out.println(test.toPrettyString());
             }
         }
         return null;
     }
 
-    private static void transformByEquality(ContainerNode<?> parentNode, JsonNode currentNode, Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap) {
+    private static ObjectNode transformByLocation(ObjectNode root) {
+        return root.deepCopy();
+    }
+
+    private static void transformByEquality(ContainerNode<?> parentNode, JsonNode currentNode, Map<JsonNode,
+        Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap, Map<Object, Set<Transform.FindByValue<?>>> findByValueMap) {
         if (currentNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) currentNode;
             Iterator<JsonNode> node = arrayNode.elements();
-
+            //TODO: support transform by parent array
             while (node.hasNext()) {
-
-                transformByEquality(arrayNode, node.next(), findByNodeMap);
-
+                transformByEquality(arrayNode, node.next(), findByNodeMap, findByValueMap);
             }
         } else if (currentNode.isObject()) {
             ObjectNode objectNode = (ObjectNode) currentNode;
-
             Set<Transform.FindByNode<? extends JsonNode>> findByNodes = findByNodeMap.get(currentNode);
-
             if (findByNodes != null) {
                 findByNodes.forEach(findByNode -> {
-                    System.out.println("********************* found it!! [" + findByNode + "]");
-                    JsonNode result = findByNode.transform(parentNode);
-                    if(result != null) {
-                        System.out.println("*** result: " + result);
-                        if (parentNode.isObject()) {
-                            ObjectNode parentObject = (ObjectNode) parentNode;
-                            parentObject.removeAll();
-                            parentObject.setAll((ObjectNode) result);
-                        }
+                    ContainerNode<?> result = findByNode.transform(parentNode);
+                    assert result != null;
+                    if (parentNode.isObject()) {
+                        ObjectNode parentObject = (ObjectNode) parentNode;
+                        parentObject.removeAll();
+                        parentObject.setAll((ObjectNode) result);
                     }
                 });
             }
-            currentNode.fields().forEachRemaining(entry -> transformByEquality(objectNode, entry.getValue(), findByNodeMap));
+            currentNode.fields().forEachRemaining(entry -> transformByEquality(objectNode, entry.getValue(), findByNodeMap, findByValueMap));
         } else {
-            System.out.println("value: " + currentNode);
+            Set<Transform.FindByValue<?>> findByValues;
+            if (currentNode.isTextual()) {
+                findByValues = findByValueMap.get(currentNode.asText());
+            } else {
+                //TODO: support other value types ?
+                throw new UnsupportedOperationException("TODO: support all of the things !!");
+            }
 
+            if (findByValues != null) {
+                findByValues.forEach(findByValue -> {
+                    System.out.println("************* Found a match! " + findByValue);
+                    ContainerNode<?> result = findByValue.transform(parentNode);
+                    assert result != null;
+                    if (parentNode.isObject()) {
+                        ObjectNode parentObject = (ObjectNode) parentNode;
+                        parentObject.removeAll();
+                        parentObject.setAll((ObjectNode) result);
+                    }
+                });
+            }
+            System.out.println("value: " + currentNode);
         }
     }
-
-
 }

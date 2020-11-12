@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,8 +43,8 @@ import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.WI
 
 
 class ReplaceTransformation implements Transformation {
-    private final List<Transform> replacements = new ArrayList<>();
     private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
+    private final List<Transform> replacements = new ArrayList<>();
 
     public ReplaceTransformation(List<TransformKeyValue> rawTransforms) {
         for (TransformKeyValue rawTransform : rawTransforms) {
@@ -68,7 +69,7 @@ class ReplaceTransformation implements Transformation {
 
             switch (find.iterator().next()) {
                 case VALUE:
-                    replacements.add(new ReplaceValue(rawTransform.getValue().asText(), rawTransform.getWith().asText()));
+                    replacements.add(new ReplaceStringValue(rawTransform.getValue().asText(), rawTransform.getWith().asText()));
                     break;
                 case OBJECT:
                     replacements.add(new ReplaceObject(rawTransform.getObject(), rawTransform.getWith()));
@@ -95,11 +96,12 @@ class ReplaceTransformation implements Transformation {
             '}';
     }
 
-    static class ReplaceValue implements Transform.FindByValue<String> {
+    //TODO: support other value types ? (not here..but like in a ReplaceBooleanValue)
+    static class ReplaceStringValue implements Transform.FindByValue<String> {
         private final String toReplace;
         private final String replacement;
 
-        ReplaceValue(String toReplace, String replacement) {
+        ReplaceStringValue(String toReplace, String replacement) {
             this.toReplace = toReplace;
             this.replacement = replacement;
         }
@@ -111,7 +113,23 @@ class ReplaceTransformation implements Transformation {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            return null;
+            if (input.isObject()) {
+                ObjectNode copy = new ObjectNode(jsonNodeFactory);
+                Iterator<Map.Entry<String, JsonNode>> it = input.fields();
+                while (it.hasNext()) {
+                    Map.Entry<String, JsonNode> currentKeyValue = it.next();
+                    if (currentKeyValue.getValue().asText().equals(toReplace)) {
+                        copy.set(currentKeyValue.getKey(), new TextNode(replacement));
+                    } else {
+                        copy.set(currentKeyValue.getKey(), currentKeyValue.getValue());
+                    }
+                }
+                return copy;
+            } else if (input.isArray()) {
+                throw new UnsupportedOperationException("TODO: support transforming arrays");
+            }
+            //impossible since object/arrays are the only types of container nodes
+            throw new IllegalStateException("Only Object/Array container nodes are supported");
         }
     }
 
@@ -149,14 +167,6 @@ class ReplaceTransformation implements Transformation {
         public ObjectNode nodeToFind() {
             return toReplace;
         }
-
-        @Override
-        public String toString() {
-            return "ReplaceObject{" +
-                "toReplace=" + toReplace +
-                ", replacement=" + replacement +
-                '}';
-        }
     }
 
     static class ReplaceAtLocation implements Transform.FindByLocation {
@@ -175,7 +185,8 @@ class ReplaceTransformation implements Transformation {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            return null;
+            //TODO: fixme
+            return input;
         }
     }
 

@@ -27,14 +27,14 @@ import com.fasterxml.jackson.databind.node.ContainerNode;
 /**
  * A Transform is a single instruction when applied in the context of {@link Transformation} defines a single specific action that
  * transforms the contents of a JsonNode. For example when executing in the context of an "add" {@link Transformation} the input
- * can be a JsonNode, and the output is a clone of that input, but with an additional key/value pair added. Implementations should
- * be free of side-effects.
+ * can be a JsonNode, and the output is a clone of that input, but with an additional key/value pair added.
  */
 @FunctionalInterface
 public interface Transform {
     /**
      * Perform the transformation. Implementations will likely pass in the parent of the Node to transform
      * (which must be an object or array), create copy, then transform the copy of the parent to return as the result of the function.
+     * Implementations should be free of side-effects.
      */
     ContainerNode<?> transform(ContainerNode<?> input);
 

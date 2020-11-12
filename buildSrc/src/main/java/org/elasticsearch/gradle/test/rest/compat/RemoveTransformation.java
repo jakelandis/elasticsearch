@@ -20,15 +20,19 @@
 package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,6 +41,7 @@ import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.OB
 
 public class RemoveTransformation implements Transformation {
 
+    private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
     private final List<Transform> removals = new ArrayList<>();
 
 
@@ -94,7 +99,8 @@ public class RemoveTransformation implements Transformation {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            return null;
+            //TODO: fixme
+            return input;
         }
     }
 
@@ -102,7 +108,6 @@ public class RemoveTransformation implements Transformation {
         private final ObjectNode objectNode;
 
         RemoveObject(ObjectNode objectNode) {
-            System.out.println("Found removal " + objectNode);
             this.objectNode = objectNode;
         }
 
@@ -113,7 +118,23 @@ public class RemoveTransformation implements Transformation {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            return null;
+            if (input.isObject()) {
+                ObjectNode copy = new ObjectNode(jsonNodeFactory);
+                Iterator<Map.Entry<String, JsonNode>> it = input.fields();
+                while (it.hasNext()) {
+                    Map.Entry<String, JsonNode> currentKeyValue = it.next();
+                    if (currentKeyValue.getValue().equals(objectNode)) {
+                       // do nothing ... removes it
+                    } else {
+                        copy.set(currentKeyValue.getKey(), currentKeyValue.getValue());
+                    }
+                }
+                return copy;
+            } else if (input.isArray()) {
+                throw new UnsupportedOperationException("TODO: support transforming arrays");
+            }
+            //impossible since object/arrays are the only types of container nodes
+            throw new IllegalStateException("Only Object/Array container nodes are supported");
         }
 
         @Override

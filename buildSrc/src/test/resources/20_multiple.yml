@@ -1,8 +1,10 @@
 "Action to list contexts":
   replace:
-    - value: foo
-      with: bar
-    - object: { contexts.22: update}
+    - value: bad_request
+      with: something_else
+    - value: aggregation_selector
+      with: something_else2
+    - object: { contexts.23: update}
       with: {c: d}
     - location: /foo/bar/match/0
       with: {c: d}

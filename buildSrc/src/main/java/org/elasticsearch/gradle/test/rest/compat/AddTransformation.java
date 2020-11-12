@@ -86,7 +86,8 @@ public class AddTransformation implements Transformation {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            return null;
+            //TODO: fixme
+            return input;
         }
     }
 }

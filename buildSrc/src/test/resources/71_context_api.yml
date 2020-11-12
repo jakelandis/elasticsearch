@@ -1,6 +1,7 @@
 "Action to list contexts":
     - do:
         scripts_painless_context: {}
+        catch: bad_request
     - match: { contexts.0: aggregation_selector}
     - match: { contexts.22: update}
 ---
