@@ -89,13 +89,6 @@ class ReplaceTransformation implements Transformation {
         return Collections.unmodifiableList(replacements);
     }
 
-    @Override
-    public String toString() {
-        return "ReplaceAction{" +
-            "replacements=" + replacements +
-            '}';
-    }
-
     //TODO: support other value types ? (not here..but like in a ReplaceBooleanValue)
     static class ReplaceStringValue implements Transform.FindByValue<String> {
         private final String toReplace;

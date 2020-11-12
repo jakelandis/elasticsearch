@@ -136,12 +136,5 @@ public class RemoveTransformation implements Transformation {
             //impossible since object/arrays are the only types of container nodes
             throw new IllegalStateException("Only Object/Array container nodes are supported");
         }
-
-        @Override
-        public String toString() {
-            return "RemoveObject{" +
-                "objectNode=" + objectNode +
-                '}';
-        }
     }
 }

@@ -59,13 +59,6 @@ public class AddTransformation implements Transformation {
     }
 
     @Override
-    public String toString() {
-        return "AddAction{" +
-            "additions=" + additions +
-            '}';
-    }
-
-    @Override
     public List<Transform> getTransforms() {
         return Collections.unmodifiableList(additions);
     }
