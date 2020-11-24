@@ -22,13 +22,17 @@ package org.elasticsearch.gradle.test.rest.compat;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,9 +41,12 @@ import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.OB
 
 public class AddTransformation implements Transformation {
 
+    private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
     private final List<Transform> additions = new ArrayList<>();
+    private final String testName;
 
-    public AddTransformation(List<TransformKeyValue> rawTransforms) {
+    public AddTransformation(String testName, List<TransformKeyValue> rawTransforms) {
+        this.testName = testName;
         for (TransformKeyValue rawTransform : rawTransforms) {
             EnumSet<Key> actions = EnumSet.copyOf(rawTransform.getAllKeys());
             if (actions.stream().noneMatch(action -> action.equals(LOCATION))) {
@@ -54,7 +61,7 @@ public class AddTransformation implements Transformation {
                 throw new IllegalStateException("found invalid key(s) in 'add' definition [" +
                     invalid.stream().map(a -> a.name().toLowerCase(Locale.ROOT)).collect(Collectors.joining(",")) + "]");
             }
-            additions.add(new AddNodeAfterLocation(JsonPointer.compile(rawTransform.getLocation().asText()), rawTransform.getObject()));
+            additions.add(new AddNodeBeforeLocation("/" + testName + rawTransform.getLocation().asText(), rawTransform.getObject()));
         }
     }
 
@@ -63,13 +70,16 @@ public class AddTransformation implements Transformation {
         return Collections.unmodifiableList(additions);
     }
 
-    static class AddNodeAfterLocation implements Transform.FindByLocation {
+    static class AddNodeBeforeLocation implements Transform.FindByLocation {
         private final JsonPointer location;
-        private final JsonNode node;
+        private final ObjectNode node;
+        private final String keyName;
 
-        AddNodeAfterLocation(JsonPointer location, JsonNode node) {
-            this.location = location;
+        AddNodeBeforeLocation(String path, ObjectNode node) {
+            this.location = JsonPointer.compile(path);
             this.node = node;
+            String[] parts = path.split("/");
+            this.keyName = parts[parts.length - 1];
         }
 
         @Override
@@ -79,8 +89,24 @@ public class AddTransformation implements Transformation {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            //TODO: fixme
-            return input;
+            if (input.isObject()) {
+                ObjectNode copy = new ObjectNode(jsonNodeFactory);
+                Iterator<Map.Entry<String, JsonNode>> it = input.fields();
+                while (it.hasNext()) {
+                    copy.setAll(node);
+                    Map.Entry<String, JsonNode> currentKeyValue = it.next();
+
+                        copy.set(currentKeyValue.getKey(), currentKeyValue.getValue());
+
+
+                }
+                return copy;
+            } else if (input.isArray()) {
+                throw new UnsupportedOperationException("TODO: support transforming arrays");
+            }
+            //impossible since object/arrays are the only types of container nodes
+            throw new IllegalStateException("Only Object/Array container nodes are supported");
+
         }
     }
 }

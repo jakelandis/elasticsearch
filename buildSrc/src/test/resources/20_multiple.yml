@@ -1,19 +1,19 @@
 "Action to list contexts":
   replace:
-    - value: bad_request
+    - value: bad_request99
       with: something_else
-    - value: aggregation_selector
+    - value: aggregation_selector99
       with: something_else2
     - object: { contexts.23: update}
       with: {c: d}
-    - location: /foo/bar/match/0
-      with: {c: d}
+    - location: /0/do/catch
+      with: blah!!
   add:
-    - location: /foo/bar
-      object: { contexts.22: update}
+    - location: /0/bar
+      object: { contexts.99: update}
   remove:
-    - location: /foo/bar
-    - object: { contexts.22: update}
+    - location: /2/match
+ #   - object: { contexts.22: update}
 #---
 #"Action to get all API values for score context":
 #  - add:

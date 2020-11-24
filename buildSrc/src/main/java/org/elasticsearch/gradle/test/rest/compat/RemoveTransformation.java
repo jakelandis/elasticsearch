@@ -43,9 +43,11 @@ public class RemoveTransformation implements Transformation {
 
     private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
     private final List<Transform> removals = new ArrayList<>();
+    private final String testName;
 
 
-    public RemoveTransformation(List<TransformKeyValue> rawTransforms) {
+    public RemoveTransformation(String testName, List<TransformKeyValue> rawTransforms) {
+        this.testName = testName;
         for (TransformKeyValue rawTransform : rawTransforms) {
 
             EnumSet<Key> actions = EnumSet.copyOf(rawTransform.getAllKeys());
@@ -67,7 +69,7 @@ public class RemoveTransformation implements Transformation {
             }
             switch (valid.iterator().next()) {
                 case LOCATION:
-                    removals.add(new RemoveAtLocation(JsonPointer.compile(rawTransform.getLocation().asText())));
+                    removals.add(new RemoveAtLocation("/" + testName + rawTransform.getLocation().asText()));
                     break;
                 case OBJECT:
                     removals.add(new RemoveObject(rawTransform.getObject()));
@@ -87,9 +89,12 @@ public class RemoveTransformation implements Transformation {
 
     static class RemoveAtLocation implements Transform.FindByLocation {
         private final JsonPointer location;
+        private final String keyName;
 
-        RemoveAtLocation(JsonPointer location) {
-            this.location = location;
+        RemoveAtLocation(String path) {
+            this.location = JsonPointer.compile(path);
+            String[] parts = path.split("/");
+            this.keyName = parts[parts.length - 1];
         }
 
         @Override
@@ -99,8 +104,27 @@ public class RemoveTransformation implements Transformation {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            //TODO: fixme
-            return input;
+
+
+            if (input.isObject()) {
+                ObjectNode copy = new ObjectNode(jsonNodeFactory);
+                Iterator<Map.Entry<String, JsonNode>> it = input.fields();
+                while (it.hasNext()) {
+                    Map.Entry<String, JsonNode> currentKeyValue = it.next();
+                    if (currentKeyValue.getKey().equals(keyName)) {
+                        // do nothing ... removes it
+                    } else {
+                        copy.set(currentKeyValue.getKey(), currentKeyValue.getValue());
+                    }
+                }
+                return copy;
+            } else if (input.isArray()) {
+                throw new UnsupportedOperationException("TODO: support transforming arrays");
+            }
+            //impossible since object/arrays are the only types of container nodes
+            throw new IllegalStateException("Only Object/Array container nodes are supported");
+
+
         }
     }
 
@@ -124,7 +148,7 @@ public class RemoveTransformation implements Transformation {
                 while (it.hasNext()) {
                     Map.Entry<String, JsonNode> currentKeyValue = it.next();
                     if (currentKeyValue.getValue().equals(objectNode)) {
-                       // do nothing ... removes it
+                        // do nothing ... removes it
                     } else {
                         copy.set(currentKeyValue.getKey(), currentKeyValue.getValue());
                     }

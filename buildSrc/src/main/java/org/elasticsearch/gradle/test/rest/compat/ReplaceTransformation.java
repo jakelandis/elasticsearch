@@ -45,8 +45,10 @@ import static org.elasticsearch.gradle.test.rest.compat.TransformKeyValue.Key.WI
 class ReplaceTransformation implements Transformation {
     private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
     private final List<Transform> replacements = new ArrayList<>();
+    private final String testName;
 
-    public ReplaceTransformation(List<TransformKeyValue> rawTransforms) {
+    public ReplaceTransformation(String testName, List<TransformKeyValue> rawTransforms) {
+        this.testName = testName;
         for (TransformKeyValue rawTransform : rawTransforms) {
             EnumSet<TransformKeyValue.Key> actions = EnumSet.copyOf(rawTransform.getAllKeys());
             if (actions.stream().noneMatch(action -> action.equals(WITH))) {
@@ -75,7 +77,7 @@ class ReplaceTransformation implements Transformation {
                     replacements.add(new ReplaceObject(rawTransform.getObject(), rawTransform.getWith()));
                     break;
                 case LOCATION:
-                    replacements.add(new ReplaceAtLocation(JsonPointer.compile(rawTransform.getLocation().asText()), rawTransform.getWith()));
+                    replacements.add(new ReplaceAtLocation("/" + testName + rawTransform.getLocation().asText(), rawTransform.getWith()));
                     break;
                 default:
                     assert false : "unexpected replace value, this is a bug with validation";
@@ -165,10 +167,13 @@ class ReplaceTransformation implements Transformation {
     static class ReplaceAtLocation implements Transform.FindByLocation {
         private final JsonPointer location;
         private final JsonNode replacement;
+        private final String keyName;
 
-        ReplaceAtLocation(JsonPointer location, JsonNode replacement) {
-            this.location = location;
+        ReplaceAtLocation(String path, JsonNode replacement) {
+            this.location = JsonPointer.compile(path);
             this.replacement = replacement;
+            String[] parts = path.split("/");
+            this.keyName = parts[parts.length - 1];
         }
 
         @Override
@@ -176,10 +181,27 @@ class ReplaceTransformation implements Transformation {
             return location;
         }
 
+
         @Override
         public ContainerNode<?> transform(ContainerNode<?> input) {
-            //TODO: fixme
-            return input;
+            if (input.isObject()) {
+                ObjectNode copy = new ObjectNode(jsonNodeFactory);
+                Iterator<Map.Entry<String, JsonNode>> it = input.fields();
+                while (it.hasNext()) {
+                    Map.Entry<String, JsonNode> currentKeyValue = it.next();
+                    if (currentKeyValue.getKey().equals(keyName)) {
+                        copy.set(currentKeyValue.getKey(), replacement);
+                    } else {
+                        copy.set(currentKeyValue.getKey(), currentKeyValue.getValue());
+                    }
+                }
+                return copy;
+            } else if (input.isArray()) {
+                throw new UnsupportedOperationException("TODO: support transforming arrays");
+            }
+            //impossible since object/arrays are the only types of container nodes
+            throw new IllegalStateException("Only Object/Array container nodes are supported");
+
         }
     }
 

@@ -19,6 +19,7 @@
 
 package org.elasticsearch.gradle.test.rest.compat;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,9 +28,13 @@ import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import org.apache.commons.lang3.tuple.Pair;
+
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -95,6 +100,32 @@ public class TransformTest {
                     findByNodeMap.computeIfAbsent(t.nodeToFind(), k -> new HashSet<>()).add(t);
                 });
 
+                //collect all of the FindByLocation
+                Set<Transform.FindByLocation> findByLocationSet = testTransformation.getAllTransforms()
+                    .stream().filter(a -> a instanceof Transform.FindByLocation)
+                    .map(e -> (Transform.FindByLocation) e).collect(Collectors.toSet());
+
+
+                //TODO: ensure that ADD is always last since ADD will change the location pointers..remove is safe because it leave behind
+                // an empty shell
+                for (Transform.FindByLocation findByLocation : findByLocationSet) {
+                    JsonNode parentNode = test.at(findByLocation.location().head());
+                    if (parentNode != null && parentNode.isContainerNode()) {
+                        ContainerNode<?> result = findByLocation.transform((ContainerNode<?>) parentNode);
+                        assert result != null;
+                        if (parentNode.isObject()) {
+                            ObjectNode parentObject = (ObjectNode) parentNode;
+                            parentObject.removeAll();
+                            parentObject.setAll((ObjectNode) result);
+                        } else if (parentNode.isArray()) {
+                            throw new UnsupportedOperationException("Array's as parent containers are not currently supported");
+                        }
+
+                    } else {
+                        // throw new IllegalArgumentException("TOOD: bad json pointer");
+                    }
+                }
+
                 transformByEquality(test, currentTest, findByNodeMap, findByValueMap);
 
                 System.out.println(test.toPrettyString());
@@ -142,7 +173,6 @@ public class TransformTest {
 
             if (findByValues != null) {
                 findByValues.forEach(findByValue -> {
-                    System.out.println("************* Found a match! " + findByValue);
                     ContainerNode<?> result = findByValue.transform(parentNode);
                     assert result != null;
                     if (parentNode.isObject()) {

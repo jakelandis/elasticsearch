@@ -38,9 +38,9 @@ public class TestTransformation {
     @JsonAnySetter
     public void testName(String testName, Map<String, List<TransformKeyValue>> actions) {
         this.testName = testName;
-        this.replaceTransformation = new ReplaceTransformation(actions.get("replace"));
-        this.addTransformation = new AddTransformation(actions.get("add"));
-        this.removeTransformation = new RemoveTransformation(actions.get("remove"));
+        this.replaceTransformation = new ReplaceTransformation(testName, actions.get("replace"));
+        this.addTransformation = new AddTransformation(testName, actions.get("add"));
+        this.removeTransformation = new RemoveTransformation(testName, actions.get("remove"));
         allTransforms = new ArrayList<>(
             replaceTransformation.getTransforms().size()
                 + addTransformation.getTransforms().size()
