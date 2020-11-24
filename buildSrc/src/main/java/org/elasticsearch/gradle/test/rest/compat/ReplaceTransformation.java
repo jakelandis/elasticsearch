@@ -203,6 +203,11 @@ class ReplaceTransformation implements Transformation {
             throw new IllegalStateException("Only Object/Array container nodes are supported");
 
         }
+
+        @Override
+        public int compareTo(FindByLocation o) {
+            return 0;
+        }
     }
 
 

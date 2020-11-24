@@ -101,9 +101,9 @@ public class TransformTest {
                 });
 
                 //collect all of the FindByLocation
-                Set<Transform.FindByLocation> findByLocationSet = testTransformation.getAllTransforms()
+                List<Transform.FindByLocation> findByLocationSet = testTransformation.getAllTransforms()
                     .stream().filter(a -> a instanceof Transform.FindByLocation)
-                    .map(e -> (Transform.FindByLocation) e).collect(Collectors.toSet());
+                    .map(e -> (Transform.FindByLocation) e).sorted().collect(Collectors.toList());
 
 
                 //TODO: ensure that ADD is always last since ADD will change the location pointers..remove is safe because it leave behind

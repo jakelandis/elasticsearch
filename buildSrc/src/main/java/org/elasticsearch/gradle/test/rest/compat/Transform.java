@@ -50,7 +50,7 @@ public interface Transform {
     /**
      * Find the node to transform via a {@link JsonPointer}
      */
-    interface FindByLocation extends Transform {
+    interface FindByLocation extends Transform, Comparable<FindByLocation> {
         JsonPointer location();
     }
 
