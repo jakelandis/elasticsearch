@@ -111,6 +111,7 @@ public class TransformTest {
                 for (Transform.FindByLocation findByLocation : findByLocationSet) {
                     JsonNode parentNode = test.at(findByLocation.location().head());
                     if (parentNode != null && parentNode.isContainerNode()) {
+
                         ContainerNode<?> result = findByLocation.transform((ContainerNode<?>) parentNode);
                         assert result != null;
                         if (parentNode.isObject()) {
@@ -118,7 +119,9 @@ public class TransformTest {
                             parentObject.removeAll();
                             parentObject.setAll((ObjectNode) result);
                         } else if (parentNode.isArray()) {
-                            throw new UnsupportedOperationException("Array's as parent containers are not currently supported");
+                            ArrayNode parentObject = (ArrayNode) parentNode;
+                            parentObject.removeAll();
+                            parentObject.addAll((ArrayNode) result);
                         }
 
                     } else {

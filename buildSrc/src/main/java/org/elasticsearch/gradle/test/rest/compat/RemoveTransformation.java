@@ -43,11 +43,8 @@ public class RemoveTransformation implements Transformation {
 
     private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
     private final List<Transform> removals = new ArrayList<>();
-    private final String testName;
-
 
     public RemoveTransformation(String testName, List<TransformKeyValue> rawTransforms) {
-        this.testName = testName;
         for (TransformKeyValue rawTransform : rawTransforms) {
 
             EnumSet<Key> actions = EnumSet.copyOf(rawTransform.getAllKeys());

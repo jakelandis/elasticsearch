@@ -32,14 +32,15 @@ import com.fasterxml.jackson.databind.node.ContainerNode;
 @FunctionalInterface
 public interface Transform {
     /**
-     * Perform the transformation. Implementations will likely pass in the parent of the Node to transform
-     * (which must be an object or array), create copy, then transform the copy of the parent to return as the result of the function.
+     * Perform the transformation. Implementations should pass in the parent of the Node to transform
+     * (which must be an object or array), create copy, perform the transform against the copy of the parent and return the copy.
      * Implementations should be free of side-effects.
      */
-    ContainerNode<?> transform(ContainerNode<?> input);
+    ContainerNode<?> transform(ContainerNode<?> parentNode);
 
     /**
-     * Find the node to transform via a given value. Value here is defined as the value in a key/value pairing.
+     * Find the node to transform via a given value. "Value" here is defined as the "value" in a key/"value" pairing, and is not container
+     * node.
      *
      * @param <T> the type of value to find
      */
