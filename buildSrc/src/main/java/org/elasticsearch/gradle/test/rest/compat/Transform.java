@@ -55,6 +55,7 @@ public interface Transform {
         JsonPointer location();
     }
 
+    //tODO: remove the generic and just use JsonNode, and renmae findByMatch
     /**
      * Find the node to transform by a given {@link JsonNode}
      *
@@ -63,4 +64,6 @@ public interface Transform {
     interface FindByNode<T extends JsonNode> extends Transform {
         T nodeToFind();
     }
+
+
 }

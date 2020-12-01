@@ -20,45 +20,85 @@
 package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
 
 /**
  * The complete set of {@link Transformation}'s and {@link Transform} per test.
  */
 public class TestTransformation {
     private String testName;
-    private ReplaceTransformation replaceTransformation;
-    private AddTransformation addTransformation;
-    private RemoveTransformation removeTransformation;
-    private List<Transform> allTransforms;
+
+    private enum Action {REPLACE, INSERT, REMOVE}
+
+    Map<String, Set<Transform>> testTransformations = new HashMap<>();
 
     @JsonAnySetter
-    public void testName(String testName, Map<String, List<TransformKeyValue>> actions) {
+    public void testName(String testName, List<Map<String, JsonNode>> transforms) {
         this.testName = testName;
-        this.replaceTransformation = new ReplaceTransformation(testName, actions.get("replace") == null ? Collections.emptyList() : actions.get("replace") );
-        this.addTransformation = new AddTransformation(testName, actions.get("add") == null ? Collections.emptyList() : actions.get("add") );
-        this.removeTransformation = new RemoveTransformation(testName, actions.get("remove") == null ? Collections.emptyList() : actions.get("remove") );
-        allTransforms = new ArrayList<>(
-            replaceTransformation.getTransforms().size()
-                + addTransformation.getTransforms().size()
-                + removeTransformation.getTransforms().size()
-        );
-        allTransforms.addAll(replaceTransformation.getTransforms());
-        allTransforms.addAll(addTransformation.getTransforms());
-        allTransforms.addAll(removeTransformation.getTransforms());
+        System.out.println("************** " + testName + " *********************");
+
+        for (Map<String, JsonNode> transform : transforms) {
+            boolean hasFindKey = false;
+            Action action = null;
+            System.out.println("-----------------");
+
+            for (Map.Entry<String, JsonNode> entry : transform.entrySet()) {
+                final String actionString = entry.getKey();
+                switch (actionString) {
+                    case "find":
+                        hasFindKey = true;
+                        break;
+                    case "replace":
+                        action = Action.REPLACE;
+                        break;
+                    case "insert":
+                        action = Action.INSERT;
+                        break;
+                    case "remove":
+                        action = Action.REMOVE;
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Found invalid action [" + action + "] for test [" + testName + "]");
+                }
+            }
+            if (hasFindKey == false) {
+                throw new IllegalArgumentException("Test [" + testName + "] does not define a 'find' entry");
+            }
+            switch (action) {
+                case REPLACE:
+                    break;
+                case INSERT:
+                    testTransformations.computeIfAbsent(testName, k -> new HashSet<>()).add(new Insert(transform));
+                    break;
+                case REMOVE:
+                    break;
+                default:
+                    throw new IllegalArgumentException("Test [" + testName + "] does not define a valid action. Valid actions are [" + Arrays.toString(Action.values()) + "]");
+
+            }
+        }
     }
 
     public String getTestName() {
         return testName;
     }
 
+    //TODO: DELETE ME !!
     public List<Transform> getAllTransforms() {
-        return allTransforms;
+        return null;
     }
+
+
 }
 
 

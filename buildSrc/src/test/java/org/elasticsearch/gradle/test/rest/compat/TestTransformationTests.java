@@ -41,7 +41,7 @@ public class TestTransformationTests extends GradleUnitTestCase {
         File originalTest = new File(getClass().getResource("/71_context_api.yml").toURI());
         Map<String, TestTransformation> mutations = TransformTest.readTransformations(instructions);
         mutations.forEach((k,v) -> System.out.println("** Found mutations for test: " + k + "\n" + v) );
-        TransformTest.transformTest(originalTest, mutations );
+       // TransformTest.transformTest(originalTest, mutations );
 
 
 

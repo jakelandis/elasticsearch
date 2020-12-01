@@ -20,6 +20,7 @@
 package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +50,18 @@ public class TransformTest {
 
     public static Map<String, TestTransformation> readTransformations(File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
+
+
+
+
+
+
+
+
         Map<String, TestTransformation> mutations = new HashMap<>();
+        //Using data binding over stream parsing since:
+        // stream parsing does not understand "---" separators and data binding can neatly organize these by test
+
         MappingIterator<TestTransformation> it = mapper.readValues(yamlParser, TestTransformation.class);
         while (it.hasNext()) {
             TestTransformation testTransformation = it.next();

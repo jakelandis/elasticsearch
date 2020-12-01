@@ -181,7 +181,7 @@ class ExitableDirectoryReader extends FilterDirectoryReader {
         }
     }
 
-    /**
+    /**ContextIndexSearcher
      * Wrapper class for {@link PointValues} that checks for query cancellation or timeout.
      */
     static class ExitablePointValues extends PointValues {
