@@ -22,7 +22,9 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A Transform is a single instruction when applied in the context of {@link Transformation} defines a single specific action that
@@ -51,7 +53,7 @@ public interface Transform {
     /**
      * Find the node to transform via a {@link JsonPointer}
      */
-    interface FindByLocation extends Transform, Comparable<FindByLocation> {
+    interface FindByLocation extends Transform  {
         JsonPointer location();
     }
 

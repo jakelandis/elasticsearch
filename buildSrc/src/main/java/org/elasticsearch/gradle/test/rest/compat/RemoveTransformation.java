@@ -124,10 +124,6 @@ public class RemoveTransformation implements Transformation {
 
         }
 
-        @Override
-        public int compareTo(FindByLocation o) {
-            return 1;
-        }
     }
 
     static class RemoveObject implements Transform.FindByNode<ObjectNode> {

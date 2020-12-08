@@ -204,11 +204,7 @@ class ReplaceTransformation implements Transformation {
 
         }
 
-        @Override
-        public int compareTo(FindByLocation o) {
-            return 0;
-        }
-    }
+       }
 
 
 }

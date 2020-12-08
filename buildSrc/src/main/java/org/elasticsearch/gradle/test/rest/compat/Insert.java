@@ -21,21 +21,24 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.Iterator;
 import java.util.Map;
 
-public class Insert implements Transform {
+public class Insert implements TransformAction {
 
-    Transform transform;
-    JsonNode toInsert;
+    private Transform transform;
+    private JsonNode toInsert;
 
     public Insert(String testName, Map<String, JsonNode> raw) {
         raw.forEach((key, v) -> {
                 switch (key) {
                     case "find":
-                        if (v.asText().startsWith("/")) {
-                            transform = new ByLocation("/" + testName + v.asText());
+                        if (v.asText().trim().startsWith("/")) {
+                            transform = new ByLocation("/" + testName + v.asText().trim());
                         } else {
                             transform = new ByMatch();
                         }
@@ -51,20 +54,19 @@ public class Insert implements Transform {
     }
 
     @Override
-    public ContainerNode<?> transform(ContainerNode<?> parentNode) {
-        return transform.transform(parentNode);
+    public Transform getTransform() {
+        return transform;
     }
 
     class ByLocation implements Transform.FindByLocation {
 
         private final JsonPointer location;
-        private int depth;
         private final String keyName;
-        ByLocation(String path){
+
+        ByLocation(String path) {
             this.location = JsonPointer.compile(path);
             String[] parts = path.split("/");
-            depth = parts.length - 1;
-            keyName = parts[depth];
+            keyName = parts[parts.length - 1];
         }
 
         @Override
@@ -73,20 +75,48 @@ public class Insert implements Transform {
         }
 
         @Override
-        public int compareTo(FindByLocation o) {
-            return 0;
+        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+            boolean inserted = false;
+            if (parentNode.isObject()) {
+                ObjectNode parentObject = (ObjectNode) parentNode;
+                // adds or will replace if already exists
+                parentObject.set(keyName, toInsert);
+                inserted = true;
+            } else if (parentNode.isArray()) {
+                ArrayNode parentArray = (ArrayNode) parentNode;
+                try {
+                    //if the trailing part of the location is numeric, we are inserting the node directly into an array
+                    int position = Integer.parseInt(keyName);
+                    parentArray.insert(position, toInsert);
+                    inserted = true;
+                } catch (NumberFormatException numberFormatException) {
+                    //if the trailing part of the location is not numeric, we are inserting into an object (whose parent is an array)
+                    Iterator<JsonNode> it = parentArray.iterator();
+                    while (it.hasNext()) {
+                        JsonNode node = it.next();
+                        if (node.isObject()) {
+                            ObjectNode objectNode = (ObjectNode) node;
+                            if (objectNode.get(keyName) != null) {
+                                objectNode.set(keyName, toInsert);
+                                inserted = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (inserted == false) {
+                throw new IllegalArgumentException("Could not find location [" + location + "] to insert [" + toInsert + "]");
+            }
+            return parentNode;
         }
 
-        @Override
-        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
-            return null;
-        }
     }
 
     class ByMatch implements Transform.FindByNode<JsonNode> {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+            System.out.println("Inserting by by match!!");
             return null;
         }
 

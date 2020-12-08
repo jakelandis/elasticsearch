@@ -5,7 +5,6 @@
     - match: { contexts.0: aggregation_selector}
     - match: { contexts.22: update}
 ---
-
 "Action to get all API values for score context":
     - do:
         scripts_painless_context:

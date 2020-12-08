@@ -3,11 +3,12 @@
     replace: bar
   - find: /1/match # will error if not found
     replace: bar
-  - find: /0/match #if match alreay exists there .. it will replace it
-    insert: blah
-  - find: /2 #will insert into the second array position
-    insert: blah
-  - find: /1/match
+#  - find: /2 #will insert after the array position, will error if can not find array location
+#    insert: blah2
+  - find: /1/match # inserting into an object
+    insert: blah3
+
+  - find: /asdfas
     remove: {}  # if given value..needs to match value ?? else error
 
   #  remove:

@@ -24,13 +24,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 
 /**
  * The complete set of {@link Transformation}'s and {@link Transform} per test.
@@ -40,7 +38,7 @@ public class TestTransformation {
 
     private enum Action {REPLACE, INSERT, REMOVE}
 
-    Map<String, Set<Transform>> testTransformations = new HashMap<>();
+    Map<String, List<TransformAction>> testTransformations = new HashMap<>();
 
     @JsonAnySetter
     public void testName(String testName, List<Map<String, JsonNode>> transforms) {
@@ -50,7 +48,7 @@ public class TestTransformation {
         for (Map<String, JsonNode> transform : transforms) {
             boolean hasFindKey = false;
             Action action = null;
-            System.out.println("-----------------");
+
 
             for (Map.Entry<String, JsonNode> entry : transform.entrySet()) {
                 final String actionString = entry.getKey();
@@ -74,11 +72,12 @@ public class TestTransformation {
             if (hasFindKey == false) {
                 throw new IllegalArgumentException("Test [" + testName + "] does not define a 'find' entry");
             }
+            System.out.println("--------" + action + "---------");
             switch (action) {
                 case REPLACE:
                     break;
                 case INSERT:
-                    testTransformations.computeIfAbsent(testName, k -> new HashSet<>()).add(new Insert(transform));
+                    testTransformations.computeIfAbsent(testName, k -> new ArrayList<>()).add(new Insert(testName, transform));
                     break;
                 case REMOVE:
                     break;
@@ -93,12 +92,9 @@ public class TestTransformation {
         return testName;
     }
 
-    //TODO: DELETE ME !!
-    public List<Transform> getAllTransforms() {
-        return null;
+    public List<TransformAction> getTestTransformations(String testName) {
+        return testTransformations.get(testName);
     }
-
-
 }
 
 

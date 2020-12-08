@@ -19,8 +19,6 @@
 
 package org.elasticsearch.gradle.test.rest.compat;
 
-import com.fasterxml.jackson.core.JsonPointer;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,20 +27,16 @@ import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-import org.apache.commons.lang3.tuple.Pair;
 
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 public class TransformTest {
     private static final YAMLFactory yaml = new YAMLFactory();
@@ -50,12 +44,6 @@ public class TransformTest {
 
     public static Map<String, TestTransformation> readTransformations(File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
-
-
-
-
-
-
 
 
         Map<String, TestTransformation> mutations = new HashMap<>();
@@ -93,55 +81,78 @@ public class TransformTest {
                 //transformByLocation(test);
 
                 //collect all of the FindByValues
-                Set<Transform.FindByValue<?>> findByValueSet = testTransformation.getAllTransforms()
-                    .stream().filter(a -> a instanceof Transform.FindByValue)
-                    .map(e -> (Transform.FindByValue<?>) e).collect(Collectors.toSet());
-                // map them by the value to find for quick lookups
-                Map<Object, Set<Transform.FindByValue<?>>> findByValueMap = new HashMap<>(findByValueSet.size());
-                findByValueSet.forEach(t -> {
-                    findByValueMap.computeIfAbsent(t.valueToFind(), k -> new HashSet<>()).add(t);
-                });
+//                Set<Transform.FindByValue<?>> findByValueSet = testTransformation.getAllTransforms()
+//                    .stream().filter(a -> a instanceof Transform.FindByValue)
+//                    .map(e -> (Transform.FindByValue<?>) e).collect(Collectors.toSet());
+//                // map them by the value to find for quick lookups
+//                Map<Object, Set<Transform.FindByValue<?>>> findByValueMap = new HashMap<>(findByValueSet.size());
+//                findByValueSet.forEach(t -> {
+//                    findByValueMap.computeIfAbsent(t.valueToFind(), k -> new HashSet<>()).add(t);
+//                });
 
-                //collect all of the FindByNodes
-                Set<Transform.FindByNode<? extends JsonNode>> findByNodeSet = testTransformation.getAllTransforms()
-                    .stream().filter(a -> a instanceof Transform.FindByNode)
-                    .map(e -> (Transform.FindByNode<? extends JsonNode>) e).collect(Collectors.toSet());
-                // map them by the node to find for quick lookups
-                Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap = new HashMap<>(findByNodeSet.size());
-                findByNodeSet.forEach(t -> {
-                    findByNodeMap.computeIfAbsent(t.nodeToFind(), k -> new HashSet<>()).add(t);
-                });
-
-                //collect all of the FindByLocation
-                List<Transform.FindByLocation> findByLocationSet = testTransformation.getAllTransforms()
-                    .stream().filter(a -> a instanceof Transform.FindByLocation)
-                    .map(e -> (Transform.FindByLocation) e).sorted().collect(Collectors.toList());
+//                //collect all of the FindByNodes
+//                Set<Transform.FindByNode<? extends JsonNode>> findByNodeSet = testTransformation.getAllTransforms()
+//                    .stream().filter(a -> a instanceof Transform.FindByNode)
+//                    .map(e -> (Transform.FindByNode<? extends JsonNode>) e).collect(Collectors.toSet());
+//                // map them by the node to find for quick lookups
+//                Map<JsonNode, Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap = new HashMap<>(findByNodeSet.size());
+//                findByNodeSet.forEach(t -> {
+//                    findByNodeMap.computeIfAbsent(t.nodeToFind(), k -> new HashSet<>()).add(t);
+//                });
 
 
-                //TODO: ensure that ADD is always last since ADD will change the location pointers..remove is safe because it leave behind
-                // an empty shell
-                for (Transform.FindByLocation findByLocation : findByLocationSet) {
-                    JsonNode parentNode = test.at(findByLocation.location().head());
-                    if (parentNode != null && parentNode.isContainerNode()) {
-
-                        ContainerNode<?> result = findByLocation.transform((ContainerNode<?>) parentNode);
-                        assert result != null;
-                        if (parentNode.isObject()) {
-                            ObjectNode parentObject = (ObjectNode) parentNode;
-                            parentObject.removeAll();
-                            parentObject.setAll((ObjectNode) result);
-                        } else if (parentNode.isArray()) {
-                            ArrayNode parentObject = (ArrayNode) parentNode;
-                            parentObject.removeAll();
-                            parentObject.addAll((ArrayNode) result);
+                //Always transform by location before find by match since insertion of JsonNodes can change document structure such that
+                // nodes pointed at by the JsonPointer's change.
+                List<TransformAction> testTransformationActions = testTransformation.getTestTransformations(testName);
+                if (testTransformationActions != null) {
+                    Consumer<Transform.FindByLocation> findByLocationTransform = transform -> {
+                        JsonNode parentNode = test.at(transform.location().head());
+                        if (parentNode != null && parentNode.isContainerNode()) {
+                            transform.transform((ContainerNode<?>) parentNode);
+                        } else {
+                            throw new IllegalArgumentException("Could not find location [" + transform.location() + "]");
                         }
+                    };
 
-                    } else {
-                        // throw new IllegalArgumentException("TOOD: bad json pointer");
-                    }
+                    //Always do the inserts last since they can change the document structure and where the JsonPointer point.
+                    //Remove will leave behind empty containers to help preserve the nodes pointed at by the JsonPointer's
+                    testTransformationActions.stream()
+                        .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
+                        .filter(b -> b instanceof Insert == false)
+                        .map(e -> (Transform.FindByLocation) e.getTransform()).forEachOrdered(findByLocationTransform);
+                    testTransformationActions.stream()
+                        .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
+                        .filter(b -> b instanceof Insert == true)
+                        .map(e -> (Transform.FindByLocation) e.getTransform()).forEachOrdered(findByLocationTransform);
+
+
+                    //TODO: ensure that ADD is always last since ADD will change the location pointers..remove is safe because it leave behind
+                    // an empty shell
+//                    for (Transform.FindByLocation transform : findByLocationNoInsert) {
+//                        JsonNode parentNode = test.at(transform.location().head());
+//                        System.out.println("Finding by location: [" + transform.location() + "] is [" + test.at(transform.location()) + "]" );
+//                        System.out.println("Finding by location: [" + transform.location() + "] and found parent [" + parentNode + "]" );
+//                        if (parentNode != null && parentNode.isContainerNode()) {
+//
+//                            ContainerNode<?> result = transform.transform((ContainerNode<?>) parentNode);
+////                            assert result != null;
+////                            if (parentNode.isObject()) {
+////                                ObjectNode parentObject = (ObjectNode) parentNode;
+////                                parentObject.removeAll();
+////                                parentObject.setAll((ObjectNode) result);
+////                            } else if (parentNode.isArray()) {
+////                                ArrayNode parentObject = (ArrayNode) parentNode;
+////                                parentObject.removeAll();
+////                                parentObject.addAll((ArrayNode) result);
+////                            }
+//
+//                        } else {
+//                             throw new IllegalArgumentException("TOOD: bad json pointer");
+//                        }
+//                    }
                 }
 
-                transformByEquality(test, currentTest, findByNodeMap, findByValueMap);
+                //   transformByEquality(test, currentTest, findByNodeMap, findByValueMap);
 
                 System.out.println(test.toPrettyString());
             }

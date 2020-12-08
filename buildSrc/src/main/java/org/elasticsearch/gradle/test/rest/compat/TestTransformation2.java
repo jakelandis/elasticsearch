@@ -32,7 +32,7 @@ import java.util.Map;
 public class TestTransformation2 {
     private String testName;
     private ReplaceTransformation replaceTransformation;
-    private AddTransformation addTransformation;
+//    private AddTransformation addTransformation;
     private RemoveTransformation removeTransformation;
     private List<Transform> allTransforms;
 
@@ -40,15 +40,15 @@ public class TestTransformation2 {
     public void testName(String testName, Map<String, List<TransformKeyValue>> actions) {
         this.testName = testName;
         this.replaceTransformation = new ReplaceTransformation(testName, actions.get("replace") == null ? Collections.emptyList() : actions.get("replace") );
-        this.addTransformation = new AddTransformation(testName, actions.get("add") == null ? Collections.emptyList() : actions.get("add") );
+//        this.addTransformation = new AddTransformation(testName, actions.get("add") == null ? Collections.emptyList() : actions.get("add") );
         this.removeTransformation = new RemoveTransformation(testName, actions.get("remove") == null ? Collections.emptyList() : actions.get("remove") );
         allTransforms = new ArrayList<>(
             replaceTransformation.getTransforms().size()
-                + addTransformation.getTransforms().size()
+//                + addTransformation.getTransforms().size()
                 + removeTransformation.getTransforms().size()
         );
         allTransforms.addAll(replaceTransformation.getTransforms());
-        allTransforms.addAll(addTransformation.getTransforms());
+//        allTransforms.addAll(addTransformation.getTransforms());
         allTransforms.addAll(removeTransformation.getTransforms());
     }
 
