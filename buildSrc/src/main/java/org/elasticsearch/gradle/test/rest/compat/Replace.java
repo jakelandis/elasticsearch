@@ -28,11 +28,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
 
-public class Insert extends TransformAction {
+public class Replace extends TransformAction {
 
-    private JsonNode toInsert;
+    private JsonNode toReplace;
 
-    public Insert(String testName, Map<String, JsonNode> raw) {
+    public Replace(String testName, Map<String, JsonNode> raw) {
         raw.forEach((key, v) -> {
                 switch (key) {
                     case "find":
@@ -42,8 +42,8 @@ public class Insert extends TransformAction {
                             transform = new ByMatch();
                         }
                         break;
-                    case "insert":
-                        toInsert = v;
+                    case "replace":
+                        toReplace = v;
                         break;
                     default:
                         throw new IllegalArgumentException("Found unexpected key: " + key);
@@ -71,19 +71,24 @@ public class Insert extends TransformAction {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> parentNode) {
-            boolean inserted = false;
+            boolean replaced = false;
             if (parentNode.isObject()) {
                 ObjectNode parentObject = (ObjectNode) parentNode;
-                // adds or will replace if already exists
-                parentObject.set(keyName, toInsert);
-                inserted = true;
+                // replace if found
+                if (parentObject.get(keyName) != null) {
+                    parentObject.set(keyName, toReplace);
+                    replaced = true;
+                }
             } else if (parentNode.isArray()) {
                 ArrayNode parentArray = (ArrayNode) parentNode;
                 try {
                     //if the trailing part of the location is numeric, we are inserting the node directly into an array
                     int position = Integer.parseInt(keyName);
-                    parentArray.insert(position, toInsert);
-                    inserted = true;
+                    //replace only if there is something at that position
+                    if (position <= parentArray.size()) {
+                        parentArray.insert(position, toReplace);
+                        replaced = true;
+                    }
                 } catch (NumberFormatException numberFormatException) {
                     //if the trailing part of the location is not numeric, we are inserting into an object (whose parent is an array)
                     Iterator<JsonNode> it = parentArray.iterator();
@@ -91,14 +96,17 @@ public class Insert extends TransformAction {
                         JsonNode node = it.next();
                         if (node.isObject()) {
                             ObjectNode objectNode = (ObjectNode) node;
-                            objectNode.set(keyName, toInsert);
-                            inserted = true;
+                            //replace only if there is data at that key
+                            if (objectNode.get(keyName) != null) {
+                                objectNode.set(keyName, toReplace);
+                                replaced = true;
+                            }
                         }
                     }
                 }
             }
-            if (inserted == false) {
-                throw new IllegalArgumentException("Could not find location [" + location + "] to insert [" + toInsert + "]");
+            if (replaced == false) {
+                throw new IllegalArgumentException("Could not find anything at location [" + location + "] to replace");
             }
             return parentNode;
         }

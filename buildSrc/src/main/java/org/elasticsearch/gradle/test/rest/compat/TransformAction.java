@@ -21,11 +21,15 @@ package org.elasticsearch.gradle.test.rest.compat;
 
 import com.fasterxml.jackson.databind.node.ContainerNode;
 
-public interface TransformAction {
-    default ContainerNode<?> transform(ContainerNode<?> parentNode){
+public abstract class TransformAction implements Transform {
+
+    protected Transform transform;
+
+    public ContainerNode<?> transform(ContainerNode<?> parentNode) {
         return getTransform().transform(parentNode);
     }
 
-    Transform getTransform();
-
+    protected final Transform getTransform() {
+        return transform;
+    }
 }

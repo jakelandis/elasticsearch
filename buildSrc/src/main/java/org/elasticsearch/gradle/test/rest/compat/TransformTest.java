@@ -101,8 +101,7 @@ public class TransformTest {
 //                });
 
 
-                //Always transform by location before find by match since insertion of JsonNodes can change document structure such that
-                // nodes pointed at by the JsonPointer's change.
+                //Always transform by location before find by match since add/remove of JsonNodes the nodes pointed at by the JsonPointer
                 List<TransformAction> testTransformationActions = testTransformation.getTestTransformations(testName);
                 if (testTransformationActions != null) {
                     Consumer<Transform.FindByLocation> findByLocationTransform = transform -> {
@@ -114,101 +113,69 @@ public class TransformTest {
                         }
                     };
 
-                    //Always do the inserts last since they can change the document structure and where the JsonPointer point.
-                    //Remove will leave behind empty containers to help preserve the nodes pointed at by the JsonPointer's
+                    //Always do the replace first since add/remove can change the document structure and where the JsonPointer point.
                     testTransformationActions.stream()
                         .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
-                        .filter(b -> b instanceof Insert == false)
+                        .filter(b -> b instanceof Replace == true)
                         .map(e -> (Transform.FindByLocation) e.getTransform()).forEachOrdered(findByLocationTransform);
                     testTransformationActions.stream()
                         .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
-                        .filter(b -> b instanceof Insert == true)
                         .map(e -> (Transform.FindByLocation) e.getTransform()).forEachOrdered(findByLocationTransform);
-
-
-                    //TODO: ensure that ADD is always last since ADD will change the location pointers..remove is safe because it leave behind
-                    // an empty shell
-//                    for (Transform.FindByLocation transform : findByLocationNoInsert) {
-//                        JsonNode parentNode = test.at(transform.location().head());
-//                        System.out.println("Finding by location: [" + transform.location() + "] is [" + test.at(transform.location()) + "]" );
-//                        System.out.println("Finding by location: [" + transform.location() + "] and found parent [" + parentNode + "]" );
-//                        if (parentNode != null && parentNode.isContainerNode()) {
-//
-//                            ContainerNode<?> result = transform.transform((ContainerNode<?>) parentNode);
-////                            assert result != null;
-////                            if (parentNode.isObject()) {
-////                                ObjectNode parentObject = (ObjectNode) parentNode;
-////                                parentObject.removeAll();
-////                                parentObject.setAll((ObjectNode) result);
-////                            } else if (parentNode.isArray()) {
-////                                ArrayNode parentObject = (ArrayNode) parentNode;
-////                                parentObject.removeAll();
-////                                parentObject.addAll((ArrayNode) result);
-////                            }
-//
-//                        } else {
-//                             throw new IllegalArgumentException("TOOD: bad json pointer");
-//                        }
-//                    }
                 }
-
                 //   transformByEquality(test, currentTest, findByNodeMap, findByValueMap);
-
                 System.out.println(test.toPrettyString());
             }
         }
-        return null;
+            return tests;
     }
 
-    private static ObjectNode transformByLocation(ObjectNode root) {
-        return root.deepCopy();
-    }
 
-    private static void transformByEquality(ContainerNode<?> parentNode, JsonNode currentNode, Map<JsonNode,
-        Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap, Map<Object, Set<Transform.FindByValue<?>>> findByValueMap) {
-        if (currentNode.isArray()) {
-            ArrayNode arrayNode = (ArrayNode) currentNode;
-            Iterator<JsonNode> node = arrayNode.elements();
-            //TODO: support transform by parent array
-            while (node.hasNext()) {
-                transformByEquality(arrayNode, node.next(), findByNodeMap, findByValueMap);
-            }
-        } else if (currentNode.isObject()) {
-            ObjectNode objectNode = (ObjectNode) currentNode;
-            Set<Transform.FindByNode<? extends JsonNode>> findByNodes = findByNodeMap.get(currentNode);
-            if (findByNodes != null) {
-                findByNodes.forEach(findByNode -> {
-                    ContainerNode<?> result = findByNode.transform(parentNode);
-                    assert result != null;
-                    if (parentNode.isObject()) {
-                        ObjectNode parentObject = (ObjectNode) parentNode;
-                        parentObject.removeAll();
-                        parentObject.setAll((ObjectNode) result);
-                    }
-                });
-            }
-            currentNode.fields().forEachRemaining(entry -> transformByEquality(objectNode, entry.getValue(), findByNodeMap, findByValueMap));
-        } else {
-            Set<Transform.FindByValue<?>> findByValues;
-            if (currentNode.isTextual()) {
-                findByValues = findByValueMap.get(currentNode.asText());
-            } else {
-                //TODO: support other value types ?
-                throw new UnsupportedOperationException("TODO: support all of the things !!");
-            }
 
-            if (findByValues != null) {
-                findByValues.forEach(findByValue -> {
-                    ContainerNode<?> result = findByValue.transform(parentNode);
-                    assert result != null;
-                    if (parentNode.isObject()) {
-                        ObjectNode parentObject = (ObjectNode) parentNode;
-                        parentObject.removeAll();
-                        parentObject.setAll((ObjectNode) result);
-                    }
-                });
-            }
-            System.out.println("value: " + currentNode);
-        }
-    }
+//    private static void transformByEquality(ContainerNode<?> parentNode, JsonNode currentNode, Map<JsonNode,
+//        Set<Transform.FindByNode<? extends JsonNode>>> findByNodeMap, Map<Object, Set<Transform.FindByValue<?>>> findByValueMap) {
+//        if (currentNode.isArray()) {
+//            ArrayNode arrayNode = (ArrayNode) currentNode;
+//            Iterator<JsonNode> node = arrayNode.elements();
+//            //TODO: support transform by parent array
+//            while (node.hasNext()) {
+//                transformByEquality(arrayNode, node.next(), findByNodeMap, findByValueMap);
+//            }
+//        } else if (currentNode.isObject()) {
+//            ObjectNode objectNode = (ObjectNode) currentNode;
+//            Set<Transform.FindByNode<? extends JsonNode>> findByNodes = findByNodeMap.get(currentNode);
+//            if (findByNodes != null) {
+//                findByNodes.forEach(findByNode -> {
+//                    ContainerNode<?> result = findByNode.transform(parentNode);
+//                    assert result != null;
+//                    if (parentNode.isObject()) {
+//                        ObjectNode parentObject = (ObjectNode) parentNode;
+//                        parentObject.removeAll();
+//                        parentObject.setAll((ObjectNode) result);
+//                    }
+//                });
+//            }
+//            currentNode.fields().forEachRemaining(entry -> transformByEquality(objectNode, entry.getValue(), findByNodeMap, findByValueMap));
+//        } else {
+//            Set<Transform.FindByValue<?>> findByValues;
+//            if (currentNode.isTextual()) {
+//                findByValues = findByValueMap.get(currentNode.asText());
+//            } else {
+//                //TODO: support other value types ?
+//                throw new UnsupportedOperationException("TODO: support all of the things !!");
+//            }
+//
+//            if (findByValues != null) {
+//                findByValues.forEach(findByValue -> {
+//                    ContainerNode<?> result = findByValue.transform(parentNode);
+//                    assert result != null;
+//                    if (parentNode.isObject()) {
+//                        ObjectNode parentObject = (ObjectNode) parentNode;
+//                        parentObject.removeAll();
+//                        parentObject.setAll((ObjectNode) result);
+//                    }
+//                });
+//            }
+//            System.out.println("value: " + currentNode);
+//        }
+//    }
 }

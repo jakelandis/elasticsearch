@@ -28,11 +28,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
 
-public class Insert extends TransformAction {
+public class Remove extends TransformAction {
 
-    private JsonNode toInsert;
+    private JsonNode toRemove;
 
-    public Insert(String testName, Map<String, JsonNode> raw) {
+    public Remove(String testName, Map<String, JsonNode> raw) {
         raw.forEach((key, v) -> {
                 switch (key) {
                     case "find":
@@ -42,8 +42,8 @@ public class Insert extends TransformAction {
                             transform = new ByMatch();
                         }
                         break;
-                    case "insert":
-                        toInsert = v;
+                    case "remove":
+                        toRemove = v;
                         break;
                     default:
                         throw new IllegalArgumentException("Found unexpected key: " + key);
@@ -51,7 +51,6 @@ public class Insert extends TransformAction {
             }
         );
     }
-
 
     class ByLocation implements Transform.FindByLocation {
 
@@ -71,38 +70,59 @@ public class Insert extends TransformAction {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> parentNode) {
-            boolean inserted = false;
+            boolean removed = false;
+            boolean emptyObject = toRemove.isObject() && toRemove.size() == 0;
             if (parentNode.isObject()) {
-                ObjectNode parentObject = (ObjectNode) parentNode;
-                // adds or will replace if already exists
-                parentObject.set(keyName, toInsert);
-                inserted = true;
+                ObjectNode objectNode = (ObjectNode) parentNode;
+                if (emptyObject) {
+                    removed = objectNode.remove(keyName) != null;
+                } else {
+                    JsonNode foundAtLocation = objectNode.get(keyName);
+                    if (toRemove.equals(foundAtLocation)) {
+                        removed = objectNode.remove(keyName) != null;
+                    }
+                }
             } else if (parentNode.isArray()) {
                 ArrayNode parentArray = (ArrayNode) parentNode;
                 try {
-                    //if the trailing part of the location is numeric, we are inserting the node directly into an array
+                    //if the trailing part of the location is numeric, we are removing the node directly from an array
                     int position = Integer.parseInt(keyName);
-                    parentArray.insert(position, toInsert);
-                    inserted = true;
+                    if (emptyObject) {
+                        removed = parentArray.remove(position) != null;
+                    } else {
+                        JsonNode foundAtLocation = parentArray.get(position);
+                        if (toRemove.equals(foundAtLocation)) {
+                            removed = parentArray.remove(position) != null;
+                        }
+                    }
                 } catch (NumberFormatException numberFormatException) {
-                    //if the trailing part of the location is not numeric, we are inserting into an object (whose parent is an array)
+                    //if the trailing part of the location is not numeric, we are removing from an object (whose parent is an array)
                     Iterator<JsonNode> it = parentArray.iterator();
                     while (it.hasNext()) {
                         JsonNode node = it.next();
                         if (node.isObject()) {
                             ObjectNode objectNode = (ObjectNode) node;
-                            objectNode.set(keyName, toInsert);
-                            inserted = true;
+                            if (emptyObject) {
+                                removed = objectNode.remove(keyName) != null;
+                            } else {
+                                JsonNode foundAtLocation = objectNode.get(keyName);
+                                if (toRemove.equals(foundAtLocation)) {
+                                    removed = objectNode.remove(keyName) != null;
+                                }
+                            }
                         }
                     }
                 }
             }
-            if (inserted == false) {
-                throw new IllegalArgumentException("Could not find location [" + location + "] to insert [" + toInsert + "]");
+            if (removed == false) {
+                if(emptyObject){
+                    throw new IllegalArgumentException("Could not find location [" + location + "] to remove") ;
+                } else {
+                    throw new IllegalArgumentException("Could not find location [" + location + "] with value [" + toRemove + "] to remove");
+                }
             }
             return parentNode;
         }
-
     }
 
     class ByMatch implements FindByMatch {

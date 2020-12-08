@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The complete set of {@link Transformation}'s and {@link Transform} per test.
+ * Target for data binding.. using data binding since stream parsing directly does not handle multiple YAML files.
  */
 public class TestTransformation {
     private String testName;
@@ -43,13 +43,9 @@ public class TestTransformation {
     @JsonAnySetter
     public void testName(String testName, List<Map<String, JsonNode>> transforms) {
         this.testName = testName;
-        System.out.println("************** " + testName + " *********************");
-
         for (Map<String, JsonNode> transform : transforms) {
             boolean hasFindKey = false;
             Action action = null;
-
-
             for (Map.Entry<String, JsonNode> entry : transform.entrySet()) {
                 final String actionString = entry.getKey();
                 switch (actionString) {
@@ -72,14 +68,15 @@ public class TestTransformation {
             if (hasFindKey == false) {
                 throw new IllegalArgumentException("Test [" + testName + "] does not define a 'find' entry");
             }
-            System.out.println("--------" + action + "---------");
             switch (action) {
                 case REPLACE:
+                    testTransformations.computeIfAbsent(testName, k -> new ArrayList<>()).add(new Replace(testName, transform));
                     break;
                 case INSERT:
                     testTransformations.computeIfAbsent(testName, k -> new ArrayList<>()).add(new Insert(testName, transform));
                     break;
                 case REMOVE:
+                    testTransformations.computeIfAbsent(testName, k -> new ArrayList<>()).add(new Remove(testName, transform));
                     break;
                 default:
                     throw new IllegalArgumentException("Test [" + testName + "] does not define a valid action. Valid actions are [" + Arrays.toString(Action.values()) + "]");
