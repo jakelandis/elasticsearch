@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class TransformTest {
     private static final YAMLFactory yaml = new YAMLFactory();
@@ -68,17 +69,13 @@ public class TransformTest {
             while (testsIterator.hasNext()) {
                 Map.Entry<String, JsonNode> testObject = testsIterator.next();
                 String testName = testObject.getKey();
-                System.out.println("@@ test:" + testName);
+
                 JsonNode currentTest = testObject.getValue();
                 TestTransformation testTransformation = mutations.get(testName);
                 if (testTransformation == null) {
                     continue;
                 }
-                System.out.println(currentTest);
-
-                //transform by location first, push results to a copy so for multiple location transformations the JSON Pointer is always in
-                //reference to the original un-transformed document.
-                //transformByLocation(test);
+                System.out.println("*************** "  + currentTest + " *******************");
 
                 //collect all of the FindByValues
 //                Set<Transform.FindByValue<?>> findByValueSet = testTransformation.getAllTransforms()
@@ -113,20 +110,56 @@ public class TransformTest {
                         }
                     };
 
-                    //Always do the replace first since add/remove can change the document structure and where the JsonPointer point.
+                    //Transform FindByLocation/Replace first since insert/remove can change the node where the JsonPointer points.
                     testTransformationActions.stream()
                         .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
                         .filter(b -> b instanceof Replace == true)
-                        .map(e -> (Transform.FindByLocation) e.getTransform()).forEachOrdered(findByLocationTransform);
+                        .map(c -> (Transform.FindByLocation) c.getTransform()).forEachOrdered(findByLocationTransform);
+
+                    //Transform FindByLocation/Insert and FindByLocation/Remove
                     testTransformationActions.stream()
                         .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
-                        .map(e -> (Transform.FindByLocation) e.getTransform()).forEachOrdered(findByLocationTransform);
+                        .map(b -> (Transform.FindByLocation) b.getTransform()).forEachOrdered(findByLocationTransform);
+
+                    //Map all the FindByMatch Actions by the JsonNode they need to match
+                    Map<JsonNode, TransformAction> findByMatchTransforms = testTransformationActions.stream()
+                        .filter(a -> a.getTransform() instanceof Transform.FindByMatch)
+                        .collect(Collectors.toMap(b -> ((Transform.FindByMatch) b.getTransform()).nodeToFind(), c -> c));
+                    //Transform all FindByMatch's
+                    transformByMatch(findByMatchTransforms, test, currentTest);
                 }
-                //   transformByEquality(test, currentTest, findByNodeMap, findByValueMap);
-                System.out.println(test.toPrettyString());
             }
+            System.out.println(test.toPrettyString());
         }
             return tests;
+    }
+
+    private static void transformByMatch(Map<JsonNode, TransformAction> findByMatchTransforms, ContainerNode<?> parentNode, JsonNode currentNode){
+        if (currentNode.isArray()) {
+            ArrayNode arrayNode = (ArrayNode) currentNode;
+            Iterator<JsonNode> node = arrayNode.elements();
+            while (node.hasNext()) {
+                JsonNode arrayItem = node.next();
+                TransformAction transformAction = findByMatchTransforms.remove(arrayItem);
+                if(transformAction != null){
+                    transformAction.transform(parentNode);
+                }
+                transformByMatch(findByMatchTransforms, arrayNode, arrayItem);
+            }
+        } else if (currentNode.isObject()) {
+            ObjectNode objectNode = (ObjectNode) currentNode;
+            TransformAction transformAction = findByMatchTransforms.remove(objectNode);
+            if (transformAction != null) {
+                transformAction.transform(parentNode);
+            }
+            currentNode.fields().forEachRemaining(entry -> transformByMatch(findByMatchTransforms, objectNode, entry.getValue()));
+        } else {
+            //value node
+            TransformAction transformAction = findByMatchTransforms.remove(currentNode);
+            if (transformAction != null) {
+                transformAction.transform(parentNode);
+            }
+        }
     }
 
 

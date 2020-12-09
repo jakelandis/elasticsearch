@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Iterator;
@@ -30,6 +31,7 @@ import java.util.Map;
 
 public class Replace extends TransformAction {
 
+    private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
     private JsonNode toReplace;
 
     public Replace(String testName, Map<String, JsonNode> raw) {
@@ -39,7 +41,7 @@ public class Replace extends TransformAction {
                         if (v.asText().trim().startsWith("/")) {
                             transform = new ByLocation("/" + testName + v.asText().trim());
                         } else {
-                            transform = new ByMatch();
+                            transform = new ByMatch(v);
                         }
                         break;
                     case "replace":
@@ -115,15 +117,36 @@ public class Replace extends TransformAction {
 
     class ByMatch implements FindByMatch {
 
+        private final JsonNode nodeToFind;
+
+        public ByMatch(JsonNode nodeToFind) {
+            this.nodeToFind = nodeToFind;
+        }
+
         @Override
         public ContainerNode<?> transform(ContainerNode<?> parentNode) {
-            System.out.println("Inserting by by match!!");
-            return null;
+            if (parentNode.isObject()) {
+                ObjectNode parentObject = (ObjectNode) parentNode;
+                Iterator<Map.Entry<String, JsonNode>> it = parentObject.deepCopy().fields();
+                while (it.hasNext()) {
+                    Map.Entry<String, JsonNode> node = it.next();
+                    if (node.getValue().equals(nodeToFind)) {
+                        parentObject.remove(node.getKey());
+                        parentObject.set(node.getKey(), toReplace);
+                    }
+                }
+            } else if (parentNode.isArray()) {
+                throw new IllegalArgumentException("TODO: support arrays yo!");
+            }
+
+            return parentNode;
         }
 
         @Override
         public JsonNode nodeToFind() {
-            return null;
+            return nodeToFind;
         }
     }
 }
+
+

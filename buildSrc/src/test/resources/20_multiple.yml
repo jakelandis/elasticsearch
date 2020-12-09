@@ -1,8 +1,8 @@
 "Action to list contexts":
-  - find: foo
-    replace: bar
-  - find: /1/match/contexts.0 # will error if not found
-    replace: bar
+  - find: bad_request
+    replace: bad_request2
+#  - find: /1/match/contexts.0 # will error if not found
+#    replace: bar
 #  - find: /2 #will insert after the array position, will error if can not find array location
 #    insert: blah2
 #  - find: /1/match # inserting into an object

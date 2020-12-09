@@ -37,10 +37,8 @@ public class TestTransformationTests extends GradleUnitTestCase {
     public void testMultipleTests() throws Exception {
 
         File instructions = new File(getClass().getResource("/20_multiple.yml").toURI());
-
         File originalTest = new File(getClass().getResource("/71_context_api.yml").toURI());
         Map<String, TestTransformation> mutations = TransformTest.readTransformations(instructions);
-        mutations.forEach((k,v) -> System.out.println("** Found mutations for test: " + k + "\n" + v) );
         TransformTest.transformTest(originalTest, mutations );
 
 
