@@ -125,14 +125,21 @@ public class Replace extends TransformAction {
 
         @Override
         public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+            System.out.println("Replacing object in parentNode: " + parentNode + " for: " + nodeToFind + " with: " + toReplace);
             if (parentNode.isObject()) {
                 ObjectNode parentObject = (ObjectNode) parentNode;
                 Iterator<Map.Entry<String, JsonNode>> it = parentObject.deepCopy().fields();
                 while (it.hasNext()) {
-                    Map.Entry<String, JsonNode> node = it.next();
-                    if (node.getValue().equals(nodeToFind)) {
-                        parentObject.remove(node.getKey());
-                        parentObject.set(node.getKey(), toReplace);
+                    Map.Entry<String, JsonNode> entry = it.next();
+                    if (toReplace instanceof ObjectNode) {
+                        ObjectNode objectItem = new ObjectNode(jsonNodeFactory);
+                        objectItem.set(entry.getKey(), entry.getValue());
+                        if (objectItem.equals(nodeToFind)) {
+                            parentObject.remove(entry.getKey());
+                            parentObject.setAll((ObjectNode) toReplace);
+                        }
+                    }else{
+                        parentObject.set(entry.getKey(), toReplace);
                     }
                 }
             } else if (parentNode.isArray()) {
