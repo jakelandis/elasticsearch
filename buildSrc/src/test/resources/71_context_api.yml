@@ -1,22 +1,3 @@
 "Action to list contexts":
-    - do:
-        scripts_painless_context: {}
-        catch: bad_request
-    - match: { contexts.0: aggregation_selector}
-    - match: { contexts.22: update}
----
-"Action to get all API values for score context":
-    - do:
-        scripts_painless_context:
-            context: score
-    - match: { name: score }
-    - match: { classes.6.name: java.lang.Appendable }
-    - match: { classes.6.imported: true }
-    - match: { classes.6.methods.0.name : append }
-    - match: { classes.6.methods.0.return : java.lang.Appendable }
-    - match: { classes.6.methods.0.parameters.0 : java.lang.CharSequence }
-    - match: { classes.6.methods.0.parameters.1 : int }
-    - match: { classes.6.methods.0.parameters.2 : int }
-    - match: { imported_methods.0.name: saturation }
-    - match: { class_bindings.0.name: decayDateExp }
-    - match: { instance_bindings: [] }
+  - find: _mytype
+    replace: { _doc  }  # if given value..needs to match value ?? else error

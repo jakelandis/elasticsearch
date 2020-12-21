@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.gradle.test.rest.compat;
+package org.elasticsearch.gradle.test.rest.transform;
 
 import com.fasterxml.jackson.databind.node.ContainerNode;
 

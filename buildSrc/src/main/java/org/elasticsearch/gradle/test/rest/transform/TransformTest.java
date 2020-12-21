@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.gradle.test.rest.compat;
+package org.elasticsearch.gradle.test.rest.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -45,23 +44,23 @@ public class TransformTest {
     private static final ObjectMapper mapper = new ObjectMapper(yaml);
     private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
 
-    public static Map<String, TestTransformation> readTransformations(File file) throws IOException {
+    public static Map<String, TransformActions> readActions(File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
 
 
-        Map<String, TestTransformation> mutations = new HashMap<>();
+        Map<String, TransformActions> mutations = new HashMap<>();
         //Using data binding over stream parsing since:
         // stream parsing does not understand "---" separators and data binding can neatly organize these by test
 
-        MappingIterator<TestTransformation> it = mapper.readValues(yamlParser, TestTransformation.class);
+        MappingIterator<TransformActions> it = mapper.readValues(yamlParser, TransformActions.class);
         while (it.hasNext()) {
-            TestTransformation testTransformation = it.next();
+            TransformActions testTransformation = it.next();
             mutations.put(testTransformation.getTestName(), testTransformation);
         }
         return mutations;
     }
 
-    public static List<ObjectNode> transformTest(File file, Map<String, TestTransformation> mutations) throws IOException {
+    public static List<ObjectNode> transformTest(File file, Map<String, TransformActions> transforms) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
         //A YAML file can have multiple tests
@@ -73,14 +72,14 @@ public class TransformTest {
                 String testName = testObject.getKey();
 
                 JsonNode currentTest = testObject.getValue();
-                TestTransformation testTransformation = mutations.get(testName);
+                TransformActions testTransformation = transforms.get(testName);
                 if (testTransformation == null) {
                     continue;
                 }
                 System.out.println("*************** " + currentTest + " *******************");
 
                 //Always transform by location before find by match since add/remove of JsonNodes the nodes pointed at by the JsonPointer
-                List<TransformAction> testTransformationActions = testTransformation.getTestTransformations(testName);
+                List<TransformAction> testTransformationActions = testTransformation.getTransforms();
                 if (testTransformationActions != null) {
                     Consumer<Transform.FindByLocation> findByLocationTransform = transform -> {
                         JsonNode parentNode = test.at(transform.location().head());

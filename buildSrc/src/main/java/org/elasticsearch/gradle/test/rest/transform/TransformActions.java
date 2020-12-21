@@ -17,28 +17,26 @@
  * under the License.
  */
 
-package org.elasticsearch.gradle.test.rest.compat;
+package org.elasticsearch.gradle.test.rest.transform;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Target for data binding.. using data binding since stream parsing directly does not handle multiple YAML files.
  */
-public class TestTransformation {
+public class TransformActions {
     private String testName;
 
     private enum Action {REPLACE, INSERT, REMOVE}
 
-    Map<String, List<TransformAction>> testTransformations = new HashMap<>();
+
+    List<TransformAction> transforms = new ArrayList<>();
 
     @JsonAnySetter
     public void testName(String testName, List<Map<String, JsonNode>> transforms) {
@@ -70,13 +68,13 @@ public class TestTransformation {
             }
             switch (action) {
                 case REPLACE:
-                    testTransformations.computeIfAbsent(testName, k -> new ArrayList<>()).add(new Replace(testName, transform));
+                    this.transforms.add(new Replace(testName, transform));
                     break;
                 case INSERT:
-                    testTransformations.computeIfAbsent(testName, k -> new ArrayList<>()).add(new Insert(testName, transform));
+                    this.transforms.add(new Insert(testName, transform));
                     break;
                 case REMOVE:
-                    testTransformations.computeIfAbsent(testName, k -> new ArrayList<>()).add(new Remove(testName, transform));
+                    this.transforms.add(new Remove(testName, transform));
                     break;
                 default:
                     throw new IllegalArgumentException("Test [" + testName + "] does not define a valid action. Valid actions are [" + Arrays.toString(Action.values()) + "]");
@@ -89,8 +87,8 @@ public class TestTransformation {
         return testName;
     }
 
-    public List<TransformAction> getTestTransformations(String testName) {
-        return testTransformations.get(testName);
+    public List<TransformAction> getTransforms() {
+        return transforms;
     }
 }
 

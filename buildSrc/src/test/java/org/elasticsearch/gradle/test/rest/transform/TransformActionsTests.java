@@ -17,19 +17,19 @@
  * under the License.
  */
 
-package org.elasticsearch.gradle.test.rest.compat;
+package org.elasticsearch.gradle.test.rest.transform;
 
 import org.elasticsearch.gradle.test.GradleUnitTestCase;
 
 import java.io.File;
 import java.util.Map;
 
-public class TestTransformationTests extends GradleUnitTestCase {
+public class TransformActionsTests extends GradleUnitTestCase {
 
     public void testSingleTest() throws Exception {
 
         File singleTest = new File(getClass().getResource("/10_single.yml").toURI());
-        TransformTest.readTransformations(singleTest);
+        TransformTest.readActions(singleTest);
 
 
     }
@@ -38,7 +38,7 @@ public class TestTransformationTests extends GradleUnitTestCase {
 
         File instructions = new File(getClass().getResource("/20_multiple.yml").toURI());
         File originalTest = new File(getClass().getResource("/71_context_api.yml").toURI());
-        Map<String, TestTransformation> mutations = TransformTest.readTransformations(instructions);
+        Map<String, TransformActions> mutations = TransformTest.readActions(instructions);
         TransformTest.transformTest(originalTest, mutations );
 
 
