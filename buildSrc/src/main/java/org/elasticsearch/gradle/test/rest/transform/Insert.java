@@ -46,12 +46,14 @@ public class Insert extends TransformAction {
                         toInsert = v;
                         break;
                     default:
-                        throw new IllegalArgumentException("Found unexpected key: " + key);
+                        throw new IllegalArgumentException("Found unexpected key [" + key + "] for test [" + testName + "]");
                 }
             }
         );
+        if (transform == null) {
+            throw new IllegalStateException("Could not find any transformations for test [" + testName + "]");
+        }
     }
-
 
     class ByLocation implements Transform.FindByLocation {
 
@@ -70,7 +72,7 @@ public class Insert extends TransformAction {
         }
 
         @Override
-        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+        public void transform(ContainerNode<?> parentNode) {
             boolean inserted = false;
             if (parentNode.isObject()) {
                 ObjectNode parentObject = (ObjectNode) parentNode;
@@ -100,7 +102,6 @@ public class Insert extends TransformAction {
             if (inserted == false) {
                 throw new IllegalArgumentException("Could not find location [" + location + "] to insert [" + toInsert + "]");
             }
-            return parentNode;
         }
 
     }
@@ -108,9 +109,8 @@ public class Insert extends TransformAction {
     class ByMatch implements FindByMatch {
 
         @Override
-        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+        public void transform(ContainerNode<?> parentNode) {
             System.out.println("Inserting by by match!!");
-            return null;
         }
 
         @Override

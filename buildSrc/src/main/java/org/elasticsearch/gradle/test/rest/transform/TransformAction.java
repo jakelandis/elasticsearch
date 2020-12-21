@@ -21,15 +21,19 @@ package org.elasticsearch.gradle.test.rest.transform;
 
 import com.fasterxml.jackson.databind.node.ContainerNode;
 
+/**
+ * A concrete action to implement a transformation. For example, inserting a Json node at a specified location.
+ */
 public abstract class TransformAction implements Transform {
 
     protected Transform transform;
 
-    public ContainerNode<?> transform(ContainerNode<?> parentNode) {
-        return getTransform().transform(parentNode);
+    public void transform(ContainerNode<?> parentNode) {
+        getTransform().transform(parentNode);
     }
 
     protected final Transform getTransform() {
+        assert transform != null;
         return transform;
     }
 }

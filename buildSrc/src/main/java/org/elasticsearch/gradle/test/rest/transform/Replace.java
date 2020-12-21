@@ -48,10 +48,13 @@ public class Replace extends TransformAction {
                         toReplace = v;
                         break;
                     default:
-                        throw new IllegalArgumentException("Found unexpected key: " + key);
+                        throw new IllegalArgumentException("Found unexpected key [" + key + "] for test [" + testName + "]");
                 }
             }
         );
+        if (transform == null) {
+            throw new IllegalStateException("Could not find any transformations for test [" + testName + "]");
+        }
     }
 
 
@@ -72,7 +75,7 @@ public class Replace extends TransformAction {
         }
 
         @Override
-        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+        public void transform(ContainerNode<?> parentNode) {
             boolean replaced = false;
             if (parentNode.isObject()) {
                 ObjectNode parentObject = (ObjectNode) parentNode;
@@ -110,7 +113,6 @@ public class Replace extends TransformAction {
             if (replaced == false) {
                 throw new IllegalArgumentException("Could not find anything at location [" + location + "] to replace");
             }
-            return parentNode;
         }
 
     }
@@ -124,7 +126,7 @@ public class Replace extends TransformAction {
         }
 
         @Override
-        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+        public void transform(ContainerNode<?> parentNode) {
             System.out.println("Replacing object in parentNode: " + parentNode + " for: " + nodeToFind + " with: " + toReplace);
             if (parentNode.isObject()) {
                 ObjectNode parentObject = (ObjectNode) parentNode;
@@ -138,15 +140,13 @@ public class Replace extends TransformAction {
                             parentObject.remove(entry.getKey());
                             parentObject.setAll((ObjectNode) toReplace);
                         }
-                    }else{
+                    } else {
                         parentObject.set(entry.getKey(), toReplace);
                     }
                 }
             } else if (parentNode.isArray()) {
                 throw new IllegalArgumentException("TODO: support arrays yo!");
             }
-
-            return parentNode;
         }
 
         @Override

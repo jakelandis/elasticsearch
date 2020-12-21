@@ -28,16 +28,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Target for data binding.. using data binding since stream parsing directly does not handle multiple YAML files.
+ * The list of all {@link TransformAction}'s per test. This class is intended to be the target for Jackson data binding.
+ * Jackson data binding is used in-favor of stream parsing since stream parsing does not handle multiple YAML files separated by dashes.
  */
 public class TransformActions {
     private String testName;
 
     private enum Action {REPLACE, INSERT, REMOVE}
 
-
     List<TransformAction> transforms = new ArrayList<>();
 
+    /**
+     * Entry point for Jackson data binding.
+     */
     @JsonAnySetter
     public void testName(String testName, List<Map<String, JsonNode>> transforms) {
         this.testName = testName;
@@ -78,7 +81,6 @@ public class TransformActions {
                     break;
                 default:
                     throw new IllegalArgumentException("Test [" + testName + "] does not define a valid action. Valid actions are [" + Arrays.toString(Action.values()) + "]");
-
             }
         }
     }

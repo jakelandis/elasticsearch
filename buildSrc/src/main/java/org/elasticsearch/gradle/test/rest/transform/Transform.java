@@ -24,11 +24,17 @@ import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
 
-
+/**
+ * Transforms a provided Json node as defined by the {@link TransformActions}
+ */
 @FunctionalInterface
 public interface Transform {
 
-    ContainerNode<?> transform(ContainerNode<?> parentNode);
+    /**
+     * Transform the Json structure per the given {@link TransformAction} This is intended to have side effects.
+     * @param parentNode The parent of the node to transform.
+     */
+    void transform(ContainerNode<?> parentNode);
 
     /**
      * Find the node to transform via a {@link JsonPointer}
@@ -37,10 +43,10 @@ public interface Transform {
         JsonPointer location();
     }
 
-
+    /**
+     * Find the node to transform via a {@link JsonNode}
+     */
     interface FindByMatch extends Transform {
         JsonNode nodeToFind();
     }
-
-
 }

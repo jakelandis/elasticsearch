@@ -46,10 +46,14 @@ public class Remove extends TransformAction {
                         toRemove = v;
                         break;
                     default:
-                        throw new IllegalArgumentException("Found unexpected key: " + key);
+                        throw new IllegalArgumentException("Found unexpected key [" + key + "] for test [" + testName + "]");
+
                 }
             }
         );
+        if (transform == null) {
+            throw new IllegalStateException("Could not find any transformations for test [" + testName + "]");
+        }
     }
 
     class ByLocation implements Transform.FindByLocation {
@@ -69,7 +73,7 @@ public class Remove extends TransformAction {
         }
 
         @Override
-        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+        public void transform(ContainerNode<?> parentNode) {
             boolean removed = false;
             boolean emptyObject = toRemove.isObject() && toRemove.size() == 0;
             if (parentNode.isObject()) {
@@ -121,16 +125,14 @@ public class Remove extends TransformAction {
                     throw new IllegalArgumentException("Could not find location [" + location + "] with value [" + toRemove + "] to remove");
                 }
             }
-            return parentNode;
         }
     }
 
     class ByMatch implements FindByMatch {
 
         @Override
-        public ContainerNode<?> transform(ContainerNode<?> parentNode) {
+        public void transform(ContainerNode<?> parentNode) {
             System.out.println("Inserting by by match!!");
-            return null;
         }
 
         @Override

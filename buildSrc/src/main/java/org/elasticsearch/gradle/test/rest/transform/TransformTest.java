@@ -32,6 +32,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,28 +40,46 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Utility class to read the transformations from disk and then perform the in-memory transformation for the REST tests.
+ * This class does not serialize the transformed tests to back to disk.
+ */
 public class TransformTest {
+    //Utility class
+    private TransformTest() {
+    }
+
     private static final YAMLFactory yaml = new YAMLFactory();
     private static final ObjectMapper mapper = new ObjectMapper(yaml);
     private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
 
-    public static Map<String, TransformActions> readActions(File file) throws IOException {
+    /**
+     * Get the list of {@link TransformAction} grouped by test name.
+     *
+     * @param file The YAML file that contains the definitions of each find/action
+     * @return the Map of test names to list of {@link TransformAction}
+     * @throws IOException if Jackson throws em
+     */
+    public static Map<String, List<TransformAction>> getTransformationsByTestName(File file) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
-
-
-        Map<String, TransformActions> mutations = new HashMap<>();
-        //Using data binding over stream parsing since:
-        // stream parsing does not understand "---" separators and data binding can neatly organize these by test
-
+        Map<String, List<TransformAction>> transformsByTestName = new HashMap<>();
         MappingIterator<TransformActions> it = mapper.readValues(yamlParser, TransformActions.class);
         while (it.hasNext()) {
-            TransformActions testTransformation = it.next();
-            mutations.put(testTransformation.getTestName(), testTransformation);
+            TransformActions transforms = it.next();
+            transformsByTestName.putIfAbsent(transforms.getTestName(), transforms.getTransforms());
         }
-        return mutations;
+        return transformsByTestName;
     }
 
-    public static List<ObjectNode> transformTest(File file, Map<String, TransformActions> transforms) throws IOException {
+    /**
+     * In memory transformation of REST tests per given file.
+     *
+     * @param file       The YAML file that contains the REST tests to transform.
+     * @param transforms the Map of test names to list of {@link TransformAction}
+     * @return the list of root nodes to serialize
+     * @throws IOException if Jackson throws em
+     */
+    public static List<ObjectNode> transformRestTests(File file, Map<String, List<TransformAction>> transforms) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
         //A YAML file can have multiple tests
@@ -72,43 +91,43 @@ public class TransformTest {
                 String testName = testObject.getKey();
 
                 JsonNode currentTest = testObject.getValue();
-                TransformActions testTransformation = transforms.get(testName);
-                if (testTransformation == null) {
+                List<TransformAction> testTransformation = transforms.get(testName);
+                if (testTransformation == null || testTransformation.isEmpty()) {
                     continue;
                 }
                 System.out.println("*************** " + currentTest + " *******************");
 
                 //Always transform by location before find by match since add/remove of JsonNodes the nodes pointed at by the JsonPointer
-                List<TransformAction> testTransformationActions = testTransformation.getTransforms();
-                if (testTransformationActions != null) {
-                    Consumer<Transform.FindByLocation> findByLocationTransform = transform -> {
-                        JsonNode parentNode = test.at(transform.location().head());
-                        if (parentNode != null && parentNode.isContainerNode()) {
-                            transform.transform((ContainerNode<?>) parentNode);
-                        } else {
-                            throw new IllegalArgumentException("Could not find location [" + transform.location() + "]");
-                        }
-                    };
 
-                    //Transform FindByLocation/Replace first since insert/remove can change the node where the JsonPointer points.
-                    testTransformationActions.stream()
-                        .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
-                        .filter(b -> b instanceof Replace == true)
-                        .map(c -> (Transform.FindByLocation) c.getTransform()).forEachOrdered(findByLocationTransform);
 
-                    //Transform FindByLocation/Insert and FindByLocation/Remove
-                    testTransformationActions.stream()
-                        .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
-                        .map(b -> (Transform.FindByLocation) b.getTransform()).forEachOrdered(findByLocationTransform);
+                Consumer<Transform.FindByLocation> findByLocationTransform = transform -> {
+                    JsonNode parentNode = test.at(transform.location().head());
+                    if (parentNode != null && parentNode.isContainerNode()) {
+                        transform.transform((ContainerNode<?>) parentNode);
+                    } else {
+                        throw new IllegalArgumentException("Could not find location [" + transform.location() + "]");
+                    }
+                };
 
-                    //Map all the FindByMatch Actions by the JsonNode they need to match
-                    Map<JsonNode, TransformAction> findByMatchTransforms = testTransformationActions.stream()
-                        .filter(a -> a.getTransform() instanceof Transform.FindByMatch)
-                        .collect(Collectors.toMap(b -> ((Transform.FindByMatch) b.getTransform()).nodeToFind(), c -> c));
+                //Transform FindByLocation/Replace first since insert/remove can change the node where the JsonPointer points.
+                testTransformation.stream()
+                    .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
+                    .filter(b -> b instanceof Replace == true)
+                    .map(c -> (Transform.FindByLocation) c.getTransform()).forEachOrdered(findByLocationTransform);
 
-                    //Transform all FindByMatch's
-                    transformByMatch(findByMatchTransforms, test, currentTest);
-                }
+                //Transform FindByLocation/Insert and FindByLocation/Remove
+                testTransformation.stream()
+                    .filter(a -> a.getTransform() instanceof Transform.FindByLocation)
+                    .map(b -> (Transform.FindByLocation) b.getTransform()).forEachOrdered(findByLocationTransform);
+
+                //Map all the FindByMatch Actions by the JsonNode they need to match
+                Map<JsonNode, TransformAction> findByMatchTransforms = testTransformation.stream()
+                    .filter(a -> a.getTransform() instanceof Transform.FindByMatch)
+                    .collect(Collectors.toMap(b -> ((Transform.FindByMatch) b.getTransform()).nodeToFind(), c -> c));
+
+                //Transform all FindByMatch's
+                transformByMatch(findByMatchTransforms, test, currentTest);
+
             }
             System.out.println(test.toPrettyString());
         }
@@ -130,7 +149,7 @@ public class TransformTest {
             }
         } else if (currentNode.isObject()) {
             ObjectNode objectNode = (ObjectNode) currentNode;
-            System.out.println("Current Object: "  +currentNode + " type: " + currentNode.getNodeType());
+            System.out.println("Current Object: " + currentNode + " type: " + currentNode.getNodeType());
             TransformAction transformAction = findByMatchTransforms.remove(objectNode);
             if (transformAction != null) {
                 transformAction.transform(parentNode);
@@ -144,12 +163,9 @@ public class TransformTest {
                 }
                 transformByMatch(findByMatchTransforms, objectNode, entry.getValue());
             });
-        }
-
-
-        else {
+        } else {
             //value node
-          //  System.out.println("Value Node: " + currentNode);
+            //  System.out.println("Value Node: " + currentNode);
             TransformAction transformAction = findByMatchTransforms.remove(currentNode);
             if (transformAction != null) {
                 transformAction.transform(parentNode);
