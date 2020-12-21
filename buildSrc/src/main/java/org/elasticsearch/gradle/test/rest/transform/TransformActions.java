@@ -42,7 +42,7 @@ public class TransformActions {
      * Entry point for Jackson data binding.
      */
     @JsonAnySetter
-    public void testName(String testName, List<Map<String, JsonNode>> transforms) {
+    public void bindPerTestName(String testName, List<Map<String, JsonNode>> transforms) {
         this.testName = testName;
         for (Map<String, JsonNode> transform : transforms) {
             boolean hasFindKey = false;

@@ -193,9 +193,11 @@ if (project != rootProject) {
     }
   }
 
-  // Track reaper jar as a test input using runtime classpath normalization strategy
   tasks.withType(Test).configureEach {
+    // Track reaper jar as a test input using runtime classpath normalization strategy
     inputs.files(configurations.reaper).withNormalizer(ClasspathNormalizer)
+    // pass through the random test seed
+    it.systemProperty "tests.seed", System.getProperty("tests.seed")
   }
 
   normalization {
