@@ -23,12 +23,17 @@ import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.util.Iterator;
 import java.util.Map;
 
 public class Insert extends TransformAction {
+
+
+    private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
 
     private JsonNode toInsert;
 
@@ -39,7 +44,7 @@ public class Insert extends TransformAction {
                         if (v.asText().trim().startsWith("/")) {
                             transform = new ByLocation("/" + testName + v.asText().trim());
                         } else {
-                            transform = new ByMatch();
+                            transform = new ByMatch(v);
                         }
                         break;
                     case "insert":
@@ -77,6 +82,7 @@ public class Insert extends TransformAction {
             if (parentNode.isObject()) {
                 ObjectNode parentObject = (ObjectNode) parentNode;
                 // adds or will replace if already exists
+                //TODO: this is wrong .. do like below
                 parentObject.set(keyName, toInsert);
                 inserted = true;
             } else if (parentNode.isArray()) {
@@ -108,14 +114,49 @@ public class Insert extends TransformAction {
 
     class ByMatch implements FindByMatch {
 
+        private final TextNode keyToFind;
+        boolean transformed = false;
+
+        public ByMatch(JsonNode nodeToFind) {
+
+            if (nodeToFind instanceof TextNode == false) {
+                throw new IllegalArgumentException("Inserting by find is only supported for object keys ");
+            }
+            this.keyToFind = (TextNode) nodeToFind;
+
+            //insert by match is only supported by matching simple strings that are the key of an object
+        }
+
         @Override
         public void transform(ContainerNode<?> parentNode) {
-            System.out.println("Inserting by by match!!");
+            System.out.println("inserting object in parentNode: " + parentNode + " after: " + keyToFind + " with: " + toInsert);
+            if (parentNode.isObject()) {
+                ObjectNode parentObject = (ObjectNode) parentNode;
+                Iterator<Map.Entry<String, JsonNode>> it = parentObject.deepCopy().fields();
+                while (it.hasNext()) {
+                    Map.Entry<String, JsonNode> entry = it.next();
+                    if (nodeToFind().textValue().equals(entry.getKey())) {
+                        if (entry.getValue() instanceof ObjectNode) {
+                            ObjectNode objectToInsertTo = (ObjectNode) entry.getValue();
+                            if (toInsert instanceof ObjectNode) {
+                                objectToInsertTo.setAll((ObjectNode) toInsert);
+                            } else if (entry.getValue() instanceof ArrayNode) {
+                                ArrayNode arrayToInsertTo = (ArrayNode) entry.getValue();
+                                arrayToInsertTo.add(toInsert);
+                            }
+                        } else {
+                            throw new IllegalStateException("Can only insert into container node (object or array)");
+                        }
+                    }
+                }
+            } else if (parentNode.isArray()) {
+                throw new IllegalArgumentException("TODO: support inserting into arrays yo!");
+            }
         }
 
         @Override
         public JsonNode nodeToFind() {
-            return null;
+            return keyToFind;
         }
     }
 }

@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 
@@ -82,6 +83,10 @@ public class TransformTest {
     public static List<ObjectNode> transformRestTests(File file, Map<String, List<TransformAction>> transforms) throws IOException {
         YAMLParser yamlParser = yaml.createParser(file);
         List<ObjectNode> tests = mapper.readValues(yamlParser, ObjectNode.class).readAll();
+        return innerTransformRestTests(tests, transforms);
+    }
+
+    static List<ObjectNode> innerTransformRestTests(List<ObjectNode> tests, Map<String, List<TransformAction>> transforms){
         //A YAML file can have multiple tests
         for (ObjectNode test : tests) {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
@@ -128,10 +133,14 @@ public class TransformTest {
                 //Transform all FindByMatch's
                 transformByMatch(findByMatchTransforms, test, currentTest);
 
+                //error if left over.
+                //if insert... can only find by object keys to insert.
+
             }
             System.out.println(test.toPrettyString());
         }
         return tests;
+
     }
 
     private static void transformByMatch(Map<JsonNode, TransformAction> findByMatchTransforms, ContainerNode<?> parentNode, JsonNode currentNode) {
@@ -155,9 +164,8 @@ public class TransformTest {
                 transformAction.transform(parentNode);
             }
             currentNode.fields().forEachRemaining(entry -> {
-                ObjectNode objectItem = new ObjectNode(jsonNodeFactory);
-                objectItem.set(entry.getKey(), entry.getValue());
-                TransformAction action = findByMatchTransforms.remove(objectItem);
+                //check if we are finding an object key
+                TransformAction action = findByMatchTransforms.get(TextNode.valueOf(entry.getKey()));
                 if (action != null) {
                     action.transform(objectNode);
                 }
@@ -165,7 +173,7 @@ public class TransformTest {
             });
         } else {
             //value node
-            //  System.out.println("Value Node: " + currentNode);
+
             TransformAction transformAction = findByMatchTransforms.remove(currentNode);
             if (transformAction != null) {
                 transformAction.transform(parentNode);
