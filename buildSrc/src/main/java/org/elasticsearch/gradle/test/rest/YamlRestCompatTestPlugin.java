@@ -151,8 +151,8 @@ public class YamlRestCompatTestPlugin implements Plugin<Project> {
         // setup IDE
         GradleUtils.setupIdeForTestSourceSet(project, yamlCompatTestSourceSet);
 
-        // wire this task into check
-        project.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(yamlRestCompatTestTask));
+        // do not wire this task into check ... this will likely go into it's own lifecycle outside of check
+        // project.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(yamlRestCompatTestTask));
     }
 
     // TODO: implement custom extension that allows us move around of the projects between major versions and still find them

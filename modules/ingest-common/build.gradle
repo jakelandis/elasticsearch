@@ -17,6 +17,7 @@
  * under the License.
  */
 apply plugin: 'elasticsearch.yaml-rest-test'
+apply plugin: 'elasticsearch.yaml-rest-compat-test'
 apply plugin: 'elasticsearch.internal-cluster-test'
 
 esplugin {
@@ -56,4 +57,14 @@ tasks.named("thirdPartyAudit").configure {
           'org.osgi.framework.wiring.BundleWire',
           'org.osgi.framework.wiring.BundleWiring'
   )
+}
+
+tasks.named("yamlRestCompatTest").configure {
+  systemProperty 'tests.rest.blacklist', (
+    [
+      //tests use types
+      'ingest/200_dissect_processor/Test dissect processor mismatch',
+      'ingest/80_foreach/Test foreach Processor'
+    ]
+  ).join(",")
 }
