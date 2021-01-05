@@ -64,7 +64,7 @@ tasks.named("yamlRestCompatTest").configure {
     [
       //tests use types
       'ingest/200_dissect_processor/Test dissect processor mismatch',
-      'ingest/80_foreach/Test foreach Processor'
+      'ingest/80_foreach/Test foreach Processor' // <-- manually overridden in yamlRestCompatTest
     ]
   ).join(",")
 }
