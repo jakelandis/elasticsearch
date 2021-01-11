@@ -19,7 +19,6 @@
 
 package org.elasticsearch.gradle.test.rest.transform;
 
-import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -34,7 +33,7 @@ import java.util.Map;
  * A {@link RestTestTransform} that injects HTTP headers into a REST test. This includes adding the necessary values to the "do" section
  * as well as adding headers as a features to the "setup" section.
  */
-public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTransformGlobalSetup {
+public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTransformGlobalSetup, RestTestTransformGlobalTeardown {
 
     private static JsonNodeFactory jsonNodeFactory = JsonNodeFactory.withExactBigDecimals(false);
 
@@ -66,30 +65,15 @@ public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTran
     }
 
     @Override
-    public ObjectNode transformSetup(@Nullable ObjectNode setupNodeParent) {
-
+    public ObjectNode transformSetup(ObjectNode setupNodeParent) {
         //check to ensure that headers feature does not already exist
-        if(setupNodeParent != null){
+        if (setupNodeParent != null) {
             ArrayNode setupNode = (ArrayNode) setupNodeParent.get("setup");
-            JsonNode features = setupNode.at("/0/skip/features");
-            if(features != null){
-                if(features.isArray()){
-                    ArrayNode featuresArray = (ArrayNode) features;
-                    Iterator<JsonNode> it = featuresArray.elements();
-                    while(it.hasNext()){
-                        if("headers".equals(it.next().asText())){
-                            return setupNodeParent;
-                        }
-                    }
-                }else{
-                    if("headers".equals(features.asText())){
-                        return setupNodeParent;
-                    }
-                }
+            if (hasHeadersFeature(setupNode)) {
+                return setupNodeParent;
             }
         }
-
-        //transform or insert the headers feature
+        //transform or insert the headers feature into setup/skip/features
         ArrayNode setupNode;
         if (setupNodeParent == null) {
             setupNodeParent = new ObjectNode(jsonNodeFactory);
@@ -97,10 +81,52 @@ public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTran
             setupNodeParent.set("setup", setupNode);
         }
         setupNode = (ArrayNode) setupNodeParent.get("setup");
-        Iterator<JsonNode> setupIt = setupNode.elements();
+        addSkip(setupNode);
+        return setupNodeParent;
+    }
+
+    @Override
+    public ObjectNode transformTeardown(@Nullable ObjectNode teardownNodeParent) {
+        if (teardownNodeParent != null) {
+            ArrayNode teardownNode = (ArrayNode) teardownNodeParent.get("teardown");
+            //only transform an existing teardown section since a teardown does not inherit from setup but still needs the skip section
+            if(teardownNode != null) {
+                //check to ensure that headers feature does not already exist
+                if (hasHeadersFeature(teardownNode)) {
+                    return teardownNodeParent;
+                }
+                addSkip(teardownNode);
+                return teardownNodeParent;
+            }
+        }
+        return teardownNodeParent;
+    }
+
+    private boolean hasHeadersFeature(ArrayNode skipParent) {
+        JsonNode features = skipParent.at("/0/skip/features");
+        if (features != null) {
+            if (features.isArray()) {
+                ArrayNode featuresArray = (ArrayNode) features;
+                Iterator<JsonNode> it = featuresArray.elements();
+                while (it.hasNext()) {
+                    if ("headers".equals(it.next().asText())) {
+                        return true;
+                    }
+                }
+            } else {
+                if ("headers".equals(features.asText())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void addSkip(ArrayNode skipParent) {
+        Iterator<JsonNode> skipParentIt = skipParent.elements();
         boolean foundSkipNode = false;
-        while (setupIt.hasNext()) {
-            JsonNode arrayEntry = setupIt.next();
+        while (skipParentIt.hasNext()) {
+            JsonNode arrayEntry = skipParentIt.next();
             if (arrayEntry.isObject()) {
                 ObjectNode skipCandidate = (ObjectNode) arrayEntry;
                 if (skipCandidate.get("skip") != null) {
@@ -127,11 +153,12 @@ public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTran
         if (foundSkipNode == false) {
             ObjectNode skipNode = new ObjectNode(jsonNodeFactory);
             ObjectNode featuresNode = new ObjectNode(jsonNodeFactory);
-            setupNode.insert(0, skipNode);
+            skipParent.insert(0, skipNode);
             featuresNode.set("features", TextNode.valueOf("headers"));
             skipNode.set("skip", featuresNode);
         }
-        return setupNodeParent;
+
     }
+
 
 }

@@ -45,6 +45,7 @@ public class RestTestTransformer {
      */
     public List<ObjectNode> transformRestTests(LinkedList<ObjectNode> tests, List<RestTestTransform<?>> transformations) {
         ObjectNode setupSection = null;
+        ObjectNode teardownSection = null;
 
         // Collect any global setup transformations
         List<RestTestTransformGlobalSetup> setupTransforms = transformations.stream()
@@ -52,7 +53,11 @@ public class RestTestTransformer {
             .map(transform -> (RestTestTransformGlobalSetup) transform)
             .collect(Collectors.toList());
 
-        assert setupTransforms.isEmpty() || setupTransforms.size() == 1;
+        // Collect any global setup transformations
+        List<RestTestTransformGlobalTeardown> teardownTransforms = transformations.stream()
+            .filter(transform -> transform instanceof RestTestTransformGlobalTeardown)
+            .map(transform -> (RestTestTransformGlobalTeardown) transform)
+            .collect(Collectors.toList());
 
         // transform the tests and include the global setup and teardown as part of the transform
         for (ObjectNode test : tests) {
@@ -62,6 +67,9 @@ public class RestTestTransformer {
                 String testName = testObject.getKey();
                 if ("setup".equals(testName)) {
                     setupSection = test;
+                }
+                if ("teardown".equals(testName)) {
+                    teardownSection = test;
                 }
                 Map<String, RestTestTransformByObjectKey> objectKeyFinders = transformations.stream()
                     .filter(transform -> transform instanceof RestTestTransformByObjectKey)
@@ -74,10 +82,23 @@ public class RestTestTransformer {
 
         // transform the global setup
         if (setupTransforms.isEmpty() == false) {
-            RestTestTransformGlobalSetup setupTransform = setupTransforms.iterator().next();
-            ObjectNode result = setupTransform.transformSetup(setupSection);
-            if (setupSection == null) {
-                tests.addFirst(result);
+            int i = 0;
+            for (RestTestTransformGlobalSetup setupTransform : setupTransforms) {
+                ObjectNode result = setupTransform.transformSetup(setupSection);
+                if (result != null && setupSection == null && i++ == 0) {
+                    tests.addFirst(result);
+                }
+            }
+        }
+
+        // transform the global teardown
+        if (setupTransforms.isEmpty() == false) {
+            int i = 0;
+            for (RestTestTransformGlobalTeardown teardownTransform : teardownTransforms) {
+                ObjectNode result = teardownTransform.transformTeardown(teardownSection);
+                if (result != null && setupSection == null && i++ == 0) {
+                    tests.addLast(result);
+                }
             }
         }
 
