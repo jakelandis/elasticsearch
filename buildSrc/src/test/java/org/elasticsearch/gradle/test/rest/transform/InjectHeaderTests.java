@@ -71,7 +71,8 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         );
         // ensure setup is correct
         assertThat(transformedTests.stream().filter(node -> node.get("setup") != null).count(), CoreMatchers.equalTo(1L));
-        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetupForHeaders);
+        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetup);
+        transformedTests.stream().filter(node -> node.get("teardown") != null).forEach(this::assertTeardown);
         // ensure do body is correct
         transformedTests.forEach(test -> {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
@@ -103,7 +104,8 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         );
         // ensure setup is correct
         assertThat(transformedTests.stream().filter(node -> node.get("setup") != null).count(), CoreMatchers.equalTo(1L));
-        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetupForHeaders);
+        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetup);
+        transformedTests.stream().filter(node -> node.get("teardown") != null).forEach(this::assertTeardown);
         // ensure do body is correct
         transformedTests.forEach(test -> {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
@@ -146,7 +148,8 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         );
         // ensure setup is correct
         assertThat(transformedTests.stream().filter(node -> node.get("setup") != null).count(), CoreMatchers.equalTo(1L));
-        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetupForHeaders);
+        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetup);
+        transformedTests.stream().filter(node -> node.get("teardown") != null).forEach(this::assertTeardown);
         // ensure do body is correct
         transformedTests.forEach(test -> {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
@@ -189,7 +192,8 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         );
         // ensure setup is correct
         assertThat(transformedTests.stream().filter(node -> node.get("setup") != null).count(), CoreMatchers.equalTo(1L));
-        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetupForHeaders);
+        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetup);
+        transformedTests.stream().filter(node -> node.get("teardown") != null).forEach(this::assertTeardown);
         // ensure do body is correct
         transformedTests.forEach(test -> {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
@@ -246,7 +250,8 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         );
         // ensure setup is correct
         assertThat(transformedTests.stream().filter(node -> node.get("setup") != null).count(), CoreMatchers.equalTo(1L));
-        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetupForHeaders);
+        transformedTests.stream().filter(node -> node.get("setup") != null).forEach(this::assertSetup);
+        transformedTests.stream().filter(node -> node.get("teardown") != null).forEach(this::assertTeardown);
         // ensure do body is correct
         transformedTests.forEach(test -> {
             Iterator<Map.Entry<String, JsonNode>> testsIterator = test.fields();
@@ -279,9 +284,19 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         });
     }
 
-    private void assertSetupForHeaders(ObjectNode setupNode) {
+    private void assertTeardown(ObjectNode teardownNode) {
+        assertThat(teardownNode.get("teardown"), CoreMatchers.instanceOf(ArrayNode.class));
+        ObjectNode skipNode = getSkipNode((ArrayNode) teardownNode.get("teardown"));
+        assertSkipNode(skipNode);
+    }
+
+    private void assertSetup(ObjectNode setupNode) {
         assertThat(setupNode.get("setup"), CoreMatchers.instanceOf(ArrayNode.class));
         ObjectNode skipNode = getSkipNode((ArrayNode) setupNode.get("setup"));
+        assertSkipNode(skipNode);
+    }
+
+    private void assertSkipNode(ObjectNode skipNode) {
         assertThat(skipNode, CoreMatchers.notNullValue());
         List<String> featureValues = new ArrayList<>();
         if (skipNode.get("features").isArray()) {
