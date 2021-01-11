@@ -283,15 +283,20 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         assertThat(setupNode.get("setup"), CoreMatchers.instanceOf(ArrayNode.class));
         ObjectNode skipNode = getSkipNode((ArrayNode) setupNode.get("setup"));
         assertThat(skipNode, CoreMatchers.notNullValue());
-        // transforms always results in an array of features, even if it is an array of 1
-        assertThat(skipNode.get("features"), CoreMatchers.instanceOf(ArrayNode.class));
-        ArrayNode features = (ArrayNode) skipNode.get("features");
+
+        System.out.println("********** --> " + skipNode);
         List<String> featureValues = new ArrayList<>();
-        features.forEach(x -> {
-            if (x.isTextual()) {
-                featureValues.add(x.asText());
-            }
-        });
+        if (skipNode.get("features").isArray()) {
+            assertThat(skipNode.get("features"), CoreMatchers.instanceOf(ArrayNode.class));
+            ArrayNode features = (ArrayNode) skipNode.get("features");
+            features.forEach(x -> {
+                if (x.isTextual()) {
+                    featureValues.add(x.asText());
+                }
+            });
+        } else {
+            featureValues.add(skipNode.get("features").asText());
+        }
         assertThat(featureValues, IsCollectionContaining.hasItem("headers"));
     }
 

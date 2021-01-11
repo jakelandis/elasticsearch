@@ -20,8 +20,12 @@
 package org.elasticsearch.gradle.test.rest.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,7 +39,7 @@ public class RestTestTransformer {
     /**
      * Transforms a REST test based on the requested {@link RestTestTransform}'s
      *
-     * @param tests           The REST tests from the same file.
+     * @param tests           The REST tests from the same file. Uses linked list so we can easily add to the beginning of the list.
      * @param transformations The set of transformations to perform against the test
      * @return the transformed tests
      */
@@ -76,6 +80,20 @@ public class RestTestTransformer {
                 tests.addFirst(result);
             }
         }
+
+        boolean debug = true;
+        if(debug == true) {
+            YAMLFactory yaml = new YAMLFactory();
+            ObjectMapper mapper = new ObjectMapper(yaml);
+            try (SequenceWriter sequenceWriter = mapper.writer().writeValues(System.out)) {
+                for (ObjectNode transformedTest : tests) {
+                    sequenceWriter.write(transformedTest);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         return tests;
     }
 

@@ -30,10 +30,10 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.TaskProvider;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -145,6 +145,14 @@ public class YamlRestCompatTestPlugin implements Plugin<Project> {
             testTask.dependsOn(copyCompatYamlTestTask);
         });
 
+        TaskProvider<RestCompatTestTransformTask> transformCompatTest = project.getTasks()
+            .register("transformCompatTests", RestCompatTestTransformTask.class, task -> {
+                task.sourceSetName = SOURCE_SET_NAME;
+                task.dependsOn(copyCompatYamlTestTask);
+                task.dependsOn(yamlCompatTestSourceSet.getProcessResourcesTaskName());
+            });
+        project.getTasks().named(SOURCE_SET_NAME).configure(mainTask -> mainTask.dependsOn(transformCompatTest));
+
         // setup the dependencies
         setupDependencies(project, yamlCompatTestSourceSet);
 
@@ -152,7 +160,7 @@ public class YamlRestCompatTestPlugin implements Plugin<Project> {
         GradleUtils.setupIdeForTestSourceSet(project, yamlCompatTestSourceSet);
 
         // wire this task into check
-        project.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(yamlRestCompatTestTask));
+        // project.getTasks().named(JavaBasePlugin.CHECK_TASK_NAME).configure(check -> check.dependsOn(yamlRestCompatTestTask));
     }
 
     // TODO: implement custom extension that allows us move around of the projects between major versions and still find them

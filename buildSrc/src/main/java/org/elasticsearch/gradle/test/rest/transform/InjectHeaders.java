@@ -84,14 +84,13 @@ public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTran
                     foundSkipNode = true;
                     JsonNode featuresNode = skipNode.get("features");
                     if (featuresNode == null) {
-                        ArrayNode featuresNodeArray = new ArrayNode(jsonNodeFactory);
-                        featuresNodeArray.add("headers");
-                        skipNode.set("features", featuresNodeArray);
+                        ObjectNode featuresNodeObject = new ObjectNode(jsonNodeFactory);
+                        skipNode.set("features", TextNode.valueOf("headers"));
                     } else if (featuresNode.isArray()) {
                         ArrayNode featuresNodeArray = (ArrayNode) featuresNode;
                         featuresNodeArray.add("headers");
-
                     } else if (featuresNode.isTextual()) {
+                        //convert to an array
                         ArrayNode featuresNodeArray = new ArrayNode(jsonNodeFactory);
                         featuresNodeArray.add(featuresNode.asText());
                         featuresNodeArray.add("headers");
@@ -104,12 +103,11 @@ public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTran
         if (foundSkipNode == false) {
             ObjectNode skipNode = new ObjectNode(jsonNodeFactory);
             ObjectNode featuresNode = new ObjectNode(jsonNodeFactory);
-            ArrayNode featuresNodeContent = new ArrayNode(jsonNodeFactory);
-            setupNode.add(skipNode);
+            setupNode.insert(0, skipNode);
+            featuresNode.set("features", TextNode.valueOf("headers"));
             skipNode.set("skip", featuresNode);
-            featuresNode.set("features", featuresNodeContent);
-            featuresNodeContent.add("headers");
         }
         return setupNodeParent;
     }
+
 }
