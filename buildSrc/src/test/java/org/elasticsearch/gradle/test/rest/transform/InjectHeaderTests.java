@@ -283,8 +283,6 @@ public class InjectHeaderTests extends GradleUnitTestCase {
         assertThat(setupNode.get("setup"), CoreMatchers.instanceOf(ArrayNode.class));
         ObjectNode skipNode = getSkipNode((ArrayNode) setupNode.get("setup"));
         assertThat(skipNode, CoreMatchers.notNullValue());
-
-        System.out.println("********** --> " + skipNode);
         List<String> featureValues = new ArrayList<>();
         if (skipNode.get("features").isArray()) {
             assertThat(skipNode.get("features"), CoreMatchers.instanceOf(ArrayNode.class));
@@ -298,6 +296,7 @@ public class InjectHeaderTests extends GradleUnitTestCase {
             featureValues.add(skipNode.get("features").asText());
         }
         assertThat(featureValues, IsCollectionContaining.hasItem("headers"));
+        assertEquals(featureValues.stream().distinct().count(), featureValues.size());
     }
 
     private ObjectNode getSkipNode(ArrayNode setupNodeValue) {

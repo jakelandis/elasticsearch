@@ -19,6 +19,7 @@
 
 package org.elasticsearch.gradle.test.rest.transform;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -66,6 +67,29 @@ public class InjectHeaders implements RestTestTransformByObjectKey, RestTestTran
 
     @Override
     public ObjectNode transformSetup(@Nullable ObjectNode setupNodeParent) {
+
+        //check to ensure that headers feature does not already exist
+        if(setupNodeParent != null){
+            ArrayNode setupNode = (ArrayNode) setupNodeParent.get("setup");
+            JsonNode features = setupNode.at("/0/skip/features");
+            if(features != null){
+                if(features.isArray()){
+                    ArrayNode featuresArray = (ArrayNode) features;
+                    Iterator<JsonNode> it = featuresArray.elements();
+                    while(it.hasNext()){
+                        if("headers".equals(it.next().asText())){
+                            return setupNodeParent;
+                        }
+                    }
+                }else{
+                    if("headers".equals(features.asText())){
+                        return setupNodeParent;
+                    }
+                }
+            }
+        }
+
+        //transform or insert the headers feature
         ArrayNode setupNode;
         if (setupNodeParent == null) {
             setupNodeParent = new ObjectNode(jsonNodeFactory);
