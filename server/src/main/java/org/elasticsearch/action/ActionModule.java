@@ -782,6 +782,11 @@ public class ActionModule extends AbstractModule {
                     settingsFilter, indexNameExpressionResolver, nodesInCluster)) {
                 registerHandler.accept(handler);
             }
+            for (RestHandler handler : plugin.getRestCompatHandlers(settings, restController, clusterSettings, indexScopedSettings,
+                settingsFilter, indexNameExpressionResolver, nodesInCluster)) {
+                //TODO: validate that is registerd with needing the header
+                registerHandler.accept(handler);
+            }
         }
         registerHandler.accept(new RestCatAction(catActions));
     }

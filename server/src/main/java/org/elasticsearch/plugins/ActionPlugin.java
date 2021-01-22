@@ -90,6 +90,15 @@ public interface ActionPlugin {
     }
 
     /**
+     * Rest compatibility handlers added by this plugin.
+     */
+    default List<RestHandler> getRestCompatHandlers(Settings settings, RestController restController, ClusterSettings clusterSettings,
+            IndexScopedSettings indexScopedSettings, SettingsFilter settingsFilter,
+            IndexNameExpressionResolver indexNameExpressionResolver, Supplier<DiscoveryNodes> nodesInCluster) {
+        return Collections.emptyList();
+    }
+
+    /**
      * Returns headers which should be copied through rest requests on to internal requests.
      */
     default Collection<RestHeaderDefinition> getRestHeaders() {

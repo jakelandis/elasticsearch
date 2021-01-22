@@ -25,8 +25,6 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
-import org.elasticsearch.plugins.ActionPlugin;
-import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 
@@ -34,10 +32,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ReindexCompatPlugin extends Plugin implements ActionPlugin {
+public class ReindexRestCompat extends ReindexPlugin {
 
     @Override
-    public List<RestHandler> getRestHandlers(
+    public List<RestHandler> getRestCompatHandlers(
         Settings settings,
         RestController restController,
         ClusterSettings clusterSettings,
@@ -46,6 +44,7 @@ public class ReindexCompatPlugin extends Plugin implements ActionPlugin {
         IndexNameExpressionResolver indexNameExpressionResolver,
         Supplier<DiscoveryNodes> nodesInCluster
     ) {
+
         return Arrays.asList(new FooBar());
     }
 }
