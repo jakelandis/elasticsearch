@@ -316,7 +316,7 @@ public abstract class ESRestTestCase extends ESTestCase {
     public static RequestOptions expectVersionSpecificWarnings(Consumer<VersionSensitiveWarningsHandler> expectationsSetter) {
         Builder builder = RequestOptions.DEFAULT.toBuilder();
         VersionSensitiveWarningsHandler warningsHandler = new VersionSensitiveWarningsHandler(nodeVersions);
-        expectationsSetter.accept(warningsHandler);
+       // expectationsSetter.accept(warningsHandler);
         builder.setWarningsHandler(warningsHandler);
         return builder.build();
     }
