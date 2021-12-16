@@ -11,6 +11,11 @@ package org.elasticsearch.common.logging;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.util.SetOnce;
+import org.elasticsearch.common.regex.Regex;
+import org.elasticsearch.common.settings.Settings;
+
+import java.util.List;
 
 /**
  * A logger that logs deprecation notices. Logger should be initialized with a class or name which will be used
@@ -32,6 +37,7 @@ public class DeprecationLogger {
      * More serious than WARN by 1, but less serious than ERROR
      */
     public static Level CRITICAL = Level.forName("CRITICAL", Level.WARN.intLevel() - 1);
+    private static SetOnce<Settings> initialEnvironment;
 
     private final Logger logger;
 
@@ -51,6 +57,10 @@ public class DeprecationLogger {
      */
     public static DeprecationLogger getLogger(String name) {
         return new DeprecationLogger(name);
+    }
+
+    public static void setInitialEnvironmentSettings(Settings settings){
+        initialEnvironment.set(settings);
     }
 
     private DeprecationLogger(String parentLoggerName) {
@@ -92,11 +102,14 @@ public class DeprecationLogger {
     }
 
     private DeprecationLogger logDeprecation(Level level, DeprecationCategory category, String key, String msg, Object[] params) {
-        String opaqueId = HeaderWarning.getXOpaqueId();
-        String productOrigin = HeaderWarning.getProductOrigin();
-        ESLogMessage deprecationMessage = new DeprecatedMessage(category, key, opaqueId, productOrigin, msg, params);
-        logger.log(level, deprecationMessage);
-        return this;
+        List<String> skipTheseDeprecations = initialEnvironment.get().getAsList("deprecation.skip_deprecated_settings");
+        if (Regex.simpleMatch(skipTheseDeprecations, key) == false) {
+            String opaqueId = HeaderWarning.getXOpaqueId();
+            String productOrigin = HeaderWarning.getProductOrigin();
+            ESLogMessage deprecationMessage = new DeprecatedMessage(category, key, opaqueId, productOrigin, msg, params);
+            logger.log(level, deprecationMessage);
+            return this;
+        }
     }
 
 }
