@@ -35,11 +35,11 @@ public final class SetProcessor extends AbstractProcessor {
     private final String copyFrom;
     private final boolean ignoreEmptyValue;
 
-    SetProcessor(String tag, String description, TemplateScript.Factory field, ValueSource value, String copyFrom) {
+    public SetProcessor(String tag, String description, TemplateScript.Factory field, ValueSource value, String copyFrom) {
         this(tag, description, field, value, copyFrom, true, false);
     }
 
-    SetProcessor(
+    public SetProcessor(
         String tag,
         String description,
         TemplateScript.Factory field,
