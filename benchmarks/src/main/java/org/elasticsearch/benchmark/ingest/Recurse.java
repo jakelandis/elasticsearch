@@ -26,7 +26,9 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,10 +40,12 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+//@Fork(jvmArgsAppend = "-Xmx2g")
 public class Recurse {
 
-    enum Type {SET, UPPER, UPPER_WITH_THROW}
-    static Type type = Type.UPPER_WITH_THROW; // change this to change the test
+    enum Type {SET, UPPER_WITH_THROW, UPPER}
+
+    static Type type = Type.SET; // change this to change the test
 
     @State(Scope.Benchmark)
     public static class Processors {
@@ -70,10 +74,10 @@ public class Recurse {
         }
 
         private CompoundProcessor getRoot(int processorCount, Type type) {
-            Processor[] processors = new Processor[processorCount+1];
+            Processor[] processors = new Processor[processorCount + 1];
             for (int i = 0; i <= processorCount; i++) {
                 switch (type) {
-                    case SET ->  processors[i] = createSetProcessor(i);
+                    case SET -> processors[i] = createSetProcessor(i);
                     case UPPER ->  processors[i] = createUpperCaseProcessor();
                     case UPPER_WITH_THROW ->  processors[i] = createUpperCaseProcessor();
                 }
@@ -91,7 +95,7 @@ public class Recurse {
             );
         }
 
-        private UppercaseProcessor createUpperCaseProcessor(){
+        private UppercaseProcessor createUpperCaseProcessor() {
             return new UppercaseProcessor("mytag", "mydescription", "myfield", true, "myfield");
         }
 
@@ -99,55 +103,95 @@ public class Recurse {
 
     @State(Scope.Benchmark)
     public static class IngestDocuments {
-        public IngestDocument doc;
+        // public IngestDocument doc;
+
+        public List<IngestDocument> aWholeBunch; //use unique documents as defined by object reference to avoid any possible object referenced JVM optimizations
+
 
         @Setup(Level.Trial)
         public void setup() {
-            switch (type) {
-                case SET ->   doc = new IngestDocument(new HashMap<>(), new HashMap<>());
-                case UPPER_WITH_THROW->   doc = new IngestDocument(new HashMap<>(), new HashMap<>()); //will throw since there it will fail to find "myfield"
-                case UPPER ->
-                    {
-                        HashMap<String, Object> mymap = new HashMap<>();
-                        mymap.put("myfield", "foo"); //matches the processor
-                        doc = new IngestDocument(mymap, new HashMap<>());
-                    }
+
+            aWholeBunch = getDocs(1000, type); //should be equal to or above the max number of processors in the tests
+        }
+
+        public List<IngestDocument> getDocs(int docCount, Type type) {
+            List<IngestDocument> docs = new ArrayList<>(docCount);
+            for (int i = 0; i <= docCount; i++) {
+                if (Type.UPPER.equals(type)) {
+                    HashMap<String, Object> mymap = new HashMap<>();
+                    mymap.put("myfield", "foo"); // this will prevent a thrown exception since this matches the processor
+                    docs.add(new IngestDocument(mymap, new HashMap<>()));
+                } else {
+                    docs.add(new IngestDocument(new HashMap<>(), new HashMap<>())); //new instance to ensure no object equality for the test
+                }
+
             }
+            return docs;
+        }
+    }
 
 
+    @Benchmark
+    public void one(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.one.execute(doc, (r, e) -> {
+            });
         }
     }
 
     @Benchmark
-    public void one(Processors processors, IngestDocuments ingestDocuments){
-        processors.one.execute(ingestDocuments.doc, (r, e) -> {});
+    public void two(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.two.execute(doc, (r, e) -> {
+            });
+        }
     }
+
     @Benchmark
-    public void two(Processors processors, IngestDocuments ingestDocuments){
-        processors.two.execute(ingestDocuments.doc, (r, e) -> {});
+    public void three(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.three.execute(doc, (r, e) -> {
+            });
+        }
     }
+
     @Benchmark
-    public void three(Processors processors, IngestDocuments ingestDocuments){
-        processors.three.execute(ingestDocuments.doc, (r, e) -> {});
+    public void ten(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.ten.execute(doc, (r, e) -> {
+            });
+        }
     }
+
     @Benchmark
-    public void ten(Processors processors, IngestDocuments ingestDocuments){
-        processors.ten.execute(ingestDocuments.doc, (r, e) -> {});
+    public void fiftyProcessors(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.fifty.execute(doc, (r, e) -> {
+            });
+        }
     }
+
     @Benchmark
-    public void fiftyProcessors(Processors processors, IngestDocuments ingestDocuments){
-        processors.fifty.execute(ingestDocuments.doc, (r, e) -> {});
+    public void oneHundred(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.hundred.execute(doc, (r, e) -> {
+            });
+        }
     }
+
     @Benchmark
-    public void oneHundred(Processors processors, IngestDocuments ingestDocuments){
-         processors.hundred.execute(ingestDocuments.doc, (r, e) -> {});
+    public void fiveHundred(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.fiveHundred.execute(doc, (r, e) -> {
+            });
+        }
     }
+
     @Benchmark
-    public void fiveHundred(Processors processors, IngestDocuments ingestDocuments){
-        processors.fiveHundred.execute(ingestDocuments.doc, (r, e) -> {});
-    }
-    @Benchmark
-    public void oneThousand(Processors processors, IngestDocuments ingestDocuments){
-        processors.oneThousand.execute(ingestDocuments.doc, (r, e) -> {});
+    public void oneThousand(Processors processors, IngestDocuments ingestDocuments) {
+        for (IngestDocument doc : ingestDocuments.aWholeBunch) {
+            processors.oneThousand.execute(doc, (r, e) -> {
+            });
+        }
     }
 }
