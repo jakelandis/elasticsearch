@@ -19,7 +19,7 @@ public final class UppercaseProcessor extends AbstractStringProcessor<String> {
 
     public static final String TYPE = "uppercase";
 
-    UppercaseProcessor(String processorTag, String description, String field, boolean ignoreMissing, String targetField) {
+    public UppercaseProcessor(String processorTag, String description, String field, boolean ignoreMissing, String targetField) {
         super(processorTag, description, ignoreMissing, targetField, field);
     }
 

@@ -14,6 +14,7 @@ import org.elasticsearch.ingest.Processor;
 import org.elasticsearch.ingest.TestTemplateService;
 import org.elasticsearch.ingest.ValueSource;
 import org.elasticsearch.ingest.common.SetProcessor;
+import org.elasticsearch.ingest.common.UppercaseProcessor;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
@@ -27,7 +28,6 @@ import org.openjdk.jmh.annotations.Warmup;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 /**
  * Ingest node processor execution is overly recursive. This test compares the differences for pipelines with
@@ -40,9 +40,12 @@ import java.util.function.BiConsumer;
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 public class Recurse {
 
+    enum Type {SET, UPPER, UPPER_WITH_THROW}
+    static Type type = Type.UPPER_WITH_THROW; // change this to change the test
 
     @State(Scope.Benchmark)
     public static class Processors {
+
 
         public CompoundProcessor one;
         public CompoundProcessor two;
@@ -55,25 +58,31 @@ public class Recurse {
 
         @Setup(Level.Trial)
         public void setup() {
-            one = getRoot(1);
-            two = getRoot(2);
-            three = getRoot(3);
-            ten = getRoot(10);
-            fifty = getRoot(50);
-            hundred = getRoot(100);
-            fiveHundred = getRoot(500);
-            oneThousand = getRoot(1000);
+
+            one = getRoot(1, type);
+            two = getRoot(2, type);
+            three = getRoot(3, type);
+            ten = getRoot(10, type);
+            fifty = getRoot(50, type);
+            hundred = getRoot(100, type);
+            fiveHundred = getRoot(500, type);
+            oneThousand = getRoot(1000, type);
         }
 
-        private CompoundProcessor getRoot(int processorCount) {
+        private CompoundProcessor getRoot(int processorCount, Type type) {
             Processor[] processors = new Processor[processorCount+1];
             for (int i = 0; i <= processorCount; i++) {
-                processors[i] = createProcessor(i);
+                switch (type) {
+                    case SET ->  processors[i] = createSetProcessor(i);
+                    case UPPER ->  processors[i] = createUpperCaseProcessor();
+                    case UPPER_WITH_THROW ->  processors[i] = createUpperCaseProcessor();
+                }
+
             }
             return new CompoundProcessor(processors);
         }
 
-        private SetProcessor createProcessor(int value) {
+        private SetProcessor createSetProcessor(int value) {
             return new SetProcessor("mytag", "mydescription", new TestTemplateService.MockTemplateScript.Factory("size"),
                 ValueSource.wrap(value, TestTemplateService.instance()),
                 null,
@@ -81,48 +90,64 @@ public class Recurse {
                 true
             );
         }
+
+        private UppercaseProcessor createUpperCaseProcessor(){
+            return new UppercaseProcessor("mytag", "mydescription", "myfield", true, "myfield");
+        }
+
     }
 
     @State(Scope.Benchmark)
     public static class IngestDocuments {
-        public IngestDocument empty;
+        public IngestDocument doc;
 
         @Setup(Level.Trial)
         public void setup() {
-            empty = new IngestDocument(new HashMap<>(), new HashMap<>());
+            switch (type) {
+                case SET ->   doc = new IngestDocument(new HashMap<>(), new HashMap<>());
+                case UPPER_WITH_THROW->   doc = new IngestDocument(new HashMap<>(), new HashMap<>()); //will throw since there it will fail to find "myfield"
+                case UPPER ->
+                    {
+                        HashMap<String, Object> mymap = new HashMap<>();
+                        mymap.put("myfield", "foo"); //matches the processor
+                        doc = new IngestDocument(mymap, new HashMap<>());
+                    }
+            }
+
+
         }
     }
 
     @Benchmark
     public void one(Processors processors, IngestDocuments ingestDocuments){
-        processors.one.execute(ingestDocuments.empty, (r, e) -> {});
+        processors.one.execute(ingestDocuments.doc, (r, e) -> {});
     }
     @Benchmark
     public void two(Processors processors, IngestDocuments ingestDocuments){
-        processors.two.execute(ingestDocuments.empty, (r, e) -> {});
+        processors.two.execute(ingestDocuments.doc, (r, e) -> {});
     }
     @Benchmark
     public void three(Processors processors, IngestDocuments ingestDocuments){
-        processors.three.execute(ingestDocuments.empty, (r, e) -> {});
+        processors.three.execute(ingestDocuments.doc, (r, e) -> {});
     }
     @Benchmark
     public void ten(Processors processors, IngestDocuments ingestDocuments){
-        processors.ten.execute(ingestDocuments.empty, (r, e) -> {});
+        processors.ten.execute(ingestDocuments.doc, (r, e) -> {});
     }
     @Benchmark
     public void fiftyProcessors(Processors processors, IngestDocuments ingestDocuments){
-        processors.fifty.execute(ingestDocuments.empty, (r, e) -> {});
+        processors.fifty.execute(ingestDocuments.doc, (r, e) -> {});
     }
     @Benchmark
     public void oneHundred(Processors processors, IngestDocuments ingestDocuments){
-         processors.hundred.execute(ingestDocuments.empty, (r, e) -> {});
+         processors.hundred.execute(ingestDocuments.doc, (r, e) -> {});
     }
     @Benchmark
     public void fiveHundred(Processors processors, IngestDocuments ingestDocuments){
-        processors.fiveHundred.execute(ingestDocuments.empty, (r, e) -> {});
+        processors.fiveHundred.execute(ingestDocuments.doc, (r, e) -> {});
     }
     @Benchmark
     public void oneThousand(Processors processors, IngestDocuments ingestDocuments){
-        processors.oneThousand.execute(ingestDocuments.empty, (r, e) -> {});
+        processors.oneThousand.execute(ingestDocuments.doc, (r, e) -> {});
     }
 }
