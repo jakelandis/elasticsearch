@@ -8,6 +8,8 @@
 
 package org.elasticsearch.rest.action.admin.indices;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.rollover.RolloverRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.internal.node.NodeClient;
@@ -25,6 +27,7 @@ import static org.elasticsearch.rest.RestRequest.Method.POST;
 
 public class RestRolloverIndexAction extends BaseRestHandler {
 
+    private static final Logger logger = LogManager.getLogger("custom_timer");
     private static final DeprecationLogger deprecationLogger = DeprecationLogger.getLogger(RestRolloverIndexAction.class);
     public static final String TYPES_DEPRECATION_MESSAGE = "[types removal] Using include_type_name in rollover "
         + "index requests is deprecated. The parameter will be removed in the next major version.";
@@ -41,6 +44,7 @@ public class RestRolloverIndexAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
+        long start = System.nanoTime();
         final boolean includeTypeName = includeTypeName(request);
         RolloverRequest rolloverIndexRequest = new RolloverRequest(request.param("index"), request.param("new_index"));
         request.applyContentParser(parser -> rolloverIndexRequest.fromXContent(includeTypeName, parser));
@@ -49,9 +53,11 @@ public class RestRolloverIndexAction extends BaseRestHandler {
         rolloverIndexRequest.masterNodeTimeout(request.paramAsTime("master_timeout", rolloverIndexRequest.masterNodeTimeout()));
         rolloverIndexRequest.getCreateIndexRequest()
             .waitForActiveShards(ActiveShardCount.parseString(request.param("wait_for_active_shards")));
-        return channel -> new RestCancellableNodeClient(client, request.getHttpChannel()).admin()
+        RestChannelConsumer returnValue = channel -> new RestCancellableNodeClient(client, request.getHttpChannel()).admin()
             .indices()
             .rolloverIndex(rolloverIndexRequest, new RestToXContentListener<>(channel));
+        logger.info("POST rollover: " + (System.nanoTime() - start));
+        return returnValue;
     }
 
     private static boolean includeTypeName(RestRequest request) {

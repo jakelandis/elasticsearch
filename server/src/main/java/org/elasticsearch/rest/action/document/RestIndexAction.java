@@ -8,6 +8,8 @@
 
 package org.elasticsearch.rest.action.document;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.index.IndexRequest;
@@ -30,6 +32,7 @@ import static org.elasticsearch.rest.RestRequest.Method.POST;
 import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestIndexAction extends BaseRestHandler {
+    private static final Logger logger = LogManager.getLogger("custom_timer");
     static final String TYPES_DEPRECATION_MESSAGE = "[types removal] Specifying types in document "
         + "index requests is deprecated, use the typeless endpoints instead (/{index}/_doc/{id}, /{index}/_doc, "
         + "or /{index}/_create/{id}).";
@@ -114,6 +117,7 @@ public class RestIndexAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
+        long start = System.nanoTime();
         if (request.getRestApiVersion() == RestApiVersion.V_7) {
             request.param("type"); // consume and ignore the type
         }
@@ -138,11 +142,12 @@ public class RestIndexAction extends BaseRestHandler {
         if (sOpType != null) {
             indexRequest.opType(sOpType);
         }
-
-        return channel -> client.index(
+        RestChannelConsumer returnValue = channel -> client.index(
             indexRequest,
             new RestStatusToXContentListener<>(channel, r -> r.getLocation(indexRequest.routing()))
         );
+        logger.info("non _bulk index request [" + indexRequest.getDescription() + "]: " + (System.nanoTime() - start));
+        return returnValue;
     }
 
 }

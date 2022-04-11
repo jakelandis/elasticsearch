@@ -8,6 +8,8 @@
 
 package org.elasticsearch.rest.action.admin.indices;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.template.put.PutComposableIndexTemplateAction;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.cluster.metadata.ComposableIndexTemplate;
@@ -23,6 +25,8 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestPutComposableIndexTemplateAction extends BaseRestHandler {
 
+    private static final Logger logger = LogManager.getLogger("custom_timer");
+
     @Override
     public List<Route> routes() {
         return List.of(new Route(POST, "/_index_template/{name}"), new Route(PUT, "/_index_template/{name}"));
@@ -35,13 +39,18 @@ public class RestPutComposableIndexTemplateAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
-
+        long start = System.nanoTime();
         PutComposableIndexTemplateAction.Request putRequest = new PutComposableIndexTemplateAction.Request(request.param("name"));
         putRequest.masterNodeTimeout(request.paramAsTime("master_timeout", putRequest.masterNodeTimeout()));
         putRequest.create(request.paramAsBoolean("create", false));
         putRequest.cause(request.param("cause", "api"));
         putRequest.indexTemplate(ComposableIndexTemplate.parse(request.contentParser()));
-
-        return channel -> client.execute(PutComposableIndexTemplateAction.INSTANCE, putRequest, new RestToXContentListener<>(channel));
+        RestChannelConsumer returnValue = channel -> client.execute(
+            PutComposableIndexTemplateAction.INSTANCE,
+            putRequest,
+            new RestToXContentListener<>(channel)
+        );
+        logger.info("PUT composable index template: " + (System.nanoTime() - start));
+        return returnValue;
     }
 }

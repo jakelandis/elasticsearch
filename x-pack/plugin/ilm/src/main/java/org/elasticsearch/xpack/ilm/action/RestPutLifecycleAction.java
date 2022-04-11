@@ -7,6 +7,8 @@
 
 package org.elasticsearch.xpack.ilm.action;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
@@ -21,6 +23,8 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestPutLifecycleAction extends BaseRestHandler {
 
+    private static final Logger logger = LogManager.getLogger("custom_timer");
+
     @Override
     public List<Route> routes() {
         return List.of(new Route(PUT, "/_ilm/policy/{name}"));
@@ -33,13 +37,19 @@ public class RestPutLifecycleAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        long start = System.nanoTime();
         String lifecycleName = restRequest.param("name");
         try (XContentParser parser = restRequest.contentParser()) {
             PutLifecycleAction.Request putLifecycleRequest = PutLifecycleAction.Request.parseRequest(lifecycleName, parser);
             putLifecycleRequest.timeout(restRequest.paramAsTime("timeout", putLifecycleRequest.timeout()));
             putLifecycleRequest.masterNodeTimeout(restRequest.paramAsTime("master_timeout", putLifecycleRequest.masterNodeTimeout()));
-
-            return channel -> client.execute(PutLifecycleAction.INSTANCE, putLifecycleRequest, new RestToXContentListener<>(channel));
+            RestChannelConsumer returnValue = channel -> client.execute(
+                PutLifecycleAction.INSTANCE,
+                putLifecycleRequest,
+                new RestToXContentListener<>(channel)
+            );
+            logger.info("PUT ILM policy: " + (System.nanoTime() - start));
+            return returnValue;
         }
     }
 }

@@ -9,6 +9,8 @@
 package org.elasticsearch.rest.action.admin.indices;
 
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.Strings;
@@ -28,6 +30,8 @@ import static org.elasticsearch.rest.RestRequest.Method.POST;
 import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestPutIndexTemplateAction extends BaseRestHandler {
+
+    private static final Logger logger = LogManager.getLogger("custom_timer");
 
     private static final DeprecationLogger deprecationLogger = DeprecationLogger.getLogger(RestPutIndexTemplateAction.class);
     public static final String DEPRECATION_WARNING = "Legacy index templates are deprecated in favor of composable templates.";
@@ -51,6 +55,7 @@ public class RestPutIndexTemplateAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
+        long start = System.nanoTime();
         PutIndexTemplateRequest putRequest = new PutIndexTemplateRequest(request.param("name"));
         if (request.getRestApiVersion() == RestApiVersion.V_7 && request.hasParam("template")) {
             deprecationLogger.compatibleCritical(
@@ -88,7 +93,10 @@ public class RestPutIndexTemplateAction extends BaseRestHandler {
             putRequest.patterns(List.of((String) sourceAsMap.remove("template")));
         }
         putRequest.source(sourceAsMap);
-
-        return channel -> client.admin().indices().putTemplate(putRequest, new RestToXContentListener<>(channel));
+        RestChannelConsumer returnValue = channel -> client.admin()
+            .indices()
+            .putTemplate(putRequest, new RestToXContentListener<>(channel));
+        logger.info("PUT legacy index template: " + (System.nanoTime() - start));
+        return returnValue;
     }
 }

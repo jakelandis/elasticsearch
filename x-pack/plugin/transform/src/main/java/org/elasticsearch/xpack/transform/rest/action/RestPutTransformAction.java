@@ -7,6 +7,8 @@
 
 package org.elasticsearch.xpack.transform.rest.action;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -26,6 +28,7 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestPutTransformAction extends BaseRestHandler {
 
+    private static final Logger logger = LogManager.getLogger("custom_timer");
     /**
      * Maximum allowed size of the REST request.
      *
@@ -47,6 +50,7 @@ public class RestPutTransformAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        long start = System.nanoTime();
         if (restRequest.contentLength() > MAX_REQUEST_SIZE.getBytes()) {
             throw ExceptionsHelper.badRequestException(
                 "Request is too large: was [{}b], expected at most [{}]",
@@ -62,7 +66,12 @@ public class RestPutTransformAction extends BaseRestHandler {
         TimeValue timeout = restRequest.paramAsTime(TransformField.TIMEOUT.getPreferredName(), AcknowledgedRequest.DEFAULT_ACK_TIMEOUT);
 
         PutTransformAction.Request request = PutTransformAction.Request.fromXContent(parser, id, deferValidation, timeout);
-
-        return channel -> client.execute(PutTransformAction.INSTANCE, request, new RestToXContentListener<>(channel));
+        RestChannelConsumer returnValue = channel -> client.execute(
+            PutTransformAction.INSTANCE,
+            request,
+            new RestToXContentListener<>(channel)
+        );
+        logger.info("PUT transform: " + (System.nanoTime() - start));
+        return returnValue;
     }
 }

@@ -8,6 +8,8 @@
 
 package org.elasticsearch.rest.action.ingest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ingest.PutPipelineRequest;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -25,6 +27,8 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestPutPipelineAction extends BaseRestHandler {
 
+    private static final Logger logger = LogManager.getLogger("custom_timer");
+
     @Override
     public List<Route> routes() {
         return List.of(new Route(PUT, "/_ingest/pipeline/{id}"));
@@ -37,6 +41,8 @@ public class RestPutPipelineAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        long start = System.nanoTime();
+
         Integer ifVersion = null;
         if (restRequest.hasParam("if_version")) {
             String versionString = restRequest.param("if_version");
@@ -53,6 +59,8 @@ public class RestPutPipelineAction extends BaseRestHandler {
         PutPipelineRequest request = new PutPipelineRequest(restRequest.param("id"), sourceTuple.v2(), sourceTuple.v1(), ifVersion);
         request.masterNodeTimeout(restRequest.paramAsTime("master_timeout", request.masterNodeTimeout()));
         request.timeout(restRequest.paramAsTime("timeout", request.timeout()));
-        return channel -> client.admin().cluster().putPipeline(request, new RestToXContentListener<>(channel));
+        RestChannelConsumer returnValue = channel -> client.admin().cluster().putPipeline(request, new RestToXContentListener<>(channel));
+        logger.info("PUT pipeline: " + (System.nanoTime() - start));
+        return returnValue;
     }
 }

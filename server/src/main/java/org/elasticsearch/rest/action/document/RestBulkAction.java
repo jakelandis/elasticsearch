@@ -8,6 +8,8 @@
 
 package org.elasticsearch.rest.action.document;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkShardRequest;
@@ -37,6 +39,7 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
  * </pre>
  */
 public class RestBulkAction extends BaseRestHandler {
+    private static final Logger logger = LogManager.getLogger("custom_timer");
     public static final String TYPES_DEPRECATION_MESSAGE = "[types removal]" + " Specifying types in bulk requests is deprecated.";
 
     private final boolean allowExplicitIndex;
@@ -64,6 +67,7 @@ public class RestBulkAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
+        long start = System.nanoTime();
         if (request.getRestApiVersion() == RestApiVersion.V_7 && request.hasParam("type")) {
             request.param("type");
         }
@@ -90,8 +94,9 @@ public class RestBulkAction extends BaseRestHandler {
             request.getXContentType(),
             request.getRestApiVersion()
         );
-
-        return channel -> client.bulk(bulkRequest, new RestStatusToXContentListener<>(channel));
+        RestChannelConsumer returnValue = channel -> client.bulk(bulkRequest, new RestStatusToXContentListener<>(channel));
+        logger.info("_bulk request [" + defaultIndex + "]: " + (System.nanoTime() - start));
+        return returnValue;
     }
 
     @Override

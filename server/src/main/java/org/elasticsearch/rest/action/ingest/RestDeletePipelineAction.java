@@ -8,6 +8,8 @@
 
 package org.elasticsearch.rest.action.ingest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ingest.DeletePipelineRequest;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -20,6 +22,9 @@ import java.util.List;
 import static org.elasticsearch.rest.RestRequest.Method.DELETE;
 
 public class RestDeletePipelineAction extends BaseRestHandler {
+
+    private static final Logger logger = LogManager.getLogger("custom_timer");
+
     @Override
     public List<Route> routes() {
         return List.of(new Route(DELETE, "/_ingest/pipeline/{id}"));
@@ -32,9 +37,14 @@ public class RestDeletePipelineAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        long start = System.nanoTime();
         DeletePipelineRequest request = new DeletePipelineRequest(restRequest.param("id"));
         request.masterNodeTimeout(restRequest.paramAsTime("master_timeout", request.masterNodeTimeout()));
         request.timeout(restRequest.paramAsTime("timeout", request.timeout()));
-        return channel -> client.admin().cluster().deletePipeline(request, new RestToXContentListener<>(channel));
+        RestChannelConsumer returnValue = channel -> client.admin()
+            .cluster()
+            .deletePipeline(request, new RestToXContentListener<>(channel));
+        logger.info("DELETE pipeline: " + (System.nanoTime() - start));
+        return returnValue;
     }
 }

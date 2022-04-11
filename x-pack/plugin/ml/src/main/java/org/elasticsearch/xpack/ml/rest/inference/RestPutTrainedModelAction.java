@@ -6,6 +6,8 @@
  */
 package org.elasticsearch.xpack.ml.rest.inference;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -23,6 +25,8 @@ import static org.elasticsearch.xpack.ml.MachineLearning.BASE_PATH;
 
 public class RestPutTrainedModelAction extends BaseRestHandler {
 
+    private static final Logger logger = LogManager.getLogger("custom_timer");
+
     @Override
     public List<Route> routes() {
         return List.of(
@@ -39,11 +43,18 @@ public class RestPutTrainedModelAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        long start = System.nanoTime();
         String id = restRequest.param(TrainedModelConfig.MODEL_ID.getPreferredName());
         XContentParser parser = restRequest.contentParser();
         boolean deferDefinitionDecompression = restRequest.paramAsBoolean(PutTrainedModelAction.DEFER_DEFINITION_DECOMPRESSION, false);
         PutTrainedModelAction.Request putRequest = PutTrainedModelAction.Request.parseRequest(id, deferDefinitionDecompression, parser);
         putRequest.timeout(restRequest.paramAsTime("timeout", putRequest.timeout()));
-        return channel -> client.execute(PutTrainedModelAction.INSTANCE, putRequest, new RestToXContentListener<>(channel));
+        RestChannelConsumer returnValue = channel -> client.execute(
+            PutTrainedModelAction.INSTANCE,
+            putRequest,
+            new RestToXContentListener<>(channel)
+        );
+        logger.info("PUT model: " + (System.nanoTime() - start));
+        return returnValue;
     }
 }
