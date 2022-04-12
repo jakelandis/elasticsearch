@@ -11,14 +11,17 @@ package org.elasticsearch.rest.action.admin.indices;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.rollover.RolloverRequest;
+import org.elasticsearch.action.admin.indices.rollover.RolloverResponse;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestCancellableNodeClient;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -53,11 +56,17 @@ public class RestRolloverIndexAction extends BaseRestHandler {
         rolloverIndexRequest.masterNodeTimeout(request.paramAsTime("master_timeout", rolloverIndexRequest.masterNodeTimeout()));
         rolloverIndexRequest.getCreateIndexRequest()
             .waitForActiveShards(ActiveShardCount.parseString(request.param("wait_for_active_shards")));
-        RestChannelConsumer returnValue = channel -> new RestCancellableNodeClient(client, request.getHttpChannel()).admin()
+        return channel -> new RestCancellableNodeClient(client, request.getHttpChannel()).admin()
             .indices()
-            .rolloverIndex(rolloverIndexRequest, new RestToXContentListener<>(channel));
-        logger.info("POST rollover: " + (System.nanoTime() - start));
-        return returnValue;
+            .rolloverIndex(rolloverIndexRequest, new RestToXContentListener<>(channel) {
+                @Override
+                public RestResponse buildResponse(RolloverResponse rolloverResponse, XContentBuilder builder) throws Exception {
+                    RestResponse returnValue = super.buildResponse(rolloverResponse, builder);
+                    logger.info("PUT legacy index template: " + (System.nanoTime() - start));
+                    return returnValue;
+                }
+            });
+
     }
 
     private static boolean includeTypeName(RestRequest request) {

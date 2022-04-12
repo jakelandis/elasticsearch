@@ -11,12 +11,15 @@ package org.elasticsearch.rest.action.ingest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ingest.PutPipelineRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.core.Tuple;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentType;
 
 import java.io.IOException;
@@ -59,8 +62,13 @@ public class RestPutPipelineAction extends BaseRestHandler {
         PutPipelineRequest request = new PutPipelineRequest(restRequest.param("id"), sourceTuple.v2(), sourceTuple.v1(), ifVersion);
         request.masterNodeTimeout(restRequest.paramAsTime("master_timeout", request.masterNodeTimeout()));
         request.timeout(restRequest.paramAsTime("timeout", request.timeout()));
-        RestChannelConsumer returnValue = channel -> client.admin().cluster().putPipeline(request, new RestToXContentListener<>(channel));
-        logger.info("PUT pipeline: " + (System.nanoTime() - start));
-        return returnValue;
+        return channel -> client.admin().cluster().putPipeline(request, new RestToXContentListener<>(channel) {
+            @Override
+            public RestResponse buildResponse(AcknowledgedResponse acknowledgedResponse, XContentBuilder builder) throws Exception {
+                RestResponse returnValue = super.buildResponse(acknowledgedResponse, builder);
+                logger.info("PUT pipeline: " + (System.nanoTime() - start));
+                return returnValue;
+            }
+        });
     }
 }

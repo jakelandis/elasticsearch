@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.bulk.BulkShardRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.internal.Requests;
@@ -20,8 +21,10 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
+import org.elasticsearch.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -94,9 +97,16 @@ public class RestBulkAction extends BaseRestHandler {
             request.getXContentType(),
             request.getRestApiVersion()
         );
-        RestChannelConsumer returnValue = channel -> client.bulk(bulkRequest, new RestStatusToXContentListener<>(channel));
-        logger.info("_bulk request [" + defaultIndex + "]: " + (System.nanoTime() - start));
-        return returnValue;
+        return channel -> {
+            client.bulk(bulkRequest, new RestStatusToXContentListener<>(channel) {
+                @Override
+                public RestResponse buildResponse(BulkResponse bulkItemResponses, XContentBuilder builder) throws Exception {
+                    RestResponse returnValue = super.buildResponse(bulkItemResponses, builder);
+                    logger.info("_bulk request [" + defaultIndex + "]: " + (System.nanoTime() - start));
+                    return returnValue;
+                }
+            });
+        };
     }
 
     @Override

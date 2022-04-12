@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.logging.DeprecationLogger;
@@ -19,7 +20,9 @@ import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -93,10 +96,13 @@ public class RestPutIndexTemplateAction extends BaseRestHandler {
             putRequest.patterns(List.of((String) sourceAsMap.remove("template")));
         }
         putRequest.source(sourceAsMap);
-        RestChannelConsumer returnValue = channel -> client.admin()
-            .indices()
-            .putTemplate(putRequest, new RestToXContentListener<>(channel));
-        logger.info("PUT legacy index template: " + (System.nanoTime() - start));
-        return returnValue;
+        return channel -> client.admin().indices().putTemplate(putRequest, new RestToXContentListener<>(channel) {
+            @Override
+            public RestResponse buildResponse(AcknowledgedResponse acknowledgedResponse, XContentBuilder builder) throws Exception {
+                RestResponse returnValue = super.buildResponse(acknowledgedResponse, builder);
+                logger.info("PUT legacy index template: " + (System.nanoTime() - start));
+                return returnValue;
+            }
+        });
     }
 }

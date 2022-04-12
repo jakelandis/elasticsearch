@@ -11,10 +11,13 @@ package org.elasticsearch.rest.action.ingest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ingest.DeletePipelineRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,10 +44,14 @@ public class RestDeletePipelineAction extends BaseRestHandler {
         DeletePipelineRequest request = new DeletePipelineRequest(restRequest.param("id"));
         request.masterNodeTimeout(restRequest.paramAsTime("master_timeout", request.masterNodeTimeout()));
         request.timeout(restRequest.paramAsTime("timeout", request.timeout()));
-        RestChannelConsumer returnValue = channel -> client.admin()
-            .cluster()
-            .deletePipeline(request, new RestToXContentListener<>(channel));
-        logger.info("DELETE pipeline: " + (System.nanoTime() - start));
-        return returnValue;
+        return channel -> client.admin().cluster().deletePipeline(request, new RestToXContentListener<>(channel) {
+
+            @Override
+            public RestResponse buildResponse(AcknowledgedResponse acknowledgedResponse, XContentBuilder builder) throws Exception {
+                RestResponse returnValue = super.buildResponse(acknowledgedResponse, builder);
+                logger.info("DELETE pipeline: " + (System.nanoTime() - start));
+                return returnValue;
+            }
+        });
     }
 }

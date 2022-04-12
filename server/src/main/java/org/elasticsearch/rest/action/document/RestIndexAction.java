@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -20,8 +21,10 @@ import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -142,12 +145,17 @@ public class RestIndexAction extends BaseRestHandler {
         if (sOpType != null) {
             indexRequest.opType(sOpType);
         }
-        RestChannelConsumer returnValue = channel -> client.index(
+        return channel -> client.index(
             indexRequest,
-            new RestStatusToXContentListener<>(channel, r -> r.getLocation(indexRequest.routing()))
-        );
-        logger.info("non _bulk index request [" + indexRequest.getDescription() + "]: " + (System.nanoTime() - start));
-        return returnValue;
-    }
+            new RestStatusToXContentListener<>(channel, r -> r.getLocation(indexRequest.routing())) {
 
+                @Override
+                public RestResponse buildResponse(IndexResponse indexResponse, XContentBuilder builder) throws Exception {
+                    RestResponse returnValue = super.buildResponse(indexResponse, builder);
+                    logger.info("non _bulk index request [" + indexRequest.getDescription() + "]: " + (System.nanoTime() - start));
+                    return returnValue;
+                }
+            }
+        );
+    }
 }

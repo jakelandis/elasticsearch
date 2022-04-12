@@ -9,10 +9,13 @@ package org.elasticsearch.xpack.ilm.action;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentParser;
 import org.elasticsearch.xpack.core.ilm.action.PutLifecycleAction;
 
@@ -43,13 +46,14 @@ public class RestPutLifecycleAction extends BaseRestHandler {
             PutLifecycleAction.Request putLifecycleRequest = PutLifecycleAction.Request.parseRequest(lifecycleName, parser);
             putLifecycleRequest.timeout(restRequest.paramAsTime("timeout", putLifecycleRequest.timeout()));
             putLifecycleRequest.masterNodeTimeout(restRequest.paramAsTime("master_timeout", putLifecycleRequest.masterNodeTimeout()));
-            RestChannelConsumer returnValue = channel -> client.execute(
-                PutLifecycleAction.INSTANCE,
-                putLifecycleRequest,
-                new RestToXContentListener<>(channel)
-            );
-            logger.info("PUT ILM policy: " + (System.nanoTime() - start));
-            return returnValue;
+            return channel -> client.execute(PutLifecycleAction.INSTANCE, putLifecycleRequest, new RestToXContentListener<>(channel) {
+                @Override
+                public RestResponse buildResponse(AcknowledgedResponse acknowledgedResponse, XContentBuilder builder) throws Exception {
+                    RestResponse returnValue = super.buildResponse(acknowledgedResponse, builder);
+                    logger.info("PUT ILM policy: " + (System.nanoTime() - start));
+                    return returnValue;
+                }
+            });
         }
     }
 }

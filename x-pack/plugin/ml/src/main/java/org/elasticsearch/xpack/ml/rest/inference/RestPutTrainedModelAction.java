@@ -12,7 +12,9 @@ import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentParser;
 import org.elasticsearch.xpack.core.ml.action.PutTrainedModelAction;
 import org.elasticsearch.xpack.core.ml.inference.TrainedModelConfig;
@@ -49,12 +51,15 @@ public class RestPutTrainedModelAction extends BaseRestHandler {
         boolean deferDefinitionDecompression = restRequest.paramAsBoolean(PutTrainedModelAction.DEFER_DEFINITION_DECOMPRESSION, false);
         PutTrainedModelAction.Request putRequest = PutTrainedModelAction.Request.parseRequest(id, deferDefinitionDecompression, parser);
         putRequest.timeout(restRequest.paramAsTime("timeout", putRequest.timeout()));
-        RestChannelConsumer returnValue = channel -> client.execute(
-            PutTrainedModelAction.INSTANCE,
-            putRequest,
-            new RestToXContentListener<>(channel)
-        );
-        logger.info("PUT model: " + (System.nanoTime() - start));
-        return returnValue;
+        return channel -> client.execute(PutTrainedModelAction.INSTANCE, putRequest, new RestToXContentListener<>(channel) {
+
+            @Override
+            public RestResponse buildResponse(PutTrainedModelAction.Response response, XContentBuilder builder) throws Exception {
+                RestResponse returnValue = super.buildResponse(response, builder);
+                logger.info("PUT model: " + (System.nanoTime() - start));
+                return returnValue;
+            }
+        });
+
     }
 }
