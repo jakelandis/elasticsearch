@@ -739,6 +739,7 @@ public class RBACEngine implements AuthorizationEngine {
         return resolveAuthorizedIndicesFromRole(role, requestInfo, lookup, () -> LoadAuthorizedIndicesTimeChecker.NO_OP_CONSUMER);
     }
 
+    private static final char dot = '.';
     static Set<String> resolveAuthorizedIndicesFromRole(
         Role role,
         RequestInfo requestInfo,
@@ -757,6 +758,11 @@ public class RBACEngine implements AuthorizationEngine {
             // TODO: can this be done smarter? I think there are usually more indices/aliases in the cluster then indices defined a roles?
             if (includeDataStreams) {
                 for (IndexAbstraction indexAbstraction : lookup.values()) {
+                    //SUPER HACKY - DO NOT MERGE THIS !!
+                    if(dot == indexAbstraction.getName().charAt(0)){
+                        continue;
+                    }
+                    //END SUPER HACKY
                     if (predicate.test(indexAbstraction)) {
                         indicesAndAliases.add(indexAbstraction.getName());
                         if (indexAbstraction.getType() == IndexAbstraction.Type.DATA_STREAM) {
