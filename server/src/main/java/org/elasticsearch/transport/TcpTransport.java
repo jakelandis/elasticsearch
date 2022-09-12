@@ -1008,7 +1008,9 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
             profiles.add(new ProfileSettings(settings, TransportSettings.DEFAULT_PROFILE));
         }
         if (isUntrustedSet == false) {
-            profiles.add(new ProfileSettings(settings, TransportSettings.UNTRUSTED_PROFILE));
+            if (isUntrustedRemoteClusterEnabled()) {
+                profiles.add(new ProfileSettings(settings, TransportSettings.UNTRUSTED_PROFILE));
+            }
         }
         return Collections.unmodifiableSet(profiles);
     }
