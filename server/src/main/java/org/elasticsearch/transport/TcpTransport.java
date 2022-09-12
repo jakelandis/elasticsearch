@@ -1055,8 +1055,8 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
                 throw new IllegalStateException("profile [" + profileName + "] has no port configured");
             }
             portOrRange = TransportSettings.PORT_PROFILE.getConcreteSettingForNamespace(profileName).get(settings);
-            publishPort = isDefaultProfile
-                ? TransportSettings.PUBLISH_PORT.get(settings)
+            publishPort = isDefaultProfile ? TransportSettings.PUBLISH_PORT.get(settings)
+                : isUntrustedProfile ? TransportSettings.UNTRUSTED_PUBLISH_PORT.get(settings)
                 : TransportSettings.PUBLISH_PORT_PROFILE.getConcreteSettingForNamespace(profileName).get(settings);
         }
     }

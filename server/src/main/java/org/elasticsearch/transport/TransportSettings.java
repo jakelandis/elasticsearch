@@ -68,7 +68,7 @@ public final class TransportSettings {
     );
     public static final Setting<String> UNTRUSTED_PORT = new Setting<>(
         "transport.untrusted.port",
-        "9400",
+        "9400-9410",
         Function.identity(),
         Setting.Property.NodeScope
     );
@@ -83,6 +83,8 @@ public final class TransportSettings {
         }
     );
     public static final Setting<Integer> PUBLISH_PORT = intSetting("transport.publish_port", -1, -1, Setting.Property.NodeScope);
+    public static final Setting<Integer> UNTRUSTED_PUBLISH_PORT = intSetting("transport.untrusted.publish_port", -1, -1,
+        Setting.Property.NodeScope);
     public static final Setting.AffixSetting<Integer> PUBLISH_PORT_PROFILE = affixKeySetting(
         "transport.profiles.",
         "publish_port",
