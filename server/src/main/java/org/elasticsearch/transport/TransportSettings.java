@@ -29,6 +29,7 @@ import static org.elasticsearch.common.settings.Setting.timeSetting;
 public final class TransportSettings {
 
     public static final String DEFAULT_PROFILE = "default";
+    public static final String UNTRUSTED_PROFILE = "untrusted";
     public static final String FEATURE_PREFIX = "transport.features";
 
     public static final Setting<List<String>> HOST = listSetting(
@@ -65,10 +66,21 @@ public final class TransportSettings {
         Function.identity(),
         Setting.Property.NodeScope
     );
+    public static final Setting<String> UNTRUSTED_PORT = new Setting<>(
+        "transport.untrusted.port",
+        "9400",
+        Function.identity(),
+        Setting.Property.NodeScope
+    );
     public static final Setting.AffixSetting<String> PORT_PROFILE = affixKeySetting(
         "transport.profiles.",
         "port",
-        key -> new Setting<>(key, PORT, Function.identity(), Setting.Property.NodeScope)
+        key ->  {
+            if(key.endsWith(UNTRUSTED_PROFILE + ".port")) {
+                return new Setting<>(key, UNTRUSTED_PORT, Function.identity(), Setting.Property.NodeScope);
+            }
+            return new Setting<>(key, PORT, Function.identity(), Setting.Property.NodeScope);
+        }
     );
     public static final Setting<Integer> PUBLISH_PORT = intSetting("transport.publish_port", -1, -1, Setting.Property.NodeScope);
     public static final Setting.AffixSetting<Integer> PUBLISH_PORT_PROFILE = affixKeySetting(

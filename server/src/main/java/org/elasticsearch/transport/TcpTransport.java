@@ -994,14 +994,21 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
     public static Set<ProfileSettings> getProfileSettings(Settings settings) {
         HashSet<ProfileSettings> profiles = new HashSet<>();
         boolean isDefaultSet = false;
+        boolean isUntrustedSet = false;
         for (String profile : settings.getGroups("transport.profiles.", true).keySet()) {
             profiles.add(new ProfileSettings(settings, profile));
             if (TransportSettings.DEFAULT_PROFILE.equals(profile)) {
                 isDefaultSet = true;
             }
+            if (TransportSettings.UNTRUSTED_PROFILE.equals(profile)) {
+                isUntrustedSet = true;
+            }
         }
         if (isDefaultSet == false) {
             profiles.add(new ProfileSettings(settings, TransportSettings.DEFAULT_PROFILE));
+        }
+        if (isUntrustedSet == false) {
+            profiles.add(new ProfileSettings(settings, TransportSettings.UNTRUSTED_PROFILE));
         }
         return Collections.unmodifiableSet(profiles);
     }
@@ -1024,10 +1031,12 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
         public final String portOrRange;
         public final int publishPort;
         public final boolean isDefaultProfile;
+        public final boolean isUntrustedProfile;
 
         public ProfileSettings(Settings settings, String profileName) {
             this.profileName = profileName;
             isDefaultProfile = TransportSettings.DEFAULT_PROFILE.equals(profileName);
+            isUntrustedProfile = TransportSettings.UNTRUSTED_PROFILE.equals(profileName);
             tcpKeepAlive = TransportSettings.TCP_KEEP_ALIVE_PROFILE.getConcreteSettingForNamespace(profileName).get(settings);
             tcpKeepIdle = TransportSettings.TCP_KEEP_IDLE_PROFILE.getConcreteSettingForNamespace(profileName).get(settings);
             tcpKeepInterval = TransportSettings.TCP_KEEP_INTERVAL_PROFILE.getConcreteSettingForNamespace(profileName).get(settings);
@@ -1040,7 +1049,7 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
             bindHosts = (profileBindHosts.isEmpty() ? NetworkService.GLOBAL_NETWORK_BIND_HOST_SETTING.get(settings) : profileBindHosts);
             publishHosts = TransportSettings.PUBLISH_HOST_PROFILE.getConcreteSettingForNamespace(profileName).get(settings);
             Setting<String> concretePort = TransportSettings.PORT_PROFILE.getConcreteSettingForNamespace(profileName);
-            if (concretePort.exists(settings) == false && isDefaultProfile == false) {
+            if (concretePort.exists(settings) == false && isDefaultProfile == false && isUntrustedProfile == false) {
                 throw new IllegalStateException("profile [" + profileName + "] has no port configured");
             }
             portOrRange = TransportSettings.PORT_PROFILE.getConcreteSettingForNamespace(profileName).get(settings);
