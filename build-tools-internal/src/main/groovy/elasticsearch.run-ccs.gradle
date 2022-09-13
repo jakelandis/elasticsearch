@@ -32,7 +32,7 @@ def queryingCluster = testClusters.register('querying-cluster') {
   setting 'cluster.remote.connections_per_cluster', "1"
 
   setting 'cluster.remote.my_remote_cluster.mode', 'proxy_with_api_key'
-  setting 'cluster.remote.my_remote_cluster.proxy_address', "localhost:9402"
+  setting 'cluster.remote.my_remote_cluster.proxy_address', "127.0.0.1:9402"
 
   setting 'xpack.security.transport.ssl.enabled', 'false' //TODO: support the new untrusted profile in security
 

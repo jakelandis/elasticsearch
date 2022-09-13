@@ -504,7 +504,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
                 (request, channel, task) -> fail("should fail at destructive operations check to trigger listener failure"),
                 Map.of(
                     profileName,
-                    new ServerTransportFilter(null, null, threadContext, randomBoolean(), destructiveOperations, securityContext)
+                    new DefaultServerTransportFilter(null, null, threadContext, randomBoolean(), destructiveOperations, securityContext)
                 ),
                 threadPool
             );

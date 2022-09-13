@@ -11,7 +11,11 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.transport.TransportChannel;
 import org.elasticsearch.transport.TransportRequest;
 
-public interface ServerTransportFilter {
+public class FromUntrustedRemoteServerTransportFilter implements ServerTransportFilter {
+    @Override
+    public void inbound(String action, TransportRequest request, TransportChannel transportChannel, ActionListener<Void> listener) {
 
-    void inbound(String action, TransportRequest request, TransportChannel transportChannel, ActionListener<Void> listener);
+        System.out.println("HERE!!");
+
+    }
 }

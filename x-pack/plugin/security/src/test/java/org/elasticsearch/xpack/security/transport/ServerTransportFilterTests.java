@@ -78,7 +78,7 @@ public class ServerTransportFilterTests extends ESTestCase {
         TransportRequest request = mock(TransportRequest.class);
         Authentication authentication = AuthenticationTestHelper.builder().internal(SystemUser.INSTANCE).build();
         doAnswer(getAnswer(authentication)).when(authcService).authenticate(eq("_action"), eq(request), eq(true), anyActionListener());
-        ServerTransportFilter filter = getNodeFilter();
+        DefaultServerTransportFilter filter = getNodeFilter();
         PlainActionFuture<Void> future = new PlainActionFuture<>();
         filter.inbound("_action", request, channel, future);
         // future.get(); // don't block it's not called really just mocked
@@ -93,7 +93,7 @@ public class ServerTransportFilterTests extends ESTestCase {
         );
         Authentication authentication = AuthenticationTestHelper.builder().internal(SystemUser.INSTANCE).build();
         doAnswer(getAnswer(authentication)).when(authcService).authenticate(eq(action), eq(request), eq(true), anyActionListener());
-        ServerTransportFilter filter = getNodeFilter();
+        DefaultServerTransportFilter filter = getNodeFilter();
         @SuppressWarnings("unchecked")
         PlainActionFuture<Void> listener = mock(PlainActionFuture.class);
         filter.inbound(action, request, channel, listener);
@@ -116,7 +116,7 @@ public class ServerTransportFilterTests extends ESTestCase {
             callback.onFailure(authE);
             return Void.TYPE;
         }).when(authcService).authenticate(eq("_action"), eq(request), eq(true), anyActionListener());
-        ServerTransportFilter filter = getNodeFilter();
+        DefaultServerTransportFilter filter = getNodeFilter();
         try {
             PlainActionFuture<Void> future = new PlainActionFuture<>();
             filter.inbound("_action", request, channel, future);
@@ -129,7 +129,7 @@ public class ServerTransportFilterTests extends ESTestCase {
     }
 
     public void testInboundAuthorizationException() throws Exception {
-        ServerTransportFilter filter = getNodeFilter();
+        DefaultServerTransportFilter filter = getNodeFilter();
         TransportRequest request = mock(TransportRequest.class);
         Authentication authentication = AuthenticationTestHelper.builder().internal(XPackUser.INSTANCE).build();
         doAnswer(getAnswer(authentication)).when(authcService).authenticate(eq("_action"), eq(request), eq(true), anyActionListener());
@@ -146,7 +146,7 @@ public class ServerTransportFilterTests extends ESTestCase {
     public void testAllowsNodeActions() throws Exception {
         final String internalAction = "internal:foo/bar";
         final String nodeOrShardAction = "indices:action" + randomFrom("[s]", "[p]", "[r]", "[n]", "[s][p]", "[s][r]", "[f]");
-        ServerTransportFilter filter = getNodeFilter();
+        DefaultServerTransportFilter filter = getNodeFilter();
         TransportRequest request = mock(TransportRequest.class);
         Authentication authentication = AuthenticationTestHelper.builder()
             .user(new User("test", "superuser"))
@@ -177,10 +177,10 @@ public class ServerTransportFilterTests extends ESTestCase {
         };
     }
 
-    private ServerTransportFilter getNodeFilter() {
+    private DefaultServerTransportFilter getNodeFilter() {
         Settings settings = Settings.builder().put("path.home", createTempDir()).build();
         ThreadContext threadContext = new ThreadContext(settings);
-        return new ServerTransportFilter(
+        return new DefaultServerTransportFilter(
             authcService,
             authzService,
             threadContext,

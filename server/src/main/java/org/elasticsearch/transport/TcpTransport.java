@@ -994,25 +994,26 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
     public static Set<ProfileSettings> getProfileSettings(Settings settings) {
         HashSet<ProfileSettings> profiles = new HashSet<>();
         boolean isDefaultSet = false;
-//        boolean isUntrustedSet = false;
+        boolean isUntrustedSet = false;
         for (String profile : settings.getGroups("transport.profiles.", true).keySet()) {
             profiles.add(new ProfileSettings(settings, profile));
             if (TransportSettings.DEFAULT_PROFILE.equals(profile)) {
                 isDefaultSet = true;
             }
-//            if (TransportSettings.UNTRUSTED_PROFILE.equals(profile)) {
-//                isUntrustedSet = true;
-//            }
+            if (TransportSettings.UNTRUSTED_PROFILE.equals(profile)) {
+                isUntrustedSet = true;
+            }
         }
         if (isDefaultSet == false) {
             profiles.add(new ProfileSettings(settings, TransportSettings.DEFAULT_PROFILE));
         }
-//        if (isUntrustedSet == false) {
-//            if (isUntrustedRemoteClusterEnabled()) {
-        //TODO: check license l
-//                profiles.add(new ProfileSettings(settings, TransportSettings.UNTRUSTED_PROFILE));
-//            }
-//        }
+        if (isUntrustedSet == false) {
+            if (isUntrustedRemoteClusterEnabled()) {
+                //TODO: check license and possibly a new setting to enable the untrusted port
+                // This is the magic to get the fulfilling cluster to open up the new port
+                profiles.add(new ProfileSettings(settings, TransportSettings.UNTRUSTED_PROFILE));
+            }
+        }
         return Collections.unmodifiableSet(profiles);
     }
 
@@ -1189,7 +1190,9 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
             // Connection failures are generally logged elsewhere, but go via the ChannelsConnectedListener which only captures the first
             // exception for each bundle of channels. If the ChannelOpenTraceLogger is installed then trace-logging is enabled so we can log
             // every failure.
-            logger.trace(() -> format("failed to open transport channel: %s", channel), e);
+           // logger.trace(() -> format("failed to open transport channel: %s", channel), e);
+            //TODO: UNDO
+            logger.error(() -> format("failed to open transport channel: %s", channel), e);
         }
     }
 

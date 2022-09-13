@@ -61,6 +61,10 @@ public class RemoteConnectionManager implements ConnectionManager {
 
     public void connectToRemoteClusterNode(DiscoveryNode node, ConnectionValidator connectionValidator, ActionListener<Void> listener)
         throws ConnectTransportException {
+        //note to self : the delegate here is a ClusterConnectionManager built with the ConnectionProfile created from the
+        // RemoteClusterConnection constructor. So RemoteClusterConnection creates the profile then creates the ClusterConnectionManager
+        // and creates this object with said ClusterConnectionManager as the delegate, so no need to pass through the ConnectionProfile,
+        // it appears that the ConnectionProfile (null here) is only exposed so that tests can override. Not confusing at all :/
         delegate.connectToNode(node, null, connectionValidator, listener.map(connectionReleasable -> {
             // We drop the connectionReleasable here but it's not really a leak: we never close individual connections to a remote cluster
             // ourselves - instead we close the whole connection manager if the remote cluster is removed, which bypasses any refcounting

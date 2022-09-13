@@ -50,7 +50,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
     private final AuthenticationService authcService;
     private final AuthorizationService authzService;
     private final SSLService sslService;
-    private final Map<String, ServerTransportFilter> profileFilters;
+    private final Map<String, DefaultServerTransportFilter> profileFilters;
     private final ThreadPool threadPool;
     private final Settings settings;
     private final SecurityContext securityContext;
@@ -174,11 +174,11 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
         return new ProfileSecuredRequestHandler<>(logger, action, forceExecution, executor, actualHandler, profileFilters, threadPool);
     }
 
-    private Map<String, ServerTransportFilter> initializeProfileFilters(DestructiveOperations destructiveOperations) {
+    private Map<String, DefaultServerTransportFilter> initializeProfileFilters(DestructiveOperations destructiveOperations) {
         final SslConfiguration sslConfiguration = sslService.getSSLConfiguration(setting("transport.ssl"));
         final Map<String, SslConfiguration> profileConfigurations = ProfileConfigurations.get(settings, sslService, sslConfiguration);
 
-        Map<String, ServerTransportFilter> profileFilters = Maps.newMapWithExpectedSize(profileConfigurations.size() + 1);
+        Map<String, DefaultServerTransportFilter> profileFilters = Maps.newMapWithExpectedSize(profileConfigurations.size() + 1);
 
         final boolean transportSSLEnabled = XPackSettings.TRANSPORT_SSL_ENABLED.get(settings);
         for (Map.Entry<String, SslConfiguration> entry : profileConfigurations.entrySet()) {
@@ -186,7 +186,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
             final boolean extractClientCert = transportSSLEnabled && SSLService.isSSLClientAuthEnabled(profileConfiguration);
             profileFilters.put(
                 entry.getKey(),
-                new ServerTransportFilter(
+                new DefaultServerTransportFilter(
                     authcService,
                     authzService,
                     threadPool.getThreadContext(),
@@ -204,7 +204,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
 
         private final String action;
         private final TransportRequestHandler<T> handler;
-        private final Map<String, ServerTransportFilter> profileFilters;
+        private final Map<String, DefaultServerTransportFilter> profileFilters;
         private final ThreadContext threadContext;
         private final String executorName;
         private final ThreadPool threadPool;
@@ -217,7 +217,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
             boolean forceExecution,
             String executorName,
             TransportRequestHandler<T> handler,
-            Map<String, ServerTransportFilter> profileFilters,
+            Map<String, DefaultServerTransportFilter> profileFilters,
             ThreadPool threadPool
         ) {
             this.logger = logger;
@@ -279,7 +279,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
         public void messageReceived(T request, TransportChannel channel, Task task) {
             try (ThreadContext.StoredContext ctx = threadContext.newStoredContextPreservingResponseHeaders()) {
                 String profile = channel.getProfileName();
-                ServerTransportFilter filter = profileFilters.get(profile);
+                DefaultServerTransportFilter filter = profileFilters.get(profile);
 
                 if (filter == null) {
                     if (TransportService.DIRECT_RESPONSE_PROFILE.equals(profile)) {

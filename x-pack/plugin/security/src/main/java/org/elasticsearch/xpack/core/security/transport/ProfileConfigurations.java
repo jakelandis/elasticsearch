@@ -25,6 +25,7 @@ public final class ProfileConfigurations {
         Set<String> profileNames = settings.getGroups("transport.profiles.", true).keySet();
         Map<String, SslConfiguration> profileConfiguration = Maps.newMapWithExpectedSize(profileNames.size() + 1);
         for (String profileName : profileNames) {
+            //TODO: figure out how this should work with the untrusted profile
             if (profileName.equals(TransportSettings.DEFAULT_PROFILE)) {
                 // don't attempt to parse ssl settings from the profile;
                 // profiles need to be killed with fire
@@ -43,6 +44,8 @@ public final class ProfileConfigurations {
 
         assert profileConfiguration.containsKey(TransportSettings.DEFAULT_PROFILE) == false;
         profileConfiguration.put(TransportSettings.DEFAULT_PROFILE, defaultConfiguration);
+        //TODO: this is likely where we can deviate from requiring mTLS for untrusted
+        profileConfiguration.put(TransportSettings.UNTRUSTED_PROFILE, defaultConfiguration);
         return profileConfiguration;
     }
 }
