@@ -102,6 +102,7 @@ import static org.elasticsearch.gradle.plugin.PluginBuildPlugin.EXPLODED_BUNDLE_
 
 public class ElasticsearchNode implements TestClusterConfiguration {
 
+    //Changes here are to help debug before the server is fully started. Don't commit this for real.
     private static final Logger LOGGER = Logging.getLogger(ElasticsearchNode.class);
     private static final int ES_DESTROY_TIMEOUT = 1000;
     private static final TimeUnit ES_DESTROY_TIMEOUT_UNIT = TimeUnit.MINUTES;

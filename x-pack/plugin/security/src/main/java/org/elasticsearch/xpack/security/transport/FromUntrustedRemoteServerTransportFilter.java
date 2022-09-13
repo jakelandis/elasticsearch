@@ -19,6 +19,7 @@ public class FromUntrustedRemoteServerTransportFilter implements ServerTransport
     @Override
     public void inbound(String action, TransportRequest request, TransportChannel transportChannel, ActionListener<Void> listener) {
 
+        //TODO: enforce API Key usage
         System.out.println("******* HERE **********");
         System.out.println("Handling action: " + action + " with request: " + request.toString() + " with channel type: "
             + transportChannel.getChannelType() + " from version: " + transportChannel.getVersion() + " with profile: "
