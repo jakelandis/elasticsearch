@@ -61,7 +61,7 @@ public class SniffConnectionStrategy extends RemoteConnectionStrategy {
             // validate seed address
             parsePort(s);
             return s;
-        }, new StrategyValidator<>(ns, key, ConnectionStrategy.SNIFF), Setting.Property.Dynamic, Setting.Property.NodeScope)
+        }, new StrategyValidator<>(ns, key, Set.of(ConnectionStrategy.SNIFF)), Setting.Property.Dynamic, Setting.Property.NodeScope)
     );
 
     /**
@@ -73,7 +73,7 @@ public class SniffConnectionStrategy extends RemoteConnectionStrategy {
     public static final Setting.AffixSetting<String> REMOTE_CLUSTERS_PROXY = Setting.affixKeySetting(
         "cluster.remote.",
         "proxy",
-        (ns, key) -> Setting.simpleString(key, new StrategyValidator<>(ns, key, ConnectionStrategy.SNIFF, s -> {
+        (ns, key) -> Setting.simpleString(key, new StrategyValidator<>(ns, key, Set.of(ConnectionStrategy.SNIFF), s -> {
             if (Strings.hasLength(s)) {
                 parsePort(s);
             }
@@ -102,7 +102,7 @@ public class SniffConnectionStrategy extends RemoteConnectionStrategy {
             key,
             REMOTE_CONNECTIONS_PER_CLUSTER,
             1,
-            new StrategyValidator<>(ns, key, ConnectionStrategy.SNIFF),
+            new StrategyValidator<>(ns, key, Set.of(ConnectionStrategy.SNIFF)),
             Setting.Property.Dynamic,
             Setting.Property.NodeScope
         )

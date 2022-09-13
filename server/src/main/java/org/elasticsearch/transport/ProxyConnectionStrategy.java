@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -43,7 +44,8 @@ public class ProxyConnectionStrategy extends RemoteConnectionStrategy {
     public static final Setting.AffixSetting<String> PROXY_ADDRESS = Setting.affixKeySetting(
         "cluster.remote.",
         "proxy_address",
-        (ns, key) -> Setting.simpleString(key, new StrategyValidator<>(ns, key, ConnectionStrategy.PROXY, s -> {
+        (ns, key) -> Setting.simpleString(key, new StrategyValidator<>(ns, key,
+            Set.of(ConnectionStrategy.PROXY, ConnectionStrategy.PROXY_WITH_API_KEY), s -> {
             if (Strings.hasLength(s)) {
                 parsePort(s);
             }
@@ -60,7 +62,7 @@ public class ProxyConnectionStrategy extends RemoteConnectionStrategy {
             key,
             18,
             1,
-            new StrategyValidator<>(ns, key, ConnectionStrategy.PROXY),
+            new StrategyValidator<>(ns, key, Set.of(ConnectionStrategy.PROXY, ConnectionStrategy.PROXY_WITH_API_KEY)),
             Setting.Property.Dynamic,
             Setting.Property.NodeScope
         )
@@ -74,7 +76,7 @@ public class ProxyConnectionStrategy extends RemoteConnectionStrategy {
         "server_name",
         (ns, key) -> Setting.simpleString(
             key,
-            new StrategyValidator<>(ns, key, ConnectionStrategy.PROXY),
+            new StrategyValidator<>(ns, key, Set.of(ConnectionStrategy.PROXY, ConnectionStrategy.PROXY_WITH_API_KEY)),
             Setting.Property.Dynamic,
             Setting.Property.NodeScope
         )
@@ -91,7 +93,7 @@ public class ProxyConnectionStrategy extends RemoteConnectionStrategy {
     private final AtomicReference<ClusterName> remoteClusterName = new AtomicReference<>();
     private final ConnectionManager.ConnectionValidator clusterNameValidator;
 
-    ProxyConnectionStrategy(
+    protected ProxyConnectionStrategy(
         String clusterAlias,
         TransportService transportService,
         RemoteConnectionManager connectionManager,

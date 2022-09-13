@@ -994,24 +994,25 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
     public static Set<ProfileSettings> getProfileSettings(Settings settings) {
         HashSet<ProfileSettings> profiles = new HashSet<>();
         boolean isDefaultSet = false;
-        boolean isUntrustedSet = false;
+//        boolean isUntrustedSet = false;
         for (String profile : settings.getGroups("transport.profiles.", true).keySet()) {
             profiles.add(new ProfileSettings(settings, profile));
             if (TransportSettings.DEFAULT_PROFILE.equals(profile)) {
                 isDefaultSet = true;
             }
-            if (TransportSettings.UNTRUSTED_PROFILE.equals(profile)) {
-                isUntrustedSet = true;
-            }
+//            if (TransportSettings.UNTRUSTED_PROFILE.equals(profile)) {
+//                isUntrustedSet = true;
+//            }
         }
         if (isDefaultSet == false) {
             profiles.add(new ProfileSettings(settings, TransportSettings.DEFAULT_PROFILE));
         }
-        if (isUntrustedSet == false) {
-            if (isUntrustedRemoteClusterEnabled()) {
-                profiles.add(new ProfileSettings(settings, TransportSettings.UNTRUSTED_PROFILE));
-            }
-        }
+//        if (isUntrustedSet == false) {
+//            if (isUntrustedRemoteClusterEnabled()) {
+        //TODO: check license l
+//                profiles.add(new ProfileSettings(settings, TransportSettings.UNTRUSTED_PROFILE));
+//            }
+//        }
         return Collections.unmodifiableSet(profiles);
     }
 

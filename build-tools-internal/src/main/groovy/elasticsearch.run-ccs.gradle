@@ -30,8 +30,12 @@ def queryingCluster = testClusters.register('querying-cluster') {
   setting 'xpack.ml.enabled', 'false'
   setting 'xpack.license.self_generated.type', 'trial'
   setting 'cluster.remote.connections_per_cluster', "1"
-  setting 'transport.untrusted.port',  "9403" //TODO: support this via the run task
+
+  setting 'cluster.remote.my_remote_cluster.mode', 'proxy_with_api_key'
+  setting 'cluster.remote.my_remote_cluster.proxy_address', "localhost:9402"
+
   setting 'xpack.security.transport.ssl.enabled', 'false' //TODO: support the new untrusted profile in security
+
   user username: 'elastic-admin', password: 'elastic-password', role: '_es_test_root'
 }
 
@@ -42,13 +46,14 @@ tasks.register("run-ccs", RunTask) {
   doFirst {
     queryingCluster.get().getNodes().each { node ->
       if (proxyMode) {
-        node.setting('cluster.remote.my_remote_cluster.mode', 'proxy')
-        node.setting('cluster.remote.my_remote_cluster.proxy_address', "\"${fulfillingCluster.get().getAllTransportPortURI().get(0)}\"")
+        //node.setting('cluster.remote.my_remote_cluster.mode', 'proxy')
+       // node.setting('cluster.remote.my_remote_cluster.proxy_address', "\"${fulfillingCluster.get().getAllTransportPortURI().get(0)}\"")
       } else {
-        node.setting('cluster.remote.my_remote_cluster.seeds', fulfillingCluster.get().getAllTransportPortURI().collect { "\"$it\"" }.toString())
+        throw new IllegalArgumentException("not supporting sniff mode for untrusted cluster");     // TODO: handle this better
+        //node.setting('cluster.remote.my_remote_cluster.seeds', fulfillingCluster.get().getAllTransportPortURI().collect { "\"$it\"" }.toString())
       }
     }
-    queryingCluster.get().restart() //updates the on-disk config
+   // queryingCluster.get().restart() //updates the on-disk config //TODO: comment back in ... no need to restart if we don't configure here
 
     println "** Querying cluster HTTP endpoints are: ${-> queryingCluster.get().allHttpSocketURI.join(",")}"
     println "** Querying cluster transport endpoints are: ${-> queryingCluster.get().getAllTransportPortURI().join(",")}"

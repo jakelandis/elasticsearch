@@ -67,6 +67,17 @@ public abstract class RemoteConnectionStrategy implements TransportConnectionLis
             public String toString() {
                 return "proxy";
             }
+        },
+
+        PROXY_WITH_API_KEY(
+            ProxyConnectionStrategy.CHANNELS_PER_CONNECTION,
+            ProxyConnectionStrategy::enablementSettings,
+            ProxyConnectionStrategy::infoReader
+        ) {
+            @Override
+            public String toString() {
+                return "proxy_with_api_key";
+            }
         };
 
         private final int numberOfChannels;
@@ -172,6 +183,7 @@ public abstract class RemoteConnectionStrategy implements TransportConnectionLis
         return switch (mode) {
             case SNIFF -> new SniffConnectionStrategy(clusterAlias, transportService, connectionManager, settings);
             case PROXY -> new ProxyConnectionStrategy(clusterAlias, transportService, connectionManager, settings);
+            case PROXY_WITH_API_KEY -> new ProxyWithApiKeyConnectionStrategy(clusterAlias, transportService, connectionManager, settings);
         };
     }
 
@@ -399,15 +411,15 @@ public abstract class RemoteConnectionStrategy implements TransportConnectionLis
     static class StrategyValidator<T> implements Setting.Validator<T> {
 
         private final String key;
-        private final ConnectionStrategy expectedStrategy;
+        private final Set<ConnectionStrategy> expectedStrategy;
         private final String namespace;
         private final Consumer<T> valueChecker;
 
-        StrategyValidator(String namespace, String key, ConnectionStrategy expectedStrategy) {
+        StrategyValidator(String namespace, String key, Set<ConnectionStrategy> expectedStrategy) {
             this(namespace, key, expectedStrategy, (v) -> {});
         }
 
-        StrategyValidator(String namespace, String key, ConnectionStrategy expectedStrategy, Consumer<T> valueChecker) {
+        StrategyValidator(String namespace, String key, Set<ConnectionStrategy> expectedStrategy, Consumer<T> valueChecker) {
             this.namespace = namespace;
             this.key = key;
             this.expectedStrategy = expectedStrategy;
@@ -423,14 +435,14 @@ public abstract class RemoteConnectionStrategy implements TransportConnectionLis
         public void validate(T value, Map<Setting<?>, Object> settings, boolean isPresent) {
             Setting<ConnectionStrategy> concrete = REMOTE_CONNECTION_MODE.getConcreteSettingForNamespace(namespace);
             ConnectionStrategy modeType = (ConnectionStrategy) settings.get(concrete);
-            if (isPresent && modeType.equals(expectedStrategy) == false) {
+            if (isPresent && expectedStrategy.contains(modeType) == false) {
                 throw new IllegalArgumentException(
                     String.format(
                         Locale.ROOT,
                         "Setting \"%s\" cannot be used with the configured \"%s\" [required=%s, configured=%s]",
                         key,
                         concrete.getKey(),
-                        expectedStrategy.name(),
+                        expectedStrategy.stream().map(Enum::name).collect(Collectors.joining(",")),
                         modeType.name()
                     )
                 );
