@@ -20,6 +20,7 @@ import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.SendRequestTransportException;
+import org.elasticsearch.transport.TcpTransport;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportChannel;
 import org.elasticsearch.transport.TransportInterceptor;
@@ -30,6 +31,7 @@ import org.elasticsearch.transport.TransportResponse;
 import org.elasticsearch.transport.TransportResponseHandler;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.transport.TransportService.ContextRestoreResponseHandler;
+import org.elasticsearch.transport.TransportSettings;
 import org.elasticsearch.xpack.core.XPackSettings;
 import org.elasticsearch.xpack.core.security.SecurityContext;
 import org.elasticsearch.xpack.core.security.transport.ProfileConfigurations;
@@ -50,7 +52,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
     private final AuthenticationService authcService;
     private final AuthorizationService authzService;
     private final SSLService sslService;
-    private final Map<String, DefaultServerTransportFilter> profileFilters;
+    private final Map<String, ServerTransportFilter> profileFilters;
     private final ThreadPool threadPool;
     private final Settings settings;
     private final SecurityContext securityContext;
@@ -174,27 +176,33 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
         return new ProfileSecuredRequestHandler<>(logger, action, forceExecution, executor, actualHandler, profileFilters, threadPool);
     }
 
-    private Map<String, DefaultServerTransportFilter> initializeProfileFilters(DestructiveOperations destructiveOperations) {
+    private Map<String, ServerTransportFilter> initializeProfileFilters(DestructiveOperations destructiveOperations) {
         final SslConfiguration sslConfiguration = sslService.getSSLConfiguration(setting("transport.ssl"));
         final Map<String, SslConfiguration> profileConfigurations = ProfileConfigurations.get(settings, sslService, sslConfiguration);
 
-        Map<String, DefaultServerTransportFilter> profileFilters = Maps.newMapWithExpectedSize(profileConfigurations.size() + 1);
+        Map<String, ServerTransportFilter> profileFilters = Maps.newMapWithExpectedSize(profileConfigurations.size() + 1);
 
         final boolean transportSSLEnabled = XPackSettings.TRANSPORT_SSL_ENABLED.get(settings);
         for (Map.Entry<String, SslConfiguration> entry : profileConfigurations.entrySet()) {
             final SslConfiguration profileConfiguration = entry.getValue();
             final boolean extractClientCert = transportSSLEnabled && SSLService.isSSLClientAuthEnabled(profileConfiguration);
-            profileFilters.put(
-                entry.getKey(),
-                new DefaultServerTransportFilter(
-                    authcService,
-                    authzService,
-                    threadPool.getThreadContext(),
-                    extractClientCert,
-                    destructiveOperations,
-                    securityContext
-                )
-            );
+
+            String profileName = entry.getKey();
+            if (TransportSettings.UNTRUSTED_PROFILE.equals(profileName)) {
+                profileFilters.put(profileName, new FromUntrustedRemoteServerTransportFilter());
+            } else {
+                profileFilters.put(
+                    profileName,
+                    new DefaultServerTransportFilter(
+                        authcService,
+                        authzService,
+                        threadPool.getThreadContext(),
+                        extractClientCert,
+                        destructiveOperations,
+                        securityContext
+                    )
+                );
+            }
         }
 
         return Collections.unmodifiableMap(profileFilters);
@@ -204,7 +212,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
 
         private final String action;
         private final TransportRequestHandler<T> handler;
-        private final Map<String, DefaultServerTransportFilter> profileFilters;
+        private final Map<String, ServerTransportFilter> profileFilters;
         private final ThreadContext threadContext;
         private final String executorName;
         private final ThreadPool threadPool;
@@ -217,7 +225,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
             boolean forceExecution,
             String executorName,
             TransportRequestHandler<T> handler,
-            Map<String, DefaultServerTransportFilter> profileFilters,
+            Map<String, ServerTransportFilter> profileFilters,
             ThreadPool threadPool
         ) {
             this.logger = logger;
@@ -279,7 +287,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
         public void messageReceived(T request, TransportChannel channel, Task task) {
             try (ThreadContext.StoredContext ctx = threadContext.newStoredContextPreservingResponseHeaders()) {
                 String profile = channel.getProfileName();
-                DefaultServerTransportFilter filter = profileFilters.get(profile);
+                ServerTransportFilter filter = profileFilters.get(profile);
 
                 if (filter == null) {
                     if (TransportService.DIRECT_RESPONSE_PROFILE.equals(profile)) {

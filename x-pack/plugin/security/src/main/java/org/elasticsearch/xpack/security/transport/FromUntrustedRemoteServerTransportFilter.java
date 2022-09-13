@@ -7,15 +7,30 @@
 
 package org.elasticsearch.xpack.security.transport;
 
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.transport.TransportChannel;
 import org.elasticsearch.transport.TransportRequest;
+
+import java.util.Set;
 
 public class FromUntrustedRemoteServerTransportFilter implements ServerTransportFilter {
     @Override
     public void inbound(String action, TransportRequest request, TransportChannel transportChannel, ActionListener<Void> listener) {
 
-        System.out.println("HERE!!");
+        System.out.println("******* HERE **********");
+        System.out.println("Handling action: " + action + " with request: " + request.toString() + " with channel type: "
+            + transportChannel.getChannelType() + " from version: " + transportChannel.getVersion() + " with profile: "
+            + transportChannel.getProfileName());
 
+        if (request instanceof SearchRequest){
+            SearchRequest searchRequest = (SearchRequest) request;
+            if(Set.of(searchRequest.indices()).contains("goboom")) {
+                listener.onFailure(new ElasticsearchSecurityException("kabooooooooom !!"));
+                return;
+            }
+        }
+        listener.onResponse(null);
     }
 }
