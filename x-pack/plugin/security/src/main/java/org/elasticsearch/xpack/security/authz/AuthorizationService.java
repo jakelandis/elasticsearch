@@ -24,8 +24,13 @@ import org.elasticsearch.action.datastreams.MigrateToDataStreamAction;
 import org.elasticsearch.action.delete.DeleteAction;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.support.GroupedActionListener;
+import org.elasticsearch.action.support.master.MasterNodeRequest;
 import org.elasticsearch.action.support.replication.TransportReplicationAction.ConcreteShardRequest;
 import org.elasticsearch.action.update.UpdateAction;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.ClusterStateObserver;
+import org.elasticsearch.cluster.block.ClusterBlockException;
+import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.cluster.service.ClusterService;
@@ -36,9 +41,11 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ListenableFuture;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.core.Nullable;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.core.Tuple;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.node.NodeClosedException;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportActionProxy;
 import org.elasticsearch.transport.TransportRequest;
@@ -87,10 +94,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.elasticsearch.action.support.ContextPreservingActionListener.wrapPreservingContext;
+import static org.elasticsearch.core.Strings.format;
 import static org.elasticsearch.xpack.core.security.SecurityField.setting;
 import static org.elasticsearch.xpack.core.security.authz.AuthorizationServiceField.ACTION_SCOPE_AUTHORIZATION_KEYS;
 import static org.elasticsearch.xpack.core.security.authz.AuthorizationServiceField.AUTHORIZATION_INFO_KEY;
@@ -129,6 +138,7 @@ public class AuthorizationService {
     private final XPackLicenseState licenseState;
     private final OperatorPrivilegesService operatorPrivilegesService;
     private final RestrictedIndices restrictedIndices;
+    private final ThreadPool threadPool;
 
     private final boolean isAnonymousEnabled;
     private final boolean anonymousAuthzExceptionEnabled;
@@ -153,6 +163,7 @@ public class AuthorizationService {
         this.restrictedIndices = restrictedIndices;
         this.indicesAndAliasesResolver = new IndicesAndAliasesResolver(settings, clusterService, resolver);
         this.authcFailureHandler = authcFailureHandler;
+        this.threadPool = threadPool;
         this.threadContext = threadPool.getThreadContext();
         this.securityContext = new SecurityContext(settings, this.threadContext);
         this.anonymousUser = anonymousUser;
@@ -415,19 +426,20 @@ public class AuthorizationService {
                 clusterAuthzListener.onResponse(result);
             }, clusterAuthzListener::onFailure));
         } else if (isIndexAction(action)) {
-            final Metadata metadata = clusterService.state().metadata();
+            AtomicReference<ClusterState> clusterState = new AtomicReference<>(clusterService.state());
             final AsyncSupplier<ResolvedIndices> resolvedIndicesAsyncSupplier = new CachingAsyncSupplier<>(resolvedIndicesListener -> {
                 final ResolvedIndices resolvedIndices = IndicesAndAliasesResolver.tryResolveWithoutWildcards(action, request);
                 if (resolvedIndices != null) {
                     resolvedIndicesListener.onResponse(resolvedIndices);
                 } else {
+                    handleIndexMetadataBlock(clusterState,resolvedIndices.getLocal().toArray(String[]::new), listener,  requestInfo);
                     authzEngine.loadAuthorizedIndices(
                         requestInfo,
                         authzInfo,
-                        metadata.getIndicesLookup(),
+                        clusterState.get().metadata().getIndicesLookup(),
                         ActionListener.wrap(
                             authorizedIndices -> resolvedIndicesListener.onResponse(
-                                indicesAndAliasesResolver.resolve(action, request, metadata, authorizedIndices)
+                                indicesAndAliasesResolver.resolve(action, request, clusterState.get().metadata(), authorizedIndices)
                             ),
                             e -> {
                                 auditTrail.accessDenied(requestId, authentication, action, request, authzInfo);
@@ -441,11 +453,12 @@ public class AuthorizationService {
                     );
                 }
             });
+
             authzEngine.authorizeIndexAction(
                 requestInfo,
                 authzInfo,
                 resolvedIndicesAsyncSupplier,
-                metadata.getIndicesLookup(),
+                clusterState.get().metadata().getIndicesLookup(),
                 wrapPreservingContext(
                     new AuthorizationResultListener<>(
                         result -> handleIndexActionAuthorizationResult(
@@ -455,7 +468,7 @@ public class AuthorizationService {
                             authzInfo,
                             authzEngine,
                             resolvedIndicesAsyncSupplier,
-                            metadata,
+                            clusterState.get().metadata(),
                             listener
                         ),
                         listener::onFailure,
@@ -471,6 +484,59 @@ public class AuthorizationService {
             auditTrail.accessDenied(requestId, authentication, action, request, authzInfo);
             listener.onFailure(actionDenied(authentication, authzInfo, action, request));
         }
+    }
+
+
+    private void handleIndexMetadataBlock(AtomicReference<ClusterState> clusterState, String[] localIndices, ActionListener<Void> listener, RequestInfo requestInfo){
+
+        AtomicReference<ClusterBlockException> blockException = new AtomicReference<>();
+        blockException.set(
+            clusterState.get().blocks()
+                .indicesBlockedException(ClusterBlockLevel.METADATA_READ, localIndices)
+        );
+        if (blockException.get() != null) {
+            if (requestInfo.getRequest() instanceof MasterNodeRequest<?>) { //keep trying till the master time out expires
+                ClusterStateObserver observer = new ClusterStateObserver(
+                    clusterService.state(),
+                    clusterService,
+                    ((MasterNodeRequest) requestInfo.getRequest()).masterNodeTimeout(),
+                    logger,
+                    threadPool.getThreadContext()
+                );
+
+                observer.waitForNextChange(new ClusterStateObserver.Listener() {
+                    @Override
+                    public void onNewClusterState(ClusterState newState) {
+                        clusterState.set(newState);
+                    }
+
+                    @Override
+                    public void onClusterServiceClose() {
+                        listener.onFailure(new NodeClosedException(clusterService.localNode()));
+                    }
+
+                    @Override
+                    public void onTimeout(TimeValue timeout) {
+                        logger.debug(
+                            () -> format(
+                                "timed out in AuthorizationService while retrying [%s] (timeout [%s])",
+                                requestInfo.getAction(),
+                                timeout
+                            )
+                        );
+                        listener.onFailure(blockException.get());
+                    }
+                }, newState -> {
+                    blockException.set(
+                        newState.blocks().indicesBlockedException(ClusterBlockLevel.METADATA_READ, localIndices)
+                    );
+                    return blockException.get() == null;
+                });
+            } else {
+                throw blockException.get(); //not a master action... fail right away... is this right ??
+            }
+        }
+
     }
 
     private void handleIndexActionAuthorizationResult(
