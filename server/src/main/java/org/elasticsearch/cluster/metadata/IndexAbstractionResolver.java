@@ -59,7 +59,7 @@ public class IndexAbstractionResolver {
         Iterable<String> indices,
         IndicesOptions indicesOptions,
         Metadata metadata,
-        LazyInitializable<Set<String>, RuntimeException> allAuthorizedAndAvailable,
+        LazyInitializable<Set<String>> allAuthorizedAndAvailable,
         Predicate<String> isAuthorized,
         boolean includeDataStreams
     ) {

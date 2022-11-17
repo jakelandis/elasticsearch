@@ -20,7 +20,7 @@ public class BatchSummary {
 
     static final int MAX_TASK_DESCRIPTION_CHARS = 8 * 1024;
 
-    private final LazyInitializable<String, RuntimeException> lazyDescription;
+    private final LazyInitializable<String> lazyDescription;
 
     public BatchSummary(TaskBatcher.BatchedTask firstTask, List<TaskBatcher.BatchedTask> allTasks) {
         lazyDescription = new LazyInitializable<>(() -> {

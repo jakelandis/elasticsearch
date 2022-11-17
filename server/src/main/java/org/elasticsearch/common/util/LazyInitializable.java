@@ -12,6 +12,7 @@ import org.elasticsearch.common.CheckedSupplier;
 
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Encapsulates a {@link CheckedSupplier} which is lazily invoked once on the
@@ -23,9 +24,9 @@ import java.util.function.Consumer;
  * <code>onReset</code> {@code Consumer} and the next {@code #getOrCompute()}
  * will regenerate the value.
  */
-public final class LazyInitializable<T, E extends Exception> {
+public final class LazyInitializable<T> {
 
-    private final CheckedSupplier<T, E> supplier;
+    private final Supplier<T> supplier;
     private final Consumer<T> onGet;
     private final Consumer<T> onReset;
     private volatile T value;
@@ -37,7 +38,7 @@ public final class LazyInitializable<T, E extends Exception> {
      *            The {@code CheckedSupplier} to generate values which will be
      *            served on {@code #getOrCompute()} invocations.
      */
-    public LazyInitializable(CheckedSupplier<T, E> supplier) {
+    public LazyInitializable(Supplier<T> supplier) {
         this(supplier, v -> {}, v -> {});
     }
 
@@ -54,7 +55,7 @@ public final class LazyInitializable<T, E extends Exception> {
      *            A {@code Consumer} which is invoked on the value that will be
      *            erased when calling {@code #reset()}
      */
-    public LazyInitializable(CheckedSupplier<T, E> supplier, Consumer<T> onGet, Consumer<T> onReset) {
+    public LazyInitializable(Supplier<T> supplier, Consumer<T> onGet, Consumer<T> onReset) {
         this.supplier = supplier;
         this.onGet = onGet;
         this.onReset = onReset;
@@ -65,7 +66,7 @@ public final class LazyInitializable<T, E extends Exception> {
      * have been previously created, if not it will be created now, thread safe of
      * course.
      */
-    public T getOrCompute() throws E {
+    public T getOrCompute()  {
         final T readOnce = value; // Read volatile just once...
         final T result = readOnce == null ? maybeCompute(supplier) : readOnce;
         onGet.accept(result);
@@ -87,7 +88,7 @@ public final class LazyInitializable<T, E extends Exception> {
     /**
      * Creates a new value thread safely.
      */
-    private synchronized T maybeCompute(CheckedSupplier<T, E> supplier) throws E {
+    private synchronized T maybeCompute(Supplier<T> supplier)  {
         if (value == null) {
             value = Objects.requireNonNull(supplier.get());
         }

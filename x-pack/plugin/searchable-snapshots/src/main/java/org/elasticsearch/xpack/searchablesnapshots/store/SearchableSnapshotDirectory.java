@@ -639,13 +639,13 @@ public class SearchableSnapshotDirectory extends BaseDirectory {
             SNAPSHOT_SNAPSHOT_ID_SETTING.get(indexSettings.getSettings())
         );
 
-        final LazyInitializable<BlobContainer, RuntimeException> lazyBlobContainer = new LazyInitializable<>(
+        final LazyInitializable<BlobContainer> lazyBlobContainer = new LazyInitializable<>(
             () -> new RateLimitingBlobContainer(
                 blobStoreRepository,
                 blobStoreRepository.shardContainer(indexId, shardPath.getShardId().id())
             )
         );
-        final LazyInitializable<BlobStoreIndexShardSnapshot, RuntimeException> lazySnapshot = new LazyInitializable<>(
+        final LazyInitializable<BlobStoreIndexShardSnapshot> lazySnapshot = new LazyInitializable<>(
             () -> blobStoreRepository.loadShardSnapshot(lazyBlobContainer.getOrCompute(), snapshotId)
         );
 

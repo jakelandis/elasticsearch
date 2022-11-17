@@ -367,7 +367,7 @@ public class ESCCRRestTestCase extends ESRestTestCase {
      * This is required to avoid failures when running test at midnight.
      * (index is created for day0, but assertions are executed for day1 assuming different time based index name that does not exist)
      */
-    private final LazyInitializable<Long, RuntimeException> time = new LazyInitializable<>(System::currentTimeMillis);
+    private final LazyInitializable<Long> time = new LazyInitializable<>(System::currentTimeMillis);
 
     protected String backingIndexName(String dataStreamName, int generation) {
         return DataStream.getDefaultBackingIndexName(dataStreamName, generation, time.getOrCompute());

@@ -259,7 +259,7 @@ public interface AuthorizationEngine {
     }
 
     interface AuthorizedIndices {
-        LazyInitializable<Set<String>, RuntimeException> allAuthorizedAndAvailable();
+        LazyInitializable<Set<String>> allAuthorizedAndAvailable();
 
         boolean isAuthorized(String name);
     }

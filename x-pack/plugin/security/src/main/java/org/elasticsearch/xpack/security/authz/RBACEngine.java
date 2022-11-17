@@ -929,7 +929,7 @@ public class RBACEngine implements AuthorizationEngine {
 
     static final class AuthorizedIndices implements AuthorizationEngine.AuthorizedIndices {
 
-        private final LazyInitializable<Set<String>, RuntimeException> allAuthorizedAndAvailableSupplier;
+        private final LazyInitializable<Set<String>> allAuthorizedAndAvailableSupplier;
         private final Predicate<String> isAuthorizedPredicate;
 
         AuthorizedIndices(Supplier<Set<String>> allAuthorizedAndAvailableSupplier, Predicate<String> isAuthorizedPredicate) {
@@ -940,7 +940,7 @@ public class RBACEngine implements AuthorizationEngine {
         }
 
         @Override
-        public LazyInitializable<Set<String>, RuntimeException> allAuthorizedAndAvailable() {
+        public LazyInitializable<Set<String>> allAuthorizedAndAvailable() {
             return allAuthorizedAndAvailableSupplier;
         }
 

@@ -303,7 +303,7 @@ public class PublicationTransportHandler {
 
         void buildDiffAndSerializeStates() {
             assert refCount() > 0;
-            final LazyInitializable<Diff<ClusterState>, RuntimeException> diffSupplier = new LazyInitializable<>(
+            final LazyInitializable<Diff<ClusterState>> diffSupplier = new LazyInitializable<>(
                 () -> newState.diff(previousState)
             );
             for (DiscoveryNode node : discoveryNodes) {

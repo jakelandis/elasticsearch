@@ -38,8 +38,8 @@ public abstract class NotificationService<Account> {
     private final Settings bootSettings;
     private final List<Setting<?>> pluginSecureSettings;
     // all are guarded by this
-    private volatile Map<String, LazyInitializable<Account, SettingsException>> accounts;
-    private volatile LazyInitializable<Account, SettingsException> defaultAccount;
+    private volatile Map<String, LazyInitializable<Account>> accounts;
+    private volatile LazyInitializable<Account> defaultAccount;
     // cached cluster setting, required when recreating the notification clients
     // using the new "reloaded" secure settings
     private volatile Settings cachedClusterSettings;
@@ -110,13 +110,13 @@ public abstract class NotificationService<Account> {
     public Account getAccount(String name) {
         // note this is not final since we mock it in tests and that causes
         // trouble since final methods can't be mocked...
-        final Map<String, LazyInitializable<Account, SettingsException>> accounts;
-        final LazyInitializable<Account, SettingsException> defaultAccount;
+        final Map<String, LazyInitializable<Account>> accounts;
+        final LazyInitializable<Account> defaultAccount;
         synchronized (this) { // must read under sync block otherwise it might be inconsistent
             accounts = this.accounts;
             defaultAccount = this.defaultAccount;
         }
-        LazyInitializable<Account, SettingsException> theAccount = accounts.getOrDefault(name, defaultAccount);
+        LazyInitializable<Account> theAccount = accounts.getOrDefault(name, defaultAccount);
         if (theAccount == null && name == null) {
             throw new IllegalArgumentException(
                 "no accounts of type ["
@@ -145,12 +145,12 @@ public abstract class NotificationService<Account> {
         return settings.get("xpack.notification." + type + ".default_account");
     }
 
-    private Map<String, LazyInitializable<Account, SettingsException>> createAccounts(
+    private Map<String, LazyInitializable<Account>> createAccounts(
         Settings settings,
         Set<String> accountNames,
         BiFunction<String, Settings, Account> accountFactory
     ) {
-        final Map<String, LazyInitializable<Account, SettingsException>> accounts = new HashMap<>();
+        final Map<String, LazyInitializable<Account>> accounts = new HashMap<>();
         for (final String accountName : accountNames) {
             final Settings accountSettings = settings.getAsSettings(getNotificationsAccountPrefix() + accountName);
             accounts.put(accountName, new LazyInitializable<>(() -> { return accountFactory.apply(accountName, accountSettings); }));
@@ -158,9 +158,9 @@ public abstract class NotificationService<Account> {
         return Collections.unmodifiableMap(accounts);
     }
 
-    private @Nullable LazyInitializable<Account, SettingsException> findDefaultAccountOrNull(
+    private @Nullable LazyInitializable<Account> findDefaultAccountOrNull(
         Settings settings,
-        Map<String, LazyInitializable<Account, SettingsException>> accounts
+        Map<String, LazyInitializable<Account>> accounts
     ) {
         final String defaultAccountName = getDefaultAccountName(settings);
         if (defaultAccountName == null) {
@@ -170,7 +170,7 @@ public abstract class NotificationService<Account> {
                 return accounts.values().iterator().next();
             }
         } else {
-            final LazyInitializable<Account, SettingsException> account = accounts.get(defaultAccountName);
+            final LazyInitializable<Account> account = accounts.get(defaultAccountName);
             if (account == null) {
                 throw new SettingsException("could not find default account [" + defaultAccountName + "]");
             }

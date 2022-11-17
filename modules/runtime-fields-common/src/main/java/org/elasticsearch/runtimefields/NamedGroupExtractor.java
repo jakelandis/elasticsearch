@@ -64,7 +64,7 @@ public interface NamedGroupExtractor {
         private final Supplier<MatcherWatchdog> watchdogSupplier;
 
         public GrokHelper(TimeValue interval, TimeValue maxExecutionTime) {
-            this.watchdogSupplier = new LazyInitializable<MatcherWatchdog, RuntimeException>(() -> {
+            this.watchdogSupplier = new LazyInitializable<>(() -> {
                 ThreadPool threadPool = threadPoolContainer.get();
                 if (threadPool == null) {
                     throw new IllegalStateException("missing call to finishInitializing");

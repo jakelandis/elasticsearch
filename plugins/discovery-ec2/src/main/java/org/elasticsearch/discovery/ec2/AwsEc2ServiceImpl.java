@@ -30,7 +30,7 @@ class AwsEc2ServiceImpl implements AwsEc2Service {
 
     private static final Logger LOGGER = LogManager.getLogger(AwsEc2ServiceImpl.class);
 
-    private final AtomicReference<LazyInitializable<AmazonEc2Reference, ElasticsearchException>> lazyClientReference =
+    private final AtomicReference<LazyInitializable<AmazonEc2Reference>> lazyClientReference =
         new AtomicReference<>();
 
     private AmazonEC2 buildClient(Ec2ClientSettings clientSettings) {
@@ -85,7 +85,7 @@ class AwsEc2ServiceImpl implements AwsEc2Service {
 
     @Override
     public AmazonEc2Reference client() {
-        final LazyInitializable<AmazonEc2Reference, ElasticsearchException> clientReference = this.lazyClientReference.get();
+        final LazyInitializable<AmazonEc2Reference> clientReference = this.lazyClientReference.get();
         if (clientReference == null) {
             throw new IllegalStateException("Missing ec2 client configs");
         }
@@ -99,12 +99,12 @@ class AwsEc2ServiceImpl implements AwsEc2Service {
      */
     @Override
     public void refreshAndClearCache(Ec2ClientSettings clientSettings) {
-        final LazyInitializable<AmazonEc2Reference, ElasticsearchException> newClient = new LazyInitializable<>(
+        final LazyInitializable<AmazonEc2Reference> newClient = new LazyInitializable<>(
             () -> new AmazonEc2Reference(buildClient(clientSettings)),
             clientReference -> clientReference.incRef(),
             clientReference -> clientReference.decRef()
         );
-        final LazyInitializable<AmazonEc2Reference, ElasticsearchException> oldClient = this.lazyClientReference.getAndSet(newClient);
+        final LazyInitializable<AmazonEc2Reference> oldClient = this.lazyClientReference.getAndSet(newClient);
         if (oldClient != null) {
             oldClient.reset();
         }
@@ -112,7 +112,7 @@ class AwsEc2ServiceImpl implements AwsEc2Service {
 
     @Override
     public void close() {
-        final LazyInitializable<AmazonEc2Reference, ElasticsearchException> clientReference = this.lazyClientReference.getAndSet(null);
+        final LazyInitializable<AmazonEc2Reference> clientReference = this.lazyClientReference.getAndSet(null);
         if (clientReference != null) {
             clientReference.reset();
         }

@@ -361,7 +361,7 @@ class IndicesAndAliasesResolver {
     }
 
     private static List<String> loadAuthorizedAliases(
-        LazyInitializable<Set<String>, RuntimeException> authorizedIndices,
+        LazyInitializable<Set<String>> authorizedIndices,
         Metadata metadata
     ) {
         List<String> authorizedAliases = new ArrayList<>();
