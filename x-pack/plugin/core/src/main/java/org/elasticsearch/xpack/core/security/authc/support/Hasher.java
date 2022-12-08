@@ -6,6 +6,7 @@
  */
 package org.elasticsearch.xpack.core.security.authc.support;
 
+import org.apache.commons.codec.binary.Hex;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.hash.MessageDigests;
 import org.elasticsearch.common.settings.SecureString;
@@ -19,10 +20,13 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
@@ -476,13 +480,14 @@ public enum Hasher {
         }
     };
 
+    // TODO: move these back to private scope
     private static final int BCRYPT_PREFIX_LENGTH = 4;
     private static final String SHA1_PREFIX = "{SHA}";
     private static final String MD5_PREFIX = "{MD5}";
     private static final String SSHA256_PREFIX = "{SSHA256}";
-    private static final String PBKDF2_PREFIX = "{PBKDF2}";
+    public static final String PBKDF2_PREFIX = "{PBKDF2}";
     private static final String PBKDF2_STRETCH_PREFIX = "{PBKDF2_STRETCH}";
-    private static final int PBKDF2_DEFAULT_COST = 10000;
+    public static final int PBKDF2_DEFAULT_COST = 10000;
     private static final int PBKDF2_KEY_LENGTH = 256;
     private static final int BCRYPT_DEFAULT_COST = 10;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -586,7 +591,8 @@ public enum Hasher {
         return hasher.verify(data, hash);
     }
 
-    private static char[] getPbkdf2Hash(SecureString data, int cost, String prefix) {
+    // TODO: move back to private scope
+    public static char[] getPbkdf2Hash(SecureString data, int cost, String prefix) {
         try {
             // Base64 string length : (4*(n/3)) rounded up to the next multiple of 4 because of padding.
             // n is 32 (PBKDF2_KEY_LENGTH in bytes) and 2 is because of the dollar sign delimiters.
@@ -610,7 +616,87 @@ public enum Hasher {
         }
     }
 
+    enum HashParsing {
+        STRICT, // used fixed sizes for the salt and keylength - default
+        DYNAMIC // dynamically determine the salt and keylength by inspecting the hash
+    }
+
+    enum HashEncoding {
+        BASE_64, // default
+        HEX
+    }
+
+    // TODO: support bcrypt ...and move dynamic parsing up a level so we can pick which algorithm should be used
+    static List<HashParsing> hashParsing = List.of(HashParsing.STRICT, HashParsing.DYNAMIC); // TODO: implement as node level setting
+    // $pbkdf2+sha512$30c9f281c8ed4abe526e437c101e1223$10000$aecf0d80b1556ae24db4fdd834f99b1e7b11200552373c712f11f843704faf1874e51c76346d964d4e25742d50b7d665b620c00a7ad492d8e85b932c87f48575
+    static String pbkdf2RegexExpression = "^\\$(.*)\\$(.*)\\$(.*)\\$(.*)$"; // TODO: implement as node level setting
+    static Pattern pbkdf2RegexPattern = Pattern.compile(pbkdf2RegexExpression); // TODO: implement as node level setting
+    static HashEncoding hashEncoding = HashEncoding.HEX; // TODO: implement as node level setting
+    static Map<String, String> algoMapping = Map.of("pbkdf2+sha512", "PBKDF2withHMACSHA512"); // TODO: implement as node level setting
+    static int algoGroup = 1; // TODO: implement as node level setting
+    static int saltGroup = 2; // TODO: implement as node level setting
+    static int costGroup = 3; // TODO: implement as node level setting
+    static int hashGroup = 4; // TODO: implement as node level setting
+
     private static boolean verifyPbkdf2Hash(SecureString data, char[] hash, String prefix) {
+
+        for (HashParsing strategy : hashParsing) {
+            switch (strategy) {
+                case STRICT -> {
+                    if (verifyPbkdf2HashStrict(data, hash, prefix)) {
+                        return true; // only short circuit loop for positive match
+                    }
+                }
+                case DYNAMIC -> {
+                    try {
+                        Matcher matcher = pbkdf2RegexPattern.matcher(String.valueOf(hash));
+                        if (matcher.matches()) {
+                            System.out.println(matcher.group(0));
+                            System.out.println(matcher.group(algoGroup) + " :: " + algoMapping.get(matcher.group(algoGroup)));
+                            System.out.println(matcher.group(saltGroup));
+                            System.out.println(matcher.group(costGroup));
+                            System.out.println(matcher.group(hashGroup));
+                            SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(algoMapping.get(matcher.group(algoGroup)));
+                            char[] hashChars = null;
+                            char[] computedPwdHash = null;
+                            if (hashEncoding == HashEncoding.HEX) {
+                               byte [] salt = Hex.decodeHex(matcher.group(saltGroup));
+                                hashChars = matcher.group(hashGroup).toCharArray();
+                                int keyLength = Hex.decodeHex(hashChars).length * 8; //TODO: double check if this is always right
+                                PBEKeySpec keySpec = new PBEKeySpec(
+                                    data.getChars(),
+                                    salt,
+                                    Integer.parseInt(matcher.group(costGroup)),
+                                    keyLength
+                                );
+                                //TODO: ensure utf8 is supported with hex encoding
+                                computedPwdHash = Hex.encodeHex(secretKeyFactory.generateSecret(keySpec).getEncoded());
+                                System.out.println(String.valueOf(computedPwdHash));
+                            } else {
+                                throw new RuntimeException("TODO: support base64 ");
+                            }
+                            final boolean result = CharArrays.constantTimeEquals(computedPwdHash, hashChars);
+                            if (result) {
+                                return result; // only short circuit loop for positive match
+                            }
+
+                        } else {
+                            throw new IllegalArgumentException(
+                                "whoops ... that regex [" + pbkdf2RegexExpression + "] does not match the hash !"
+                            );
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("uh oh !", e);
+                    }
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean verifyPbkdf2HashStrict(SecureString data, char[] hash, String prefix) {
         // Base64 string length : (4*(n/3)) rounded up to the next multiple of 4 because of padding.
         // n is 32 (PBKDF2_KEY_LENGTH in bytes), so tokenLength is 44
         final int tokenLength = 44;
@@ -623,6 +709,11 @@ public enum Hasher {
             }
             hashChars = Arrays.copyOfRange(hash, hash.length - tokenLength, hash.length);
             saltChars = Arrays.copyOfRange(hash, hash.length - (2 * tokenLength + 1), hash.length - (tokenLength + 1));
+            System.out.println("*** start static");
+            System.out.println(hash);
+            System.out.println(saltChars);
+            System.out.println(hashChars);
+
             int cost = Integer.parseInt(new String(Arrays.copyOfRange(hash, prefix.length(), hash.length - (2 * tokenLength + 2))));
             SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2withHMACSHA512");
             PBEKeySpec keySpec = new PBEKeySpec(
@@ -634,6 +725,8 @@ public enum Hasher {
             computedPwdHash = CharArrays.utf8BytesToChars(
                 Base64.getEncoder().encode(secretKeyFactory.generateSecret(keySpec).getEncoded())
             );
+            System.out.println(computedPwdHash);
+            System.out.println("*** end static");
             final boolean result = CharArrays.constantTimeEquals(computedPwdHash, hashChars);
             return result;
         } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {

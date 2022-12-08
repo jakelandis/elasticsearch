@@ -6,11 +6,24 @@
  */
 package org.elasticsearch.xpack.security.authc.support;
 
+import org.apache.commons.codec.binary.Hex;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.core.security.authc.support.Hasher;
+import org.jcodings.util.Hash;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.util.Locale;
+import java.util.Random;
+
+import static org.elasticsearch.xpack.core.security.authc.support.Hasher.PBKDF2_DEFAULT_COST;
+import static org.elasticsearch.xpack.core.security.authc.support.Hasher.PBKDF2_PREFIX;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.sameInstance;
@@ -44,6 +57,38 @@ public class HasherTests extends ESTestCase {
         check("$2b$14$azbTD0EotrQtoSsxFpbx/.HG8hCAojDFmN4hsD8khuevk/9j0yPlK", "python 3.9.6; bcrypt 3.2.0", true);
         check("$2a$06$aQVRp5ajsIn3fzx2MnXKy.KlhxFLHaCOh8jSElqCtmYFbRkmTy..C", "https://bcrypt-generator.com/", true);
         check("$2y$10$flKBxak./o.7Hql0il/98ejdZyob67TmPhHbRy3qOnMtCBosAVSRy", "php", true);
+    }
+
+    public void testDynamicHashParsing() throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+
+        String password = "hunter2";
+
+        // static
+        String hash = String.valueOf(Hasher.getPbkdf2Hash(new SecureString(password.toCharArray()),  PBKDF2_DEFAULT_COST, PBKDF2_PREFIX));
+        check(hash, password, true);
+
+        // dynamic
+        hash = altHash(password);
+        Hasher hasher = Hasher.PBKDF2; //TODO... support which hasher to use via the dynamic support
+        assertThat(
+            "Verify " + password + " against " + hash + " using " + hasher.name(),
+            hasher.verify(new SecureString(password.toCharArray()), hash.toCharArray()),
+            equalTo(true)
+        );
+    }
+
+    private String altHash(String plainPassword) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        String HEADER_PBKDFSHA512 = "pbkdf2+sha512";
+        String PATTERN_PBKDFSHA512 = "$" + HEADER_PBKDFSHA512 + "$%s$%d$%s";
+        int rounds = 10000;
+        Random r = new SecureRandom();
+        byte[] salt = new byte[16];
+        r.nextBytes(salt);
+        KeySpec spec = new PBEKeySpec(plainPassword.toCharArray(), salt, rounds, 512);
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        byte[] hash = factory.generateSecret(spec).getEncoded();
+        return String.format(Locale.ROOT, PATTERN_PBKDFSHA512, Hex.encodeHexString(salt), rounds, Hex.encodeHexString(hash));
     }
 
     public void testPBKDF2FamilySelfGenerated() throws Exception {
