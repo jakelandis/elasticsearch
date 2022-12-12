@@ -15,6 +15,12 @@ dependencies {
   javaRestTestImplementation project(':client:rest-high-level')
   // let the javaRestTest see the classpath of main
   javaRestTestImplementation project.sourceSets.main.runtimeClasspath
+
+  implementation 'org.asynchttpclient:async-http-client:2.10.1'
+  implementation 'org.asynchttpclient:async-http-client-netty-utils:2.10.1'
+  implementation 'org.reactivestreams:reactive-streams:1.0.2'
+  implementation 'com.typesafe.netty:netty-reactive-streams:2.0.3'
+
 }
 
 testClusters.configureEach {

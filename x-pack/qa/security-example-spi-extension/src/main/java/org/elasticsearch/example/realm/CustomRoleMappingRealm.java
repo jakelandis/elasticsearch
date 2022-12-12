@@ -6,6 +6,12 @@
  */
 package org.elasticsearch.example.realm;
 
+import org.asynchttpclient.AsyncCompletionHandler;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import org.asynchttpclient.Dsl;
+import org.asynchttpclient.RequestBuilder;
+import org.asynchttpclient.Response;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.cache.Cache;
 import org.elasticsearch.common.cache.CacheBuilder;
@@ -21,6 +27,7 @@ import org.elasticsearch.xpack.core.security.user.User;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An example realm with specific behaviours:
@@ -62,11 +69,11 @@ public class CustomRoleMappingRealm extends Realm implements CachingRealm {
 
     @Override
     public void lookupUser(String username, ActionListener<User> listener) {
-        final User user = cache.get(username);
-        if (user != null) {
-            listener.onResponse(user);
-            return;
-        }
+//        final User user = cache.get(username);
+//        if (user != null) {
+//            listener.onResponse(user);
+//            return;
+//        }
         if (USERNAME.equals(username)) {
             buildUser(
                 username,
@@ -79,10 +86,33 @@ public class CustomRoleMappingRealm extends Realm implements CachingRealm {
 
     private void buildUser(String username, ActionListener<User> listener) {
         final UserRoleMapper.UserData data = new UserRoleMapper.UserData(username, null, List.of(USER_GROUP), Map.of(), super.config);
-        roleMapper.resolveRoles(
-            data,
-            ActionListener.wrap(roles -> listener.onResponse(new User(username, roles.toArray(String[]::new))), listener::onFailure)
+
+        DefaultAsyncHttpClientConfig.Builder configBuilder = (
+            new DefaultAsyncHttpClientConfig.Builder()
+                .setCookieStore(null)
         );
+
+        AsyncHttpClient client = Dsl.asyncHttpClient(configBuilder);
+        RequestBuilder requestBuilder = Dsl.get("http://postman-echo.com/get");
+        CompletableFuture<Response> completableFuture = client.executeRequest(
+            requestBuilder.build(),
+            new AsyncCompletionHandler<Response>() {
+                @Override
+                public Response onCompleted(Response response) throws Exception {
+                    return response;
+                }
+            }
+        ).toCompletableFuture();
+
+        completableFuture.handle((response, error) -> {
+            roleMapper.resolveRoles(
+                data,
+                ActionListener.wrap(roles -> listener.onResponse(new User(username, "roleA")), listener::onFailure)
+            );
+
+            return null;
+        });
+
     }
 
     @Override
