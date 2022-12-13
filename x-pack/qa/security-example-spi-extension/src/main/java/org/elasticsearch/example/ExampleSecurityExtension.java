@@ -51,7 +51,7 @@ public class ExampleSecurityExtension implements SecurityExtension {
     public Map<String, Realm.Factory> getRealms(SecurityComponents components) {
         return Map.ofEntries(
             Map.entry(CustomRealm.TYPE, CustomRealm::new),
-            Map.entry(CustomRoleMappingRealm.TYPE, config -> new CustomRoleMappingRealm(config, components.roleMapper()))
+            Map.entry(CustomRoleMappingRealm.TYPE, config -> new CustomRoleMappingRealm(config, components.roleMapper(), components.threadPool()))
         );
     }
 
@@ -59,6 +59,7 @@ public class ExampleSecurityExtension implements SecurityExtension {
     public AuthenticationFailureHandler getAuthenticationFailureHandler(SecurityComponents components) {
         return new CustomAuthenticationFailureHandler();
     }
+
 
     @Override
     public List<BiConsumer<Set<String>, ActionListener<RoleRetrievalResult>>> getRolesProviders(SecurityComponents components) {

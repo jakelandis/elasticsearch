@@ -13,9 +13,12 @@ import org.asynchttpclient.Dsl;
 import org.asynchttpclient.RequestBuilder;
 import org.asynchttpclient.Response;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.support.ContextPreservingActionListener;
 import org.elasticsearch.common.cache.Cache;
 import org.elasticsearch.common.cache.CacheBuilder;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
+import org.elasticsearch.example.SpiExtensionPlugin;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationResult;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationToken;
 import org.elasticsearch.xpack.core.security.authc.Realm;
@@ -44,12 +47,14 @@ public class CustomRoleMappingRealm extends Realm implements CachingRealm {
 
     private final Cache<String, User> cache;
     private final UserRoleMapper roleMapper;
+    private final ThreadPool threadPool;
 
-    public CustomRoleMappingRealm(RealmConfig config, UserRoleMapper roleMapper) {
+    public CustomRoleMappingRealm(RealmConfig config, UserRoleMapper roleMapper, ThreadPool threadPool) {
         super(config);
         this.cache = CacheBuilder.<String, User>builder().build();
         this.roleMapper = roleMapper;
         this.roleMapper.refreshRealmOnChange(this);
+        this.threadPool = threadPool;
     }
 
     @Override
@@ -104,10 +109,12 @@ public class CustomRoleMappingRealm extends Realm implements CachingRealm {
             }
         ).toCompletableFuture();
 
+
+        ContextPreservingActionListener<User> listener2 = ContextPreservingActionListener.wrapPreservingContext(listener, threadPool.getThreadContext());
         completableFuture.handle((response, error) -> {
             roleMapper.resolveRoles(
                 data,
-                ActionListener.wrap(roles -> listener.onResponse(new User(username, "roleA")), listener::onFailure)
+                ActionListener.wrap(roles -> listener2.onResponse(new User(username, "roleA")), listener::onFailure)
             );
 
             return null;
