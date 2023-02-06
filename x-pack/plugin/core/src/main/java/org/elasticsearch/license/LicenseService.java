@@ -431,9 +431,7 @@ public class LicenseService extends AbstractLifecycleComponent implements Cluste
                     + "]"
             );
         }
-        if(LicenseSelfGenerator.get() != null) {
-            throw new IllegalStateException("A trial license may not be generated.");
-        }
+        
         clusterService.submitStateUpdateTask(
             StartTrialClusterTask.TASK_SOURCE,
             new StartTrialClusterTask(logger, clusterService.getClusterName().value(), clock, request, listener),
