@@ -25,7 +25,7 @@ import static org.elasticsearch.license.CryptUtils.decryptV3Format;
 import static org.elasticsearch.license.CryptUtils.encrypt;
 import static org.elasticsearch.license.CryptUtils.encryptV3Format;
 
-class SelfGeneratedLicense {
+public class SelfGeneratedLicense {
 
     public static License create(License.Builder specBuilder, DiscoveryNodes currentNodes) {
         return create(specBuilder, LicenseUtils.compatibleLicenseVersion(currentNodes));

@@ -21,7 +21,7 @@ import org.elasticsearch.xpack.core.XPackPlugin;
 import java.time.Clock;
 import java.util.UUID;
 
-public class StartupSelfGeneratedLicenseTask extends ClusterStateUpdateTask {
+public class StartupSelfGeneratedLicenseTask extends LicenseSelfGenerator {
     private static final Logger logger = LogManager.getLogger(StartupSelfGeneratedLicenseTask.class);
 
     static final String TASK_SOURCE = "maybe generate license for cluster";

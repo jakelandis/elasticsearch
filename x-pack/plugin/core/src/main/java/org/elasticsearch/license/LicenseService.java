@@ -431,6 +431,9 @@ public class LicenseService extends AbstractLifecycleComponent implements Cluste
                     + "]"
             );
         }
+        if(LicenseSelfGenerator.get() != null) {
+            throw new IllegalStateException("A trial license may not be generated.");
+        }
         clusterService.submitStateUpdateTask(
             StartTrialClusterTask.TASK_SOURCE,
             new StartTrialClusterTask(logger, clusterService.getClusterName().value(), clock, request, listener),
@@ -463,9 +466,10 @@ public class LicenseService extends AbstractLifecycleComponent implements Cluste
      * a new basic license with no expiration date is generated.
      */
     private void registerOrUpdateSelfGeneratedLicense() {
+        LicenseSelfGenerator generator = LicenseSelfGenerator.get();
         submitUnbatchedTask(
             StartupSelfGeneratedLicenseTask.TASK_SOURCE,
-            new StartupSelfGeneratedLicenseTask(settings, clock, clusterService)
+            generator == null ? new StartupSelfGeneratedLicenseTask(settings, clock, clusterService) : generator
         );
     }
 
