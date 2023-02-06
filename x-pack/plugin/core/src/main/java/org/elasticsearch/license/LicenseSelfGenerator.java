@@ -8,22 +8,24 @@
 package org.elasticsearch.license;
 
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
+import org.elasticsearch.core.Nullable;
+
+import java.util.Objects;
 
 public abstract class LicenseSelfGenerator extends ClusterStateUpdateTask {
     private static LicenseSelfGenerator instance;
     /**
-     * Call this to invert control to an alternative license generator. Not intended for general usage.
-     * Registering this will effectively disable trial licenses.
-     * @param instance The alternative license generator.
+     * Not intended for general usage.
+     * @param instance An alternative self license generator.
      */
     public static void register(LicenseSelfGenerator instance) {
         if( LicenseSelfGenerator.instance != null ){
-            throw new RuntimeException("boom"); //TODO: better error
+            throw new IllegalStateException("Can not register a LicenseSelfGenerator more than once");
         }
-        LicenseSelfGenerator.instance = instance;
+        LicenseSelfGenerator.instance = Objects.requireNonNull(instance);
     }
 
-    public static LicenseSelfGenerator get() {
+    public static @Nullable LicenseSelfGenerator get() {
         return instance;
     }
 }
