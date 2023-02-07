@@ -7,6 +7,7 @@
 
 package org.elasticsearch.xpack.searchablesnapshots.cache.shared;
 
+import org.elasticsearch.blobcache.shared.SharedBlobCacheService;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
@@ -39,6 +40,7 @@ import static org.hamcrest.Matchers.hasSize;
 
 public class NodesCachesStatsIntegTests extends BaseFrozenSearchableSnapshotsIntegTestCase {
 
+    @AwaitsFix(bugUrl = "https://github.com/elastic/elasticsearch/issues/93555")
     public void testNodesCachesStats() throws Exception {
         final String[] nodeNames = internalCluster().getNodeNames();
         // here to ensure no shard relocations after the snapshot is mounted,
@@ -93,10 +95,10 @@ public class NodesCachesStatsIntegTests extends BaseFrozenSearchableSnapshotsInt
                 .getTotal()
                 .getBytes();
 
-            final long cacheSize = FrozenCacheService.calculateCacheSize(clusterService.getSettings(), totalFsSize);
+            final long cacheSize = SharedBlobCacheService.calculateCacheSize(clusterService.getSettings(), totalFsSize);
             assertThat(nodeCachesStats.getSize(), equalTo(cacheSize));
 
-            final long regionSize = FrozenCacheService.SHARED_CACHE_REGION_SIZE_SETTING.get(clusterService.getSettings()).getBytes();
+            final long regionSize = SharedBlobCacheService.SHARED_CACHE_REGION_SIZE_SETTING.get(clusterService.getSettings()).getBytes();
             assertThat(nodeCachesStats.getRegionSize(), equalTo(regionSize));
 
             assertThat(nodeCachesStats.getNumRegions(), equalTo(Math.toIntExact(cacheSize / regionSize)));
