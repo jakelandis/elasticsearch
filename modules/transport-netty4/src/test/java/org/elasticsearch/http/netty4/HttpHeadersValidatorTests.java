@@ -13,8 +13,8 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
-import org.elasticsearch.http.netty4.HttpHeadersValidator.ValidatableHttpHeaders;
-import org.elasticsearch.http.netty4.HttpHeadersValidator.ValidatableHttpHeaders.ValidationResult;
+import org.elasticsearch.http.netty4.HttpRequestUtils.ValidatableHttpHeaders;
+import org.elasticsearch.http.netty4.HttpRequestUtils.ValidatableHttpHeaders.ValidationResult;
 import org.elasticsearch.test.ESTestCase;
 
 import static org.hamcrest.Matchers.is;
@@ -31,7 +31,7 @@ public final class HttpHeadersValidatorTests extends ESTestCase {
         String headerValue2 = "headerValue2";
         httpRequest.headers().add(header1, headerValue1);
         httpRequest.headers().add(header2, headerValue2);
-        final DefaultHttpRequest validatableHttpRequest = (DefaultHttpRequest) HttpHeadersValidator.wrapAsValidatableMessage(httpRequest);
+        final DefaultHttpRequest validatableHttpRequest = (DefaultHttpRequest) HttpRequestUtils.wrapAsValidatableMessage(httpRequest);
         boolean validated = randomBoolean();
         if (validated) {
             ((ValidatableHttpHeaders) validatableHttpRequest.headers()).markAsSuccessfullyValidated(validationResult);
@@ -61,7 +61,7 @@ public final class HttpHeadersValidatorTests extends ESTestCase {
         String header = "header";
         String headerValue = "headerValue";
         httpRequest.headers().add(header, headerValue);
-        final DefaultHttpRequest validatableHttpRequest = (DefaultHttpRequest) HttpHeadersValidator.wrapAsValidatableMessage(httpRequest);
+        final DefaultHttpRequest validatableHttpRequest = (DefaultHttpRequest) HttpRequestUtils.wrapAsValidatableMessage(httpRequest);
         boolean validated = randomBoolean();
         if (validated) {
             ((ValidatableHttpHeaders) validatableHttpRequest.headers()).markAsSuccessfullyValidated(validationResult);

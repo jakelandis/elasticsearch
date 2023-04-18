@@ -14,6 +14,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.util.PageCacheRecycler;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
+import org.elasticsearch.http.HttpAuthenticator;
 import org.elasticsearch.http.HttpPreRequest;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.indices.breaker.CircuitBreakerService;
@@ -84,4 +85,11 @@ public interface NetworkPlugin {
     ) {
         return Collections.emptyMap();
     }
+
+    default HttpAuthenticator getHttpAuthenticator(BiConsumer<HttpPreRequest, ThreadContext> perRequestThreadContext) {
+        //TODO: return no-op instead of null
+        return null;
+    };
+
+
 }

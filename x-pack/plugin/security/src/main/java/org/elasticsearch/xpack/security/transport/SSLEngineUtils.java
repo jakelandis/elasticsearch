@@ -17,6 +17,7 @@ import org.elasticsearch.transport.TcpChannel;
 import org.elasticsearch.transport.netty4.Netty4TcpChannel;
 import org.elasticsearch.xpack.security.authc.pki.PkiRealm;
 
+import java.net.InetSocketAddress;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
@@ -60,6 +61,28 @@ public class SSLEngineUtils {
         }
     }
 
+
+    //TODO: remove "2" and wire in the remote address
+    public static void extract2(Logger logger, ThreadContext threadContext, SSLEngine sslEngine ){ //}, InetSocketAddress remoteAddress) {
+        try {
+            Certificate[] certs = sslEngine.getSession().getPeerCertificates();
+            if (certs instanceof X509Certificate[]) {
+                threadContext.putTransient(PkiRealm.PKI_CERT_HEADER_NAME, certs);
+            }
+        } catch (SSLPeerUnverifiedException e) {
+            // this happens when client authentication is optional and the client does not provide credentials. If client
+            // authentication was required then this connection should be closed before ever getting into this class
+            assert sslEngine.getNeedClientAuth() == false;
+            assert sslEngine.getWantClientAuth();
+//            if (logger.isTraceEnabled()) {
+//                logger.trace((Supplier<?>) () -> "SSL Peer did not present a certificate from [" + remoteAddress + "]", e);
+//            } else if (logger.isDebugEnabled()) {
+//                logger.debug("SSL Peer did not present a certificate from [{}]", remoteAddress);
+//            }
+        }
+    }
+
+    //TODO: remove this in favor of extract2
     private static void extract(Logger logger, ThreadContext threadContext, SSLEngine sslEngine, Object channel) {
         try {
             Certificate[] certs = sslEngine.getSession().getPeerCertificates();

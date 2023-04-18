@@ -8,6 +8,7 @@
 
 package org.elasticsearch.http;
 
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.rest.RestRequest;
 
 import java.util.List;
@@ -45,4 +46,7 @@ public interface HttpPreRequest {
         }
         return null;
     }
+
+
+
 }

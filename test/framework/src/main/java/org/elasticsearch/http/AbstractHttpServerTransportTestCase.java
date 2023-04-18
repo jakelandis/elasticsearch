@@ -9,16 +9,16 @@ package org.elasticsearch.http;
 
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.http.netty4.HttpHeadersValidator;
+import org.elasticsearch.http.netty4.HttpRequestUtils;
 import org.elasticsearch.test.ESTestCase;
 
 public class AbstractHttpServerTransportTestCase extends ESTestCase {
 
     /**
-     * Trivial {@link HttpHeadersValidator} implementation, to be used in tests, that successfully validates
+     * Trivial {@link HttpRequestUtils} implementation, to be used in tests, that successfully validates
      * any and all HTTP request headers.
      */
-    public static final HttpHeadersValidator VALIDATE_EVERYTHING_VALIDATOR = new HttpHeadersValidator(
+    public static final HttpRequestUtils VALIDATE_EVERYTHING_VALIDATOR = new HttpRequestUtils(
         (httpPreRequest, channel, listener) -> listener.onResponse(() -> {})
     );
 

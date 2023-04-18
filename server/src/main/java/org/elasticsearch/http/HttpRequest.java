@@ -9,6 +9,7 @@
 package org.elasticsearch.http;
 
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.core.Nullable;
 import org.elasticsearch.rest.ChunkedRestResponseBody;
 import org.elasticsearch.rest.RestStatus;
@@ -57,4 +58,5 @@ public interface HttpRequest extends HttpPreRequest {
      * @return a safe unpooled http request
      */
     HttpRequest releaseAndCopy();
+
 }

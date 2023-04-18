@@ -58,7 +58,7 @@ import org.elasticsearch.http.HttpHeadersValidationException;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.http.HttpTransportSettings;
 import org.elasticsearch.http.NullDispatcher;
-import org.elasticsearch.http.netty4.HttpHeadersValidator.ValidatableHttpHeaders.ValidationResult;
+import org.elasticsearch.http.netty4.HttpRequestUtils.ValidatableHttpHeaders.ValidationResult;
 import org.elasticsearch.rest.ChunkedRestResponseBody;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestRequest;
@@ -658,7 +658,7 @@ public class Netty4HttpServerTransportTests extends AbstractHttpServerTransportT
             @Override
             public void dispatchRequest(final RestRequest request, final RestChannel channel, final ThreadContext threadContext) {
                 assertThat(
-                    HttpHeadersValidator.extractValidationResult(request.getHttpRequest()),
+                    HttpRequestUtils.extractValidationResult(request.getHttpRequest()),
                     is(validationResultContextReference.get())
                 );
                 assertThat(request.getHttpRequest().uri(), is(urlReference.get()));
@@ -672,7 +672,7 @@ public class Netty4HttpServerTransportTests extends AbstractHttpServerTransportT
                 throw new AssertionError();
             }
         };
-        final HttpHeadersValidator successHeadersValidator = new HttpHeadersValidator(
+        final HttpRequestUtils successHeadersValidator = new HttpRequestUtils(
             ((httpPreRequest, channel, validationResultContextActionListener) -> {
                 assertThat(httpPreRequest.uri(), is(urlReference.get()));
                 assertThat(httpPreRequest.header(headerReference.get()), is(headerValueReference.get()));
@@ -697,7 +697,7 @@ public class Netty4HttpServerTransportTests extends AbstractHttpServerTransportT
                 @Override
                 protected void populatePerRequestThreadContext(RestRequest restRequest, ThreadContext threadContext) {
                     assertThat(
-                        HttpHeadersValidator.extractValidationResult(restRequest.getHttpRequest()),
+                        HttpRequestUtils.extractValidationResult(restRequest.getHttpRequest()),
                         is(validationResultContextReference.get())
                     );
                 }
@@ -759,7 +759,7 @@ public class Netty4HttpServerTransportTests extends AbstractHttpServerTransportT
                 }
             }
         };
-        final HttpHeadersValidator failureHeadersValidator = new HttpHeadersValidator(
+        final HttpRequestUtils failureHeadersValidator = new HttpRequestUtils(
             ((httpPreRequest, channel, validationResultContextActionListener) -> {
                 assertThat(httpPreRequest.uri(), is(urlReference.get()));
                 assertThat(httpPreRequest.header(headerReference.get()), is(headerValueReference.get()));

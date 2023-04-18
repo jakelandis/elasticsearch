@@ -6,8 +6,6 @@
  */
 package org.elasticsearch.xpack.security;
 
-import io.netty.channel.Channel;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.SetOnce;
@@ -16,7 +14,6 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.support.ActionFilter;
-import org.elasticsearch.action.support.ContextPreservingActionListener;
 import org.elasticsearch.action.support.DestructiveOperations;
 import org.elasticsearch.bootstrap.BootstrapCheck;
 import org.elasticsearch.client.internal.Client;
@@ -29,7 +26,6 @@ import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.CheckedBiConsumer;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.TriConsumer;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.network.NetworkModule;
@@ -53,10 +49,10 @@ import org.elasticsearch.core.Nullable;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.env.NodeMetadata;
+import org.elasticsearch.http.HttpAuthenticator;
 import org.elasticsearch.http.HttpPreRequest;
 import org.elasticsearch.http.HttpServerTransport;
-import org.elasticsearch.http.netty4.HttpHeadersValidator;
-import org.elasticsearch.http.netty4.HttpHeadersValidator.ValidatableHttpHeaders.ValidationResult;
+import org.elasticsearch.http.netty4.Netty4HttpHeaderValidator;
 import org.elasticsearch.http.netty4.Netty4HttpServerTransport;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.indices.SystemIndexDescriptor;
@@ -291,7 +287,6 @@ import org.elasticsearch.xpack.security.operator.OperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges.OperatorPrivilegesService;
 import org.elasticsearch.xpack.security.profile.ProfileService;
-import org.elasticsearch.xpack.security.rest.RemoteHostHeader;
 import org.elasticsearch.xpack.security.rest.SecurityRestFilter;
 import org.elasticsearch.xpack.security.rest.action.RestAuthenticateAction;
 import org.elasticsearch.xpack.security.rest.action.RestDelegatePkiAuthenticationAction;
@@ -378,6 +373,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.net.ssl.SSLEngine;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -386,8 +382,9 @@ import static org.elasticsearch.core.Strings.format;
 import static org.elasticsearch.xpack.core.XPackSettings.API_KEY_SERVICE_ENABLED_SETTING;
 import static org.elasticsearch.xpack.core.XPackSettings.HTTP_SSL_ENABLED;
 import static org.elasticsearch.xpack.core.security.SecurityField.FIELD_LEVEL_SECURITY_FEATURE;
+import static org.elasticsearch.xpack.core.security.authc.AuthenticationField.AUTHENTICATION_KEY;
 import static org.elasticsearch.xpack.security.operator.OperatorPrivileges.OPERATOR_PRIVILEGES_ENABLED;
-import static org.elasticsearch.xpack.security.transport.SSLEngineUtils.extractClientCertificates;
+import static org.elasticsearch.xpack.security.transport.SSLEngineUtils.extract2;
 
 public class Security extends Plugin
     implements
@@ -1627,7 +1624,7 @@ public class Security extends Plugin
             final boolean ssl = HTTP_SSL_ENABLED.get(settings);
             final SSLService sslService = getSslService();
             final SslConfiguration sslConfiguration;
-            final BiConsumer<Channel, ThreadContext> populateClientCertificate;
+            final BiConsumer<SSLEngine, ThreadContext> populateClientCertificate;
             if (ssl) {
                 sslConfiguration = sslService.getHttpTransportSSLConfiguration();
                 if (SSLService.isConfigurationValidForServerUsage(sslConfiguration) == false) {
@@ -1637,9 +1634,9 @@ public class Security extends Plugin
                     );
                 }
                 if (SSLService.isSSLClientAuthEnabled(sslConfiguration)) {
-                    populateClientCertificate = (channel, threadContext) -> extractClientCertificates(logger, threadContext, channel);
+                    populateClientCertificate = (sslEngine, threadContext) -> extract2(logger, threadContext, sslEngine);
                 } else {
-                    populateClientCertificate = (channel, threadContext) -> {};
+                    populateClientCertificate = (sslEngine, threadContext) -> {};
                 }
             } else {
                 sslConfiguration = null;
@@ -1647,45 +1644,10 @@ public class Security extends Plugin
             }
             final AuthenticationService authenticationService = this.authcService.get();
             final ThreadContext threadContext = this.threadContext.get();
-            final TriConsumer<HttpPreRequest, Channel, ActionListener<ValidationResult>> authenticateMessage = (
-                httpRequest,
-                channel,
-                listener) -> {
-                // step 1: Wrap the passed-in listener such that the changes wrt to authentication are not visible to `listener#onResponse`.
-                // Authentication will change the thread-context, but we don't want such a context be visible to whatever code is going to
-                // run under the `listener#onResponse` call stack.
-                var contextPreservingListener = new ContextPreservingActionListener<>(
-                    threadContext.wrapRestorable(threadContext.newStoredContext()),
-                    listener
-                );
-                // step 2: Stash the thread context, such that changes to the thread context from inside the `try` block are not visible to
-                // anything after the try block (though, in practice, nothing interesting ought to happen after a code that called in
-                // a listener) . "Stashing" is a generic way to also guard against any pre-existent context, by setting
-                // a default/empty context (empty with some caveats that should not matter here), before entering the `try` block.
-                try (ThreadContext.StoredContext ignore = threadContext.stashContext()) {
-                    assert threadContext.isDefaultContext();
-                    // step 3: Populate the thread context with credentials and any other HTTP request header values that the
-                    // authentication process looks for while doing its duty.
-                    perRequestThreadContext.accept(httpRequest, threadContext);
-                    populateClientCertificate.accept(channel, threadContext);
-                    RemoteHostHeader.process(channel, threadContext);
-                    // step 4: Run authentication on the now properly prepared thread-context.
-                    // This inspects and modifies the thread context.
-                    authenticationService.authenticate(httpRequest, ActionListener.wrap(authentication -> {
-                        if (authentication == null) {
-                            logger.trace("No authentication available for HTTP request [{}]", httpRequest.uri());
-                        } else {
-                            logger.trace("Authenticated HTTP request [{}] as {}", httpRequest.uri(), authentication);
-                        }
-                        // step 5: Capture the now *authenticated* thread context and store it in a variable.
-                        // The captured authenticated context is going to be instated only while executing the associated request handler.
-                        ThreadContext.StoredContext authenticatedStoredContext = threadContext.newStoredContext();
-                        // step 6: Pass the lambda that restores the *authenticated* context as an argument to the listener.
-                        contextPreservingListener.onResponse(authenticatedStoredContext::restore);
-                    }, contextPreservingListener::onFailure));
-                }
-                // the thread context here is identical to how the `try` block found it
-            };
+
+            final HttpAuthenticator httpAuthenticator =
+                new SecurityHttpAuthenticator(threadContext, authenticationService, perRequestThreadContext, populateClientCertificate);
+
             return new Netty4HttpServerTransport(
                 settings,
                 networkService,
@@ -1697,13 +1659,13 @@ public class Security extends Plugin
                 tracer,
                 new TLSConfig(sslConfiguration, sslService::createSSLEngine),
                 acceptPredicate,
-                new HttpHeadersValidator(authenticateMessage)
+                httpAuthenticator
             ) {
                 @Override
                 protected void populatePerRequestThreadContext(RestRequest restRequest, ThreadContext threadContext) {
-                    ValidationResult validationResult = HttpHeadersValidator.extractValidationResult(restRequest.getHttpRequest());
-                    assert validationResult != null : "all HTTP requests must be authenticated";
-                    validationResult.assertValid();
+                  if(threadContext.getHeader(AUTHENTICATION_KEY) == null) {
+                      throw new RuntimeException("whoops not authenticated !"); //TODO: better exception and message
+                  }
                 }
             };
         });

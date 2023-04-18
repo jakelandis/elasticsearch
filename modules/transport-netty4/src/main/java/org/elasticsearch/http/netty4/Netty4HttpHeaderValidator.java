@@ -9,7 +9,7 @@
 package org.elasticsearch.http.netty4;
 
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.DecoderResult;
@@ -17,32 +17,36 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.ReferenceCountUtil;
 
+import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.common.TriConsumer;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
+import org.elasticsearch.http.HttpAuthenticator;
 
+import javax.net.ssl.SSLEngine;
+import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
+import java.util.function.Supplier;
 
+import static org.elasticsearch.http.netty4.HttpRequestUtils.asHttpPreRequest;
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.DROPPING_DATA_PERMANENTLY;
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.DROPPING_DATA_UNTIL_NEXT_REQUEST;
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.FORWARDING_DATA_UNTIL_NEXT_REQUEST;
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.QUEUEING_DATA;
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.WAITING_TO_START;
 
+
 public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
 
-    public static final TriConsumer<HttpRequest, Channel, ActionListener<Void>> NOOP_VALIDATOR = ((
-        httpRequest,
-        channel,
-        listener) -> listener.onResponse(null));
-
-    private final TriConsumer<HttpRequest, Channel, ActionListener<Void>> validator;
+    private final HttpAuthenticator authenticator;
     private ArrayDeque<HttpObject> pending = new ArrayDeque<>(4);
     private State state = WAITING_TO_START;
+    private SetOnce<ThreadContext.StoredContext> storedContext;
 
-    public Netty4HttpHeaderValidator(TriConsumer<HttpRequest, Channel, ActionListener<Void>> validator) {
-        this.validator = validator;
+    public Netty4HttpHeaderValidator(HttpAuthenticator authenticator) {
+        this.authenticator = authenticator;
     }
 
     State getState() {
@@ -54,6 +58,7 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         assert msg instanceof HttpObject;
         final HttpObject httpObject = (HttpObject) msg;
+        storedContext = new SetOnce<>();
 
         switch (state) {
             case WAITING_TO_START:
@@ -69,6 +74,7 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
                 assert pending.isEmpty();
                 if (httpObject instanceof LastHttpContent) {
                     state = WAITING_TO_START;
+                    storedContext.get().restore();
                 }
                 ctx.fireChannelRead(httpObject);
                 break;
@@ -108,16 +114,27 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
 
         if (httpRequest == null) {
             // this looks like a malformed request and will forward without validation
-            ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx));
+            ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx, null));
         } else {
-            validator.apply(httpRequest, ctx.channel(), new ActionListener<>() {
-                @Override
-                public void onResponse(Void unused) {
-                    // Always use "Submit" to prevent reentrancy concerns if we are still on event loop
-                    ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx));
-                }
 
-                @Override
+            //TODO: beef this up
+            SslHandler sslHandler = ctx.pipeline().get(SslHandler.class);
+            SSLEngine sslEngine = null;
+            if(sslHandler != null) {
+                sslEngine = sslHandler.engine();
+            }
+
+            //TODO: is that a safe cast InetSocketAddress ? (I think so we already do it .. but probably safe to check instance type first)
+            authenticator.authenticate(asHttpPreRequest(httpRequest),
+                (InetSocketAddress) ctx.channel().remoteAddress(), sslEngine, new ActionListener<>() {
+
+                    @Override
+                    public void onResponse(Supplier<ThreadContext.StoredContext> authenticatedContext) {
+                        // Always use "Submit" to prevent reentrancy concerns if we are still on event loop
+                        ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx, authenticatedContext.get()));
+                    }
+
+                    @Override
                 public void onFailure(Exception e) {
                     // Always use "Submit" to prevent reentrancy concerns if we are still on event loop
                     ctx.channel().eventLoop().submit(() -> forwardRequestWithDecoderExceptionAndNoContent(ctx, e));
@@ -126,7 +143,7 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private void forwardFullRequest(ChannelHandlerContext ctx) {
+    private void forwardFullRequest(ChannelHandlerContext ctx, ThreadContext.StoredContext authenticatedContext) {
         assert ctx.channel().eventLoop().inEventLoop();
         assert ctx.channel().config().isAutoRead() == false;
         assert state == QUEUEING_DATA;
@@ -136,6 +153,9 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
         assert fullRequestForwarded || pending.isEmpty();
         if (fullRequestForwarded) {
             state = WAITING_TO_START;
+            if(authenticatedContext != null){
+                storedContext.set(authenticatedContext);
+            }
             requestStart(ctx);
         } else {
             state = FORWARDING_DATA_UNTIL_NEXT_REQUEST;

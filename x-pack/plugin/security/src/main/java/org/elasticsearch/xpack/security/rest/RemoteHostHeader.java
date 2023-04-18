@@ -21,8 +21,8 @@ public class RemoteHostHeader {
      * Extracts the remote address from the given netty channel and puts it in the request context. This will
      * then be copied to the subsequent action handler contexts.
      */
-    public static void process(Channel channel, ThreadContext threadContext) {
-        threadContext.putTransient(KEY, channel.remoteAddress());
+    public static void process(InetSocketAddress remoteAddress, ThreadContext threadContext) {
+        threadContext.putTransient(KEY, remoteAddress);
     }
 
     /**
