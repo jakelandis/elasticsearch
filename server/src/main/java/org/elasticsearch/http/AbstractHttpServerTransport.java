@@ -347,11 +347,11 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
      * @param httpRequest that is incoming
      * @param httpChannel that received the http request
      */
-    public void incomingRequest(final HttpRequest httpRequest, final HttpChannel httpChannel) {
+    public void incomingRequest(final HttpRequest httpRequest, final HttpChannel httpChannel, ThreadContext.StoredContext authContext) {
         httpClientStatsTracker.updateClientStats(httpRequest, httpChannel);
         final long startTime = threadPool.rawRelativeTimeInMillis();
         try {
-            handleIncomingRequest(httpRequest, httpChannel, httpRequest.getInboundException());
+            handleIncomingRequest(httpRequest, httpChannel, authContext, httpRequest.getInboundException());
         } finally {
             final long took = threadPool.rawRelativeTimeInMillis() - startTime;
             networkService.getHandlingTimeTracker().addHandlingTime(took);
@@ -371,21 +371,30 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
     }
 
     // Visible for testing
-    void dispatchRequest(final RestRequest restRequest, final RestChannel channel, final Throwable badRequestCause) {
+    void dispatchRequest(final RestRequest restRequest, final RestChannel channel, ThreadContext.StoredContext authContext, final Throwable badRequestCause) {
         final ThreadContext threadContext = threadPool.getThreadContext();
+        assert threadContext.isDefaultContext() : "the expected default context but was " + threadContext.getHeaders();
         try (ThreadContext.StoredContext ignore = threadContext.stashContext()) {
             if (badRequestCause != null) {
                 dispatcher.dispatchBadRequest(channel, threadContext, badRequestCause);
             } else {
-                populatePerRequestThreadContext0(restRequest, channel, threadContext);
-                dispatcher.dispatchRequest(restRequest, channel, threadContext);
+                if(authContext == null) {
+                    populatePerRequestThreadContext0(restRequest, channel, threadContext);
+                    dispatcher.dispatchRequest(restRequest, channel, threadContext);
+                } else{
+                    try (ThreadContext.StoredContext ignore2 = threadContext.stashContext()) {
+                        authContext.restore();
+                        populatePerRequestThreadContext0(restRequest, channel, threadContext);
+                        dispatcher.dispatchRequest(restRequest, channel, threadContext);
+                    }
+                }
             }
         }
     }
 
     private void populatePerRequestThreadContext0(RestRequest restRequest, RestChannel channel, ThreadContext threadContext) {
         try {
-            populatePerRequestThreadContext(restRequest, threadContext);
+            populatePerRequestThreadContext(restRequest, threadContext); //TODO: do we need this anymore ?.. maybe rename it to validateThreadContext ?
         } catch (Exception e) {
             try {
                 channel.sendResponse(new RestResponse(channel, e));
@@ -398,7 +407,7 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
 
     protected void populatePerRequestThreadContext(RestRequest restRequest, ThreadContext threadContext) {}
 
-    private void handleIncomingRequest(final HttpRequest httpRequest, final HttpChannel httpChannel, final Exception exception) {
+    private void handleIncomingRequest(final HttpRequest httpRequest, final HttpChannel httpChannel, ThreadContext.StoredContext authContext, final Exception exception) {
         if (exception == null) {
             HttpResponse earlyResponse = corsHandler.handleInbound(httpRequest);
             if (earlyResponse != null) {
@@ -474,7 +483,7 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
             channel = innerChannel;
         }
 
-        dispatchRequest(restRequest, channel, badRequestCause);
+        dispatchRequest(restRequest, channel, authContext, badRequestCause);
     }
 
     private RestRequest requestWithoutFailedHeader(

@@ -36,6 +36,7 @@ import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.DROP
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.FORWARDING_DATA_UNTIL_NEXT_REQUEST;
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.QUEUEING_DATA;
 import static org.elasticsearch.http.netty4.Netty4HttpHeaderValidator.State.WAITING_TO_START;
+import static org.elasticsearch.http.netty4.Netty4HttpServerTransport.AUTH_CONTEXT_CHANNEL_KEY;
 
 
 public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
@@ -74,8 +75,9 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
                 assert pending.isEmpty();
                 if (httpObject instanceof LastHttpContent) {
                     state = WAITING_TO_START;
-                    storedContext.get().restore();
                 }
+
+
                 ctx.fireChannelRead(httpObject);
                 break;
             case DROPPING_DATA_UNTIL_NEXT_REQUEST:
@@ -114,7 +116,7 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
 
         if (httpRequest == null) {
             // this looks like a malformed request and will forward without validation
-            ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx, null));
+            ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx));
         } else {
 
             //TODO: beef this up
@@ -129,9 +131,14 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
                 (InetSocketAddress) ctx.channel().remoteAddress(), sslEngine, new ActionListener<>() {
 
                     @Override
-                    public void onResponse(Supplier<ThreadContext.StoredContext> authenticatedContext) {
+                    public void onResponse(ThreadContext.StoredContext restorableAuthContext) {
+                        System.out.println("**************** setting authenticationContext "  + restorableAuthContext );
+                        //not 100% sure this safe ...  i think so, but not 100%
+                        ctx.channel().attr(AUTH_CONTEXT_CHANNEL_KEY).set(restorableAuthContext);
+                        System.out.println("**************** getting authenticationContext "  + ctx.channel().attr(AUTH_CONTEXT_CHANNEL_KEY).get() );
+
                         // Always use "Submit" to prevent reentrancy concerns if we are still on event loop
-                        ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx, authenticatedContext.get()));
+                        ctx.channel().eventLoop().submit(() -> forwardFullRequest(ctx));
                     }
 
                     @Override
@@ -143,7 +150,7 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private void forwardFullRequest(ChannelHandlerContext ctx, ThreadContext.StoredContext authenticatedContext) {
+    private void forwardFullRequest(ChannelHandlerContext ctx) {
         assert ctx.channel().eventLoop().inEventLoop();
         assert ctx.channel().config().isAutoRead() == false;
         assert state == QUEUEING_DATA;
@@ -153,9 +160,6 @@ public class Netty4HttpHeaderValidator extends ChannelInboundHandlerAdapter {
         assert fullRequestForwarded || pending.isEmpty();
         if (fullRequestForwarded) {
             state = WAITING_TO_START;
-            if(authenticatedContext != null){
-                storedContext.set(authenticatedContext);
-            }
             requestStart(ctx);
         } else {
             state = FORWARDING_DATA_UNTIL_NEXT_REQUEST;

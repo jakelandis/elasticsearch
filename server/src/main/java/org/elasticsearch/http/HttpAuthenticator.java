@@ -19,5 +19,5 @@ import java.util.function.Supplier;
 
 public interface HttpAuthenticator {
 
-    void authenticate(HttpPreRequest httpPreRequest, InetSocketAddress remoteAddress, SSLEngine sslEngine, ActionListener<Supplier<ThreadContext.StoredContext>> listener);
+    void authenticate(HttpPreRequest httpPreRequest, InetSocketAddress remoteAddress, SSLEngine sslEngine, ActionListener<ThreadContext.StoredContext> listener);
 }

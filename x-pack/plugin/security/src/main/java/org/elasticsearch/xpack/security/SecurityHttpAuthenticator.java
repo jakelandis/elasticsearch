@@ -42,7 +42,7 @@ public class SecurityHttpAuthenticator implements HttpAuthenticator {
 
 
     public void authenticate(HttpPreRequest httpPreRequest,
-                             InetSocketAddress remoteAddress, SSLEngine sslEngine, ActionListener<Supplier<ThreadContext.StoredContext>> listener) {
+                             InetSocketAddress remoteAddress, SSLEngine sslEngine, ActionListener<ThreadContext.StoredContext> listener) {
 
         try (ThreadContext.StoredContext ignore = threadContext.stashContext()) {
             assert threadContext.isDefaultContext();
@@ -57,11 +57,21 @@ public class SecurityHttpAuthenticator implements HttpAuthenticator {
                 } else {
                     logger.trace("Authenticated HTTP request [{}] as {}", httpPreRequest.uri(), authentication);
                 }
-                // Capture the now *authenticated* thread context and store it in a variable.
-                // The captured authenticated context is going to be instated only while executing the associated request handler.
-                listener.onResponse(threadContext.wrapRestorable(threadContext.newStoredContext()));
+                System.out.println("************* before stashing");
+                //resets the context to the default but give the listener a StoredContext they can restore to get the authentication context
+
+                try (ThreadContext.StoredContext restorableAuthContext = threadContext.stashContext()){
+                    assert threadContext.isDefaultContext() : "the expected default context but was " + threadContext.getHeaders();
+
+                    listener.onResponse(restorableAuthContext);
+                }
+
+
+                System.out.println("************* after on Response");
             }, listener::onFailure));
         }
+
+        System.out.println("************* after on try block");
 
     }
 }

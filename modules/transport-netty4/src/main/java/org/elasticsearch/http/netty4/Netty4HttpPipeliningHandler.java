@@ -28,6 +28,7 @@ import io.netty.util.concurrent.PromiseCombiner;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.bytes.ReleasableBytesReference;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.core.Booleans;
 import org.elasticsearch.core.Nullable;
 import org.elasticsearch.core.Tuple;
@@ -45,6 +46,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
+
+import static org.elasticsearch.http.netty4.Netty4HttpServerTransport.AUTH_CONTEXT_CHANNEL_KEY;
 
 /**
  * Implements HTTP pipelining ordering, ensuring that responses are completely served in the same order as their corresponding requests.
@@ -125,7 +128,8 @@ public class Netty4HttpPipeliningHandler extends ChannelDuplexHandler {
         assert Transports.assertDefaultThreadContext(serverTransport.getThreadPool().getThreadContext());
         assert Transports.assertTransportThread();
         try {
-            serverTransport.incomingRequest(pipelinedRequest, channel);
+            ThreadContext.StoredContext authContext = ctx.channel().attr(AUTH_CONTEXT_CHANNEL_KEY).get();
+            serverTransport.incomingRequest(pipelinedRequest, channel, authContext);
             success = true;
         } finally {
             if (success == false) {

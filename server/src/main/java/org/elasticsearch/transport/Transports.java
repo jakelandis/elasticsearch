@@ -68,9 +68,10 @@ public enum Transports {
     }
 
     public static boolean assertDefaultThreadContext(ThreadContext threadContext) {
-        assert threadContext.getRequestHeadersOnly().isEmpty()
-            || REQUEST_HEADERS_ALLOWED_ON_DEFAULT_THREAD_CONTEXT.containsAll(threadContext.getRequestHeadersOnly().keySet())
-            : "expected empty context but was " + threadContext.getRequestHeadersOnly() + " on " + Thread.currentThread().getName();
+        assert threadContext.isDefaultContext() : "expected default context but was " + threadContext.getHeaders(); //not sure if this right since we have 2 different definitions of default context :/
+//        assert threadContext.getRequestHeadersOnly().isEmpty()
+//            || REQUEST_HEADERS_ALLOWED_ON_DEFAULT_THREAD_CONTEXT.containsAll(threadContext.getRequestHeadersOnly().keySet())
+//            : "expected empty context but was " + threadContext.getRequestHeadersOnly() + " on " + Thread.currentThread().getName();
         return true;
     }
 }

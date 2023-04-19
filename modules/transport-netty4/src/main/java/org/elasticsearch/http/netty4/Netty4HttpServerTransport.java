@@ -45,6 +45,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.core.IOUtils;
 import org.elasticsearch.core.Nullable;
 import org.elasticsearch.http.AbstractHttpServerTransport;
@@ -332,6 +333,7 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
 
     static final AttributeKey<Netty4HttpChannel> HTTP_CHANNEL_KEY = AttributeKey.newInstance("es-http-channel");
     static final AttributeKey<Netty4HttpServerChannel> HTTP_SERVER_CHANNEL_KEY = AttributeKey.newInstance("es-http-server-channel");
+    static final AttributeKey<ThreadContext.StoredContext> AUTH_CONTEXT_CHANNEL_KEY = AttributeKey.newInstance("es-auth-context");
 
     protected static class HttpChannelHandler extends ChannelInitializer<Channel> {
 
