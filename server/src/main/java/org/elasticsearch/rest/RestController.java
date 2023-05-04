@@ -372,20 +372,20 @@ public class RestController implements HttpServerTransport.Dispatcher {
             }
         }
         RestChannel responseChannel = channel;
-        if (serverlessEnabled) {
-            Scope scope = handler.getServerlessScope();
-            if (Scope.INTERNAL.equals(scope)) {
-                final String internalOrigin = request.header(ELASTIC_INTERNAL_ORIGIN_HTTP_HEADER);
-                boolean internalRequest = internalOrigin != null;
-                if (internalRequest == false) {
-                    handleServerlessRequestToProtectedResource(request.uri(), request.method(), responseChannel);
-                    return;
-                }
-            } else if (Scope.PUBLIC.equals(scope) == false) {
-                handleServerlessRequestToProtectedResource(request.uri(), request.method(), responseChannel);
-                return;
-            }
-        }
+//        if (serverlessEnabled) {
+//            Scope scope = handler.getServerlessScope();
+//            if (Scope.INTERNAL.equals(scope)) {
+//                final String internalOrigin = request.header(ELASTIC_INTERNAL_ORIGIN_HTTP_HEADER);
+//                boolean internalRequest = internalOrigin != null;
+//                if (internalRequest == false) {
+//                    handleServerlessRequestToProtectedResource(request.uri(), request.method(), responseChannel);
+//                    return;
+//                }
+//            } else if (Scope.PUBLIC.equals(scope) == false) {
+//                handleServerlessRequestToProtectedResource(request.uri(), request.method(), responseChannel);
+//                return;
+//            }
+//        }
         try {
             if (handler.canTripCircuitBreaker()) {
                 inFlightRequestsBreaker(circuitBreakerService).addEstimateBytesAndMaybeBreak(contentLength, "<http_request>");
