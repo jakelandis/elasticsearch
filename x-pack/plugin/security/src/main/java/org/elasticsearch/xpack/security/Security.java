@@ -79,6 +79,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestHeaderDefinition;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.Scope;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.internal.ShardSearchRequest;
 import org.elasticsearch.threadpool.ExecutorBuilder;
@@ -159,7 +160,9 @@ import org.elasticsearch.xpack.core.security.action.user.HasPrivilegesAction;
 import org.elasticsearch.xpack.core.security.action.user.ProfileHasPrivilegesAction;
 import org.elasticsearch.xpack.core.security.action.user.PutUserAction;
 import org.elasticsearch.xpack.core.security.action.user.SetEnabledAction;
+import org.elasticsearch.xpack.core.security.authc.Authentication;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationFailureHandler;
+import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationServiceField;
 import org.elasticsearch.xpack.core.security.authc.DefaultAuthenticationFailureHandler;
 import org.elasticsearch.xpack.core.security.authc.InternalRealmsSettings;
@@ -179,8 +182,10 @@ import org.elasticsearch.xpack.core.security.authz.permission.FieldPermissionsCa
 import org.elasticsearch.xpack.core.security.authz.permission.SimpleRole;
 import org.elasticsearch.xpack.core.security.authz.store.ReservedRolesStore;
 import org.elasticsearch.xpack.core.security.authz.store.RoleRetrievalResult;
+import org.elasticsearch.xpack.core.security.rest.internal.SecurityRestAccessControl;
 import org.elasticsearch.xpack.core.security.support.Automatons;
 import org.elasticsearch.xpack.core.security.user.AnonymousUser;
+import org.elasticsearch.xpack.core.security.user.User;
 import org.elasticsearch.xpack.core.ssl.SSLConfigurationSettings;
 import org.elasticsearch.xpack.core.ssl.SSLService;
 import org.elasticsearch.xpack.core.ssl.TransportTLSBootstrapCheck;
@@ -527,6 +532,7 @@ public class Security extends Plugin
     private final List<SecurityExtension> securityExtensions = new ArrayList<>();
     private final SetOnce<Transport> transportReference = new SetOnce<>();
     private final SetOnce<ScriptService> scriptServiceReference = new SetOnce<>();
+    private SetOnce<SecurityRestAccessControl> restAccessControl = new SetOnce<>();
 
     private final SetOnce<ReservedRoleMappingAction> reservedRoleMappingAction = new SetOnce<>();
 
@@ -1673,6 +1679,7 @@ public class Security extends Plugin
             authcService.get(),
             secondayAuthc.get(),
             auditTrailService.get(),
+            restAccessControl.get(),
             handler
         );
     }
@@ -1777,6 +1784,57 @@ public class Security extends Plugin
     @Override
     public void loadExtensions(ExtensionLoader loader) {
         securityExtensions.addAll(loader.loadExtensions(SecurityExtension.class));
+
+        // TODO: actually wire this logic in via SPI
+        // List<SecurityRestAccessControl> accessControls = loader.loadExtensions(SecurityRestAccessControl.class);
+        // ensure there is only 1
+        // this.restAccessControl.set(accessControls.get(0));
+        this.restAccessControl.set(new SecurityRestAccessControl() {
+            @Override
+            public boolean allow(RestHandler restHandler) {
+                Scope scope = restHandler.getServerlessScope();
+                if (scope == null) {
+                    return false; // dis-allow all access without annonations
+                } else {
+                    switch (restHandler.getServerlessScope()) {
+                        case PUBLIC -> {
+                            return true;
+                        } // allow anyone to access
+                        case INTERNAL -> {
+                            if (isRestInternalUser()) {
+                                {
+                                    return true;
+                                }
+                            } else {
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+                return SecurityRestAccessControl.super.allow(restHandler);
+            }
+        });
+    }
+
+    // This should mirror the format and logic in org.elasticsearch.xpack.security.operator.FileOperatorUsersStore.isOperatorUser
+    // a Rest Internal user is compelety different concept from the org.elasticsearch.xpack.core.security.user.User.isInternal
+    // Rest Internal users are named users authenticating via the Rest API where
+    // the org.elasticsearch.xpack.core.security.user.User.isInternal is an internal user used to authorize transport actions
+    // despite the similar names this has nothing to do with org.elasticsearch.xpack.core.security.user.User.isInternal
+    public boolean isRestInternalUser() {
+        Authentication authentication = threadContext.get().getTransient(AuthenticationField.AUTHENTICATION_KEY);
+        Authentication.AuthenticationType authType = authentication.getAuthenticationType();
+        final User user = authentication.getEffectiveSubject().getUser();
+        final Authentication.RealmRef realm = authentication.getEffectiveSubject().getRealm();
+        logger.info("user : " + user.principal());
+        logger.info("type : " + authType);
+        logger.info("realm name : " + realm.getName());
+        // TODO: load the set of users, realms, and realm names from the file that mirrors operators.yml and check against that list
+        return "elastic-admin".equalsIgnoreCase(user.principal())
+            && Authentication.AuthenticationType.REALM.equals(authType)
+            && (realm.getName() == null || "default_file".equalsIgnoreCase(realm.getName()));
     }
 
     private synchronized SharedGroupFactory getNettySharedGroupFactory(Settings settings) {
@@ -1811,6 +1869,8 @@ public class Security extends Plugin
         }
         return new DlsFlsRequestCacheDifferentiator(getLicenseState(), securityContext, scriptServiceReference);
     }
+
+
 
     List<ReservedClusterStateHandler<?>> reservedClusterStateHandlers() {
         // If security is disabled we never call the plugin createComponents

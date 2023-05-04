@@ -11,8 +11,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.internal.node.NodeClient;
-import org.elasticsearch.cluster.node.DiscoveryNode;
-import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.core.CheckedRunnable;
 import org.elasticsearch.rest.RestChannel;
@@ -22,12 +20,7 @@ import org.elasticsearch.rest.RestRequest.Method;
 import org.elasticsearch.rest.RestRequestFilter;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.rest.Scope;
-import org.elasticsearch.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.core.security.SecurityContext;
-import org.elasticsearch.xpack.core.security.authc.Authentication;
-import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
-import org.elasticsearch.xpack.core.security.user.User;
+import org.elasticsearch.xpack.core.security.rest.internal.SecurityRestAccessControl;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authc.support.SecondaryAuthenticator;
@@ -46,6 +39,7 @@ public class SecurityRestFilter implements RestHandler {
     private final AuditTrailService auditTrailService;
     private final boolean enabled;
     private final ThreadContext threadContext;
+    private final SecurityRestAccessControl restAccessControl;
 
     public SecurityRestFilter(
         boolean enabled,
@@ -53,6 +47,7 @@ public class SecurityRestFilter implements RestHandler {
         AuthenticationService authenticationService,
         SecondaryAuthenticator secondaryAuthenticator,
         AuditTrailService auditTrailService,
+        SecurityRestAccessControl restAccessControl,
         RestHandler restHandler
     ) {
         this.enabled = enabled;
@@ -60,6 +55,7 @@ public class SecurityRestFilter implements RestHandler {
         this.authenticationService = authenticationService;
         this.secondaryAuthenticator = secondaryAuthenticator;
         this.auditTrailService = auditTrailService;
+        this.restAccessControl = restAccessControl;
         this.restHandler = restHandler;
     }
 
@@ -104,52 +100,18 @@ public class SecurityRestFilter implements RestHandler {
 
     private void doHandleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         threadContext.sanitizeHeaders();
-        CheckedRunnable<Exception> allow = () -> restHandler.handleRequest(request, channel, client);
-        Runnable deny = () -> channel.sendResponse(new RestResponse(RestStatus.FORBIDDEN, "This API is not available in serverless"));
+        CheckedRunnable<Exception> action;
+        if (restAccessControl.allow(restHandler)) {
+            action = () -> restHandler.handleRequest(request, channel, client); // allow
+        } else {
+            action = () -> channel.sendResponse(new RestResponse(RestStatus.FORBIDDEN, "This API is not available")); //deny
+        }
         try {
-            if (DiscoveryNodeRole.hasServerlessFeatureFlag()) {
-                Scope scope = restHandler.getServerlessScope();
-                if (scope == null) {
-                    deny.run();
-                } else {
-                    switch (restHandler.getServerlessScope()) {
-                        case PUBLIC -> allow.run();
-                        case INTERNAL -> {
-                            if (isRestInternalUser()) {
-                                allow.run();
-                            } else {
-                                deny.run();
-                            }
-                        }
-                    }
-                }
-
-            } else {
-                allow.run();
-            }
+            action.run();
         } catch (Exception e) {
             logger.debug(() -> format("Request handling failed for REST request [%s]", request.uri()), e);
             throw e;
         }
-    }
-
-    // This should mirror the format and logic in org.elasticsearch.xpack.security.operator.FileOperatorUsersStore.isOperatorUser
-    // a Rest Internal user is compelety different concept from the org.elasticsearch.xpack.core.security.user.User.isInternal
-    // Rest Internal users are named users authenticating via the Rest API where
-    // the org.elasticsearch.xpack.core.security.user.User.isInternal is an internal user used to authorize transport actions
-    // despite the similar names this has nothing to do with org.elasticsearch.xpack.core.security.user.User.isInternal
-    public boolean isRestInternalUser() {
-        Authentication authentication = threadContext.getTransient(AuthenticationField.AUTHENTICATION_KEY);
-        Authentication.AuthenticationType authType = authentication.getAuthenticationType();
-        final User user = authentication.getEffectiveSubject().getUser();
-        final Authentication.RealmRef realm = authentication.getEffectiveSubject().getRealm();
-        logger.info("user : " + user.principal());
-        logger.info("type : " + authType);
-        logger.info("realm name : " + realm.getName());
-        // TODO: load the set of users, realms, and realm names from the file that mirrors operators.yml and check against that list
-        return "elastic-admin".equalsIgnoreCase(user.principal())
-            && Authentication.AuthenticationType.REALM.equals(authType)
-            && (realm.getName() == null || "default_file".equalsIgnoreCase(realm.getName()));
     }
 
     protected void handleException(RestRequest request, RestChannel channel, Exception e) {
