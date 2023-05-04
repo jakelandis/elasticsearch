@@ -1729,7 +1729,7 @@ public class Security extends Plugin
     @Override
     public UnaryOperator<RestHandler> getRestHandlerInterceptor(ThreadContext threadContext) {
         return handler -> new SecurityRestFilter(enabled, threadContext, secondayAuthc.get(), auditTrailService.get(), restAccessControl.get(), handler);
-            
+
     }
 
     @Override
@@ -1833,7 +1833,7 @@ public class Security extends Plugin
     public void loadExtensions(ExtensionLoader loader) {
         securityExtensions.addAll(loader.loadExtensions(SecurityExtension.class));
 
-        // TODO: actually wire this logic in via SPI
+        // TODO: actually wire this logic in via SPI -> all loading of serverless stuff will happen from serverless plugin
         // List<SecurityRestAccessControl> accessControls = loader.loadExtensions(SecurityRestAccessControl.class);
         // ensure there is only 1
         // this.restAccessControl.set(accessControls.get(0));

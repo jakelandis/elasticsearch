@@ -89,14 +89,12 @@ public class SecurityRestFilter implements RestHandler {
 
     private void doHandleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         threadContext.sanitizeHeaders();
-        CheckedRunnable<Exception> action;
-        if (restAccessControl.allow(restHandler)) {
-            action = () -> restHandler.handleRequest(request, channel, client); // allow
-        } else {
-            action = () -> channel.sendResponse(new RestResponse(RestStatus.FORBIDDEN, "This API is not available")); //deny
-        }
         try {
-            action.run();
+            if (restAccessControl.allow(restHandler)) {
+                restHandler.handleRequest(request, channel, client); // allow
+            } else {
+                channel.sendResponse(new RestResponse(RestStatus.FORBIDDEN, "This API is not available")); //deny
+            }
         } catch (Exception e) {
             logger.debug(() -> format("Request handling failed for REST request [%s]", request.uri()), e);
             throw e;
