@@ -1833,6 +1833,7 @@ public class Security extends Plugin
     public void loadExtensions(ExtensionLoader loader) {
         securityExtensions.addAll(loader.loadExtensions(SecurityExtension.class));
 
+        // TODO: gate this whole thing with a custom serverless only feature flag (defined in the serverless plugin)
         // TODO: actually wire this logic in via SPI -> all loading of serverless stuff will happen from serverless plugin
         // List<SecurityRestAccessControl> accessControls = loader.loadExtensions(SecurityRestAccessControl.class);
         // ensure there is only 1
