@@ -24,7 +24,7 @@ import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationTestHelper;
 import org.elasticsearch.xpack.core.security.user.User;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.operator.OperatorPrivileges.DefaultOperatorPrivilegesService;
+import org.elasticsearch.xpack.security.operator.OperatorPrivileges.RBACOperatorPrivilegesService;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges.OperatorPrivilegesService;
 import org.junit.Before;
 import org.mockito.Mockito;
@@ -47,15 +47,15 @@ public class OperatorPrivilegesTests extends ESTestCase {
 
     private MockLicenseState xPackLicenseState;
     private FileOperatorUsersStore fileOperatorUsersStore;
-    private OperatorOnlyRegistry operatorOnlyRegistry;
+    private DefaultOperatorOnlyRegistry defaultOperatorOnlyRegistry;
     private OperatorPrivilegesService operatorPrivilegesService;
 
     @Before
     public void init() {
         xPackLicenseState = mock(MockLicenseState.class);
         fileOperatorUsersStore = mock(FileOperatorUsersStore.class);
-        operatorOnlyRegistry = mock(OperatorOnlyRegistry.class);
-        operatorPrivilegesService = new DefaultOperatorPrivilegesService(xPackLicenseState, fileOperatorUsersStore, operatorOnlyRegistry);
+        defaultOperatorOnlyRegistry = mock(DefaultOperatorOnlyRegistry.class);
+        operatorPrivilegesService = new RBACOperatorPrivilegesService(xPackLicenseState, fileOperatorUsersStore, defaultOperatorOnlyRegistry);
     }
 
     public void testWillMarkThreadContextForAllLicenses() {
@@ -78,7 +78,7 @@ public class OperatorPrivilegesTests extends ESTestCase {
             threadContext
         );
         assertNull(e);
-        verifyNoMoreInteractions(operatorOnlyRegistry);
+        verifyNoMoreInteractions(defaultOperatorOnlyRegistry);
     }
 
     public void testMarkOperatorUser() throws IllegalAccessException {
@@ -162,8 +162,8 @@ public class OperatorPrivilegesTests extends ESTestCase {
         final String operatorAction = "cluster:operator_only/action";
         final String nonOperatorAction = "cluster:non_operator/action";
         final String message = "[" + operatorAction + "]";
-        when(operatorOnlyRegistry.check(eq(operatorAction), any())).thenReturn(() -> message);
-        when(operatorOnlyRegistry.check(eq(nonOperatorAction), any())).thenReturn(null);
+        when(defaultOperatorOnlyRegistry.checkTransportAction(eq(operatorAction), any())).thenReturn(() -> message);
+        when(defaultOperatorOnlyRegistry.checkTransportAction(eq(nonOperatorAction), any())).thenReturn(null);
         ThreadContext threadContext = new ThreadContext(settings);
         final Authentication authentication = randomValueOtherThanMany(
             authc -> Authentication.AuthenticationType.INTERNAL == authc.getAuthenticationType(),
@@ -198,7 +198,7 @@ public class OperatorPrivilegesTests extends ESTestCase {
                 new ThreadContext(Settings.EMPTY)
             )
         );
-        verify(operatorOnlyRegistry, never()).check(anyString(), any());
+        verify(defaultOperatorOnlyRegistry, never()).checkTransportAction(anyString(), any());
     }
 
     public void testMaybeInterceptRequest() throws IllegalAccessException {

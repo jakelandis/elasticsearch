@@ -9,20 +9,20 @@ package org.elasticsearch.xpack.security.rest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.Supplier;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
-import org.elasticsearch.core.CheckedRunnable;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestRequest.Method;
 import org.elasticsearch.rest.RestRequestFilter;
 import org.elasticsearch.rest.RestResponse;
-import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.xpack.core.security.rest.internal.SecurityRestAccessControl;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.authc.support.SecondaryAuthenticator;
+import org.elasticsearch.xpack.security.operator.OperatorOnlyRegistry;
+import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
 
 import java.util.List;
 
@@ -37,21 +37,21 @@ public class SecurityRestFilter implements RestHandler {
     private final AuditTrailService auditTrailService;
     private final boolean enabled;
     private final ThreadContext threadContext;
-    private final SecurityRestAccessControl restAccessControl;
+    private final OperatorPrivileges.OperatorPrivilegesService operatorPrivilegesService;
 
     public SecurityRestFilter(
         boolean enabled,
         ThreadContext threadContext,
         SecondaryAuthenticator secondaryAuthenticator,
         AuditTrailService auditTrailService,
-        SecurityRestAccessControl restAccessControl,
+        OperatorPrivileges.OperatorPrivilegesService operatorPrivilegesService,
         RestHandler restHandler
     ) {
         this.enabled = enabled;
         this.threadContext = threadContext;
         this.secondaryAuthenticator = secondaryAuthenticator;
         this.auditTrailService = auditTrailService;
-        this.restAccessControl = restAccessControl;
+        this.operatorPrivilegesService = operatorPrivilegesService;
         this.restHandler = restHandler;
     }
 
@@ -90,11 +90,15 @@ public class SecurityRestFilter implements RestHandler {
     private void doHandleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         threadContext.sanitizeHeaders();
         try {
-            if (restAccessControl.allow(restHandler)) {
+            final OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorPrivilegesService.checkRest(restHandler, threadContext);
+            if (violation == null) {
                 restHandler.handleRequest(request, channel, client); // allow
             } else {
-                channel.sendResponse(new RestResponse(RestStatus.FORBIDDEN, "This API is not available")); //deny
+                // TODO: should probably be a 404 instead
+                throw new ElasticsearchSecurityException("Operator privileges are required for " + violation.message());
+
             }
+
         } catch (Exception e) {
             logger.debug(() -> format("Request handling failed for REST request [%s]", request.uri()), e);
             throw e;

@@ -213,5 +213,5 @@ module org.elasticsearch.xcore {
     exports org.elasticsearch.xpack.core.watcher.trigger;
     exports org.elasticsearch.xpack.core.watcher.watch;
     exports org.elasticsearch.xpack.core.watcher;
-    exports org.elasticsearch.xpack.core.security.rest.internal to org.elasticsearch.security, org.elasticsearch.internal.rest;
+    //exports org.elasticsearch.xpack.core.security.rest.internal to org.elasticsearch.security, org.elasticsearch.internal.rest;
 }

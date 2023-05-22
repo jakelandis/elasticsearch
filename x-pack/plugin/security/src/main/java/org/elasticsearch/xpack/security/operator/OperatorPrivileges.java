@@ -14,6 +14,8 @@ import org.elasticsearch.action.admin.cluster.snapshots.restore.RestoreSnapshotR
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.rest.RestHandler;
+import org.elasticsearch.rest.Scope;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.core.security.authc.Authentication;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
@@ -48,6 +50,9 @@ public class OperatorPrivileges {
             ThreadContext threadContext
         );
 
+        OperatorOnlyRegistry.OperatorPrivilegesViolation checkRest(RestHandler restHandler, ThreadContext threadContext);
+
+
         /**
          * When operator privileges are enabled, certain requests needs to be configured in a specific way
          * so that they respect operator only settings. For an example, the restore snapshot request
@@ -57,13 +62,13 @@ public class OperatorPrivileges {
         void maybeInterceptRequest(ThreadContext threadContext, TransportRequest request);
     }
 
-    public static final class DefaultOperatorPrivilegesService implements OperatorPrivilegesService {
+    public static final class RBACOperatorPrivilegesService implements OperatorPrivilegesService {
 
         private final FileOperatorUsersStore fileOperatorUsersStore;
         private final OperatorOnlyRegistry operatorOnlyRegistry;
         private final XPackLicenseState licenseState;
 
-        public DefaultOperatorPrivilegesService(
+        public RBACOperatorPrivilegesService(
             XPackLicenseState licenseState,
             FileOperatorUsersStore fileOperatorUsersStore,
             OperatorOnlyRegistry operatorOnlyRegistry
@@ -94,6 +99,32 @@ public class OperatorPrivileges {
             }
         }
 
+
+        public OperatorOnlyRegistry.OperatorPrivilegesViolation checkRest(RestHandler restHandler, ThreadContext threadContext) {
+            //TODO: need something above this to check the serverless scope so that operator privs only care about enforcing operator privs
+
+
+            Authentication authentication = threadContext.getTransient(AuthenticationField.AUTHENTICATION_KEY);
+            //TODO: DRY and clean up
+            if (false == shouldProcess()) {
+                return null;
+            }
+             final User user = authentication.getEffectiveSubject().getUser();
+            // Let internal users pass (also check run_as, it is impossible to run_as internal users, but just to be extra safe)
+            if (User.isInternal(user) && false == authentication.isRunAs()) {
+                return null;
+            }
+
+
+            logger.trace("Checking operator-only violation for user [{}] and rest Handler [{}]", user, restHandler.routes());
+            final OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.checkRestAccess(restHandler, threadContext);
+            if (violation != null) {
+                return violation;
+            }
+
+            return null;
+
+        }
         public ElasticsearchSecurityException check(
             Authentication authentication,
             String action,
@@ -113,7 +144,7 @@ public class OperatorPrivileges {
             )) {
                 // Only check whether request is operator-only when user is NOT an operator
                 logger.trace("Checking operator-only violation for user [{}] and action [{}]", user, action);
-                final OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.check(action, request);
+                final OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.checkTransportAction(action, request);
                 if (violation != null) {
                     return new ElasticsearchSecurityException("Operator privileges are required for " + violation.message());
                 }
@@ -144,6 +175,11 @@ public class OperatorPrivileges {
             TransportRequest request,
             ThreadContext threadContext
         ) {
+            return null;
+        }
+
+        @Override
+        public OperatorOnlyRegistry.OperatorPrivilegesViolation checkRest(RestHandler restHandler, ThreadContext threadContext) {
             return null;
         }
 

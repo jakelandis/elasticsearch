@@ -82,7 +82,6 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestHeaderDefinition;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.Scope;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.internal.ShardSearchRequest;
 import org.elasticsearch.threadpool.ExecutorBuilder;
@@ -163,9 +162,7 @@ import org.elasticsearch.xpack.core.security.action.user.HasPrivilegesAction;
 import org.elasticsearch.xpack.core.security.action.user.ProfileHasPrivilegesAction;
 import org.elasticsearch.xpack.core.security.action.user.PutUserAction;
 import org.elasticsearch.xpack.core.security.action.user.SetEnabledAction;
-import org.elasticsearch.xpack.core.security.authc.Authentication;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationFailureHandler;
-import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationServiceField;
 import org.elasticsearch.xpack.core.security.authc.DefaultAuthenticationFailureHandler;
 import org.elasticsearch.xpack.core.security.authc.InternalRealmsSettings;
@@ -185,10 +182,8 @@ import org.elasticsearch.xpack.core.security.authz.permission.FieldPermissionsCa
 import org.elasticsearch.xpack.core.security.authz.permission.SimpleRole;
 import org.elasticsearch.xpack.core.security.authz.store.ReservedRolesStore;
 import org.elasticsearch.xpack.core.security.authz.store.RoleRetrievalResult;
-import org.elasticsearch.xpack.core.security.rest.internal.SecurityRestAccessControl;
 import org.elasticsearch.xpack.core.security.support.Automatons;
 import org.elasticsearch.xpack.core.security.user.AnonymousUser;
-import org.elasticsearch.xpack.core.security.user.User;
 import org.elasticsearch.xpack.core.ssl.SSLConfigurationSettings;
 import org.elasticsearch.xpack.core.ssl.SSLService;
 import org.elasticsearch.xpack.core.ssl.TransportTLSBootstrapCheck;
@@ -290,10 +285,12 @@ import org.elasticsearch.xpack.security.authz.store.NativePrivilegeStore;
 import org.elasticsearch.xpack.security.authz.store.NativeRolesStore;
 import org.elasticsearch.xpack.security.authz.store.RoleProviders;
 import org.elasticsearch.xpack.security.ingest.SetSecurityUserProcessor;
+import org.elasticsearch.xpack.security.operator.DefaultOperatorOnlyRegistryFactory;
 import org.elasticsearch.xpack.security.operator.FileOperatorUsersStore;
 import org.elasticsearch.xpack.security.operator.OperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges.OperatorPrivilegesService;
+import org.elasticsearch.xpack.security.operator.serverless.ServerlessOperatorOnlyRegistryFactory;
 import org.elasticsearch.xpack.security.profile.ProfileService;
 import org.elasticsearch.xpack.security.rest.RemoteHostHeader;
 import org.elasticsearch.xpack.security.rest.SecurityRestFilter;
@@ -536,7 +533,9 @@ public class Security extends Plugin
     private final List<SecurityExtension> securityExtensions = new ArrayList<>();
     private final SetOnce<Transport> transportReference = new SetOnce<>();
     private final SetOnce<ScriptService> scriptServiceReference = new SetOnce<>();
-    private SetOnce<SecurityRestAccessControl> restAccessControl = new SetOnce<>();
+    private SetOnce<OperatorOnlyRegistry.Factory> operatorOnlyRegistryFactory = new SetOnce<>();
+
+    OperatorPrivilegesService operatorPrivilegesService; //TODO: setonce
 
     private final SetOnce<ReservedRoleMappingAction> reservedRoleMappingAction = new SetOnce<>();
 
@@ -878,14 +877,14 @@ public class Security extends Plugin
         getLicenseState().addListener(allRolesStore::invalidateAll);
 
         final AuthenticationFailureHandler failureHandler = createAuthenticationFailureHandler(realms, extensionComponents);
-        final OperatorPrivilegesService operatorPrivilegesService;
+
         final boolean operatorPrivilegesEnabled = OPERATOR_PRIVILEGES_ENABLED.get(settings);
         if (operatorPrivilegesEnabled) {
             logger.info("operator privileges are enabled");
-            operatorPrivilegesService = new OperatorPrivileges.DefaultOperatorPrivilegesService(
+            operatorPrivilegesService = new OperatorPrivileges.RBACOperatorPrivilegesService(
                 getLicenseState(),
                 new FileOperatorUsersStore(environment, resourceWatcherService),
-                new OperatorOnlyRegistry(clusterService.getClusterSettings())
+                operatorOnlyRegistryFactory.get().create(clusterService.getClusterSettings())
             );
         } else {
             operatorPrivilegesService = OperatorPrivileges.NOOP_OPERATOR_PRIVILEGES_SERVICE;
@@ -1728,7 +1727,7 @@ public class Security extends Plugin
 
     @Override
     public UnaryOperator<RestHandler> getRestHandlerInterceptor(ThreadContext threadContext) {
-        return handler -> new SecurityRestFilter(enabled, threadContext, secondayAuthc.get(), auditTrailService.get(), restAccessControl.get(), handler);
+        return handler -> new SecurityRestFilter(enabled, threadContext, secondayAuthc.get(), auditTrailService.get(), operatorPrivilegesService, handler);
 
     }
 
@@ -1833,58 +1832,23 @@ public class Security extends Plugin
     public void loadExtensions(ExtensionLoader loader) {
         securityExtensions.addAll(loader.loadExtensions(SecurityExtension.class));
 
-        // TODO: gate this whole thing with a custom serverless only feature flag (defined in the serverless plugin)
-        // TODO: actually wire this logic in via SPI -> all loading of serverless stuff will happen from serverless plugin
-        // List<SecurityRestAccessControl> accessControls = loader.loadExtensions(SecurityRestAccessControl.class);
-        // ensure there is only 1
-        // this.restAccessControl.set(accessControls.get(0));
-        this.restAccessControl.set(new SecurityRestAccessControl() {
-            @Override
-            public boolean allow(RestHandler restHandler) {
-                Scope scope = restHandler.getServerlessScope();
-                if (scope == null) {
-                    return false; // dis-allow all access without annonations
-                } else {
-                    switch (restHandler.getServerlessScope()) {
-                        case PUBLIC -> {
-                            return true;
-                        } // allow anyone to access
-                        case INTERNAL -> {
-                            if (isRestInternalUser()) {
-                                {
-                                    return true;
-                                }
-                            } else {
-                                {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                }
-                return SecurityRestAccessControl.super.allow(restHandler);
-            }
-        });
+        List<OperatorOnlyRegistry.Factory> factories = loader.loadExtensions(OperatorOnlyRegistry.Factory.class);
+        //todo ensure only 1
+       // if(factories == null || factories.size() < 1 ) {
+        if(1 == 2) {
+            operatorOnlyRegistryFactory.set(new DefaultOperatorOnlyRegistryFactory());
+        } else {
+            operatorOnlyRegistryFactory.set(new ServerlessOperatorOnlyRegistryFactory());
+        }
+       // } else if (factories.size() == 1){
+       //     operatorOnlyRegistryFactory.set(factories.get(0));
+    //        }
+//        } else {
+//            throw new RuntimeException("boom ... must be 0 or 1 ");
+//        }
     }
 
-    // This should mirror the format and logic in org.elasticsearch.xpack.security.operator.FileOperatorUsersStore.isOperatorUser
-    // a Rest Internal user is compelety different concept from the org.elasticsearch.xpack.core.security.user.User.isInternal
-    // Rest Internal users are named users authenticating via the Rest API where
-    // the org.elasticsearch.xpack.core.security.user.User.isInternal is an internal user used to authorize transport actions
-    // despite the similar names this has nothing to do with org.elasticsearch.xpack.core.security.user.User.isInternal
-    public boolean isRestInternalUser() {
-        Authentication authentication = threadContext.get().getTransient(AuthenticationField.AUTHENTICATION_KEY);
-        Authentication.AuthenticationType authType = authentication.getAuthenticationType();
-        final User user = authentication.getEffectiveSubject().getUser();
-        final Authentication.RealmRef realm = authentication.getEffectiveSubject().getRealm();
-        logger.info("user : " + user.principal());
-        logger.info("type : " + authType);
-        logger.info("realm name : " + realm.getName());
-        // TODO: load the set of users, realms, and realm names from the file that mirrors operators.yml and check against that list
-        return "elastic-admin".equalsIgnoreCase(user.principal())
-            && Authentication.AuthenticationType.REALM.equals(authType)
-            && (realm.getName() == null || "default_file".equalsIgnoreCase(realm.getName()));
-    }
+
 
     private synchronized SharedGroupFactory getNettySharedGroupFactory(Settings settings) {
         if (sharedGroupFactory.get() != null) {
