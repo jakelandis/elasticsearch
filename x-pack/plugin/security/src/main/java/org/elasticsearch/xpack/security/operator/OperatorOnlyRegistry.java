@@ -7,24 +7,28 @@
 
 package org.elasticsearch.xpack.security.operator;
 
-import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsRequest;
-import org.elasticsearch.common.settings.ClusterSettings;
-import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.transport.TransportRequest;
 
 public interface OperatorOnlyRegistry {
 
+    /**
+     * Check whether the given action and request qualify as operator-only. The method returns
+     * null if the action+request is NOT operator-only. Other it returns a violation object
+     * that contains the message for details. Generally this should be called from the
+     * authorization service before allowing work to continue.
+     * @return the OperatorPrivilegesViolation if failed the check, null otherwise
+     */
+    OperatorPrivilegesViolation check(String action, TransportRequest request);
 
-    OperatorPrivilegesViolation checkTransportAction(String action, TransportRequest request);
-    OperatorPrivilegesViolation checkRestAccess(RestHandler restHandler, ThreadContext threadContext);
-    OperatorPrivilegesViolation checkClusterUpdateSettings(ClusterUpdateSettingsRequest request);
-
-
-
-    interface Factory {
-        OperatorOnlyRegistry create(ClusterSettings clusterSettings);
-    }
+    /**
+     * Check whether the given REST handler qualify as operator-only. The method returns
+     * null if the handler NOT operator-only. Other it returns a violation object
+     * that contains the message for details. Generally this should be called before the
+     * request is dispatched.
+     * @return the OperatorPrivilegesViolation if failed the check, null otherwise
+     */
+    OperatorPrivilegesViolation checkRest(RestHandler restHandler);
 
     @FunctionalInterface
     interface OperatorPrivilegesViolation {

@@ -15,12 +15,13 @@ import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.rest.RestHandler;
-import org.elasticsearch.rest.Scope;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.core.security.authc.Authentication;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
 import org.elasticsearch.xpack.core.security.user.User;
 import org.elasticsearch.xpack.security.Security;
+
+import java.util.stream.Collectors;
 
 public class OperatorPrivileges {
 
@@ -50,7 +51,7 @@ public class OperatorPrivileges {
             ThreadContext threadContext
         );
 
-        OperatorOnlyRegistry.OperatorPrivilegesViolation checkRest(RestHandler restHandler, ThreadContext threadContext);
+        ElasticsearchSecurityException checkRest(RestHandler restHandler, ThreadContext threadContext);
 
 
         /**
@@ -59,7 +60,7 @@ public class OperatorPrivileges {
          * should not restore operator only states from the snapshot.
          * This method is where that requests are configured when necessary.
          */
-        void maybeInterceptRequest(ThreadContext threadContext, TransportRequest request);
+        void maybeInterceptTransportRequest(ThreadContext threadContext, TransportRequest request);
     }
 
     public static final class RBACOperatorPrivilegesService implements OperatorPrivilegesService {
@@ -100,31 +101,26 @@ public class OperatorPrivileges {
         }
 
 
-        public OperatorOnlyRegistry.OperatorPrivilegesViolation checkRest(RestHandler restHandler, ThreadContext threadContext) {
-            //TODO: need something above this to check the serverless scope so that operator privs only care about enforcing operator privs
-
-
-            Authentication authentication = threadContext.getTransient(AuthenticationField.AUTHENTICATION_KEY);
-            //TODO: DRY and clean up
-            if (false == shouldProcess()) {
-                return null;
+        public ElasticsearchSecurityException checkRest(RestHandler restHandler, ThreadContext threadContext) {
+//            if (false == shouldProcess()) {
+//                return null;
+//            }
+            if (false == AuthenticationField.PRIVILEGE_CATEGORY_VALUE_OPERATOR.equals(
+                threadContext.getHeader(AuthenticationField.PRIVILEGE_CATEGORY_KEY)
+            )) {
+                // Only check whether request is operator-only when user is NOT an operator
+                if (logger.isTraceEnabled()) {
+                    Authentication authentication = threadContext.getTransient(AuthenticationField.AUTHENTICATION_KEY);
+                    final User user = authentication.getEffectiveSubject().getUser();
+                    logger.trace("Checking operator-only violation for user [{}] and routes [{}]", user, restHandler.routes().stream().map(RestHandler.Route::getPath).collect(Collectors.joining(",")));
+                }
+                System.out.println("Checking rest via registry ...");
+                OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.checkRest(restHandler);
+                return violation == null ? null : new ElasticsearchSecurityException(violation.message());
             }
-             final User user = authentication.getEffectiveSubject().getUser();
-            // Let internal users pass (also check run_as, it is impossible to run_as internal users, but just to be extra safe)
-            if (User.isInternal(user) && false == authentication.isRunAs()) {
-                return null;
-            }
-
-
-            logger.trace("Checking operator-only violation for user [{}] and rest Handler [{}]", user, restHandler.routes());
-            final OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.checkRestAccess(restHandler, threadContext);
-            if (violation != null) {
-                return violation;
-            }
-
             return null;
-
         }
+
         public ElasticsearchSecurityException check(
             Authentication authentication,
             String action,
@@ -144,7 +140,7 @@ public class OperatorPrivileges {
             )) {
                 // Only check whether request is operator-only when user is NOT an operator
                 logger.trace("Checking operator-only violation for user [{}] and action [{}]", user, action);
-                final OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.checkTransportAction(action, request);
+                final OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.check(action, request);
                 if (violation != null) {
                     return new ElasticsearchSecurityException("Operator privileges are required for " + violation.message());
                 }
@@ -152,7 +148,7 @@ public class OperatorPrivileges {
             return null;
         }
 
-        public void maybeInterceptRequest(ThreadContext threadContext, TransportRequest request) {
+        public void maybeInterceptTransportRequest(ThreadContext threadContext, TransportRequest request) {
             if (request instanceof RestoreSnapshotRequest) {
                 logger.debug("Intercepting [{}] for operator privileges", request);
                 ((RestoreSnapshotRequest) request).skipOperatorOnlyState(shouldProcess());
@@ -179,12 +175,13 @@ public class OperatorPrivileges {
         }
 
         @Override
-        public OperatorOnlyRegistry.OperatorPrivilegesViolation checkRest(RestHandler restHandler, ThreadContext threadContext) {
+        public ElasticsearchSecurityException checkRest(RestHandler restHandler, ThreadContext threadContext) {
+            System.out.println("in no-op check rest");
             return null;
         }
 
         @Override
-        public void maybeInterceptRequest(ThreadContext threadContext, TransportRequest request) {
+        public void maybeInterceptTransportRequest(ThreadContext threadContext, TransportRequest request) {
             if (request instanceof RestoreSnapshotRequest) {
                 ((RestoreSnapshotRequest) request).skipOperatorOnlyState(false);
             }

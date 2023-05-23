@@ -285,12 +285,12 @@ import org.elasticsearch.xpack.security.authz.store.NativePrivilegeStore;
 import org.elasticsearch.xpack.security.authz.store.NativeRolesStore;
 import org.elasticsearch.xpack.security.authz.store.RoleProviders;
 import org.elasticsearch.xpack.security.ingest.SetSecurityUserProcessor;
-import org.elasticsearch.xpack.security.operator.DefaultOperatorOnlyRegistryFactory;
+import org.elasticsearch.xpack.security.operator.DefaultOperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.operator.FileOperatorUsersStore;
 import org.elasticsearch.xpack.security.operator.OperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges.OperatorPrivilegesService;
-import org.elasticsearch.xpack.security.operator.serverless.ServerlessOperatorOnlyRegistryFactory;
+import org.elasticsearch.xpack.security.operator.serverless.ServerlessOperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.profile.ProfileService;
 import org.elasticsearch.xpack.security.rest.RemoteHostHeader;
 import org.elasticsearch.xpack.security.rest.SecurityRestFilter;
@@ -349,6 +349,9 @@ import org.elasticsearch.xpack.security.rest.action.user.RestHasPrivilegesAction
 import org.elasticsearch.xpack.security.rest.action.user.RestProfileHasPrivilegesAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestPutUserAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestSetEnabledAction;
+import org.elasticsearch.xpack.security.rest.internal.RestRestrictions;
+import org.elasticsearch.xpack.security.rest.internal.RestRestrictionsFactory;
+import org.elasticsearch.xpack.security.rest.internal.serverless.ServerlessRestRestrictionsFactory;
 import org.elasticsearch.xpack.security.support.CacheInvalidatorRegistry;
 import org.elasticsearch.xpack.security.support.ExtensionComponents;
 import org.elasticsearch.xpack.security.support.SecuritySystemIndices;
@@ -533,7 +536,9 @@ public class Security extends Plugin
     private final List<SecurityExtension> securityExtensions = new ArrayList<>();
     private final SetOnce<Transport> transportReference = new SetOnce<>();
     private final SetOnce<ScriptService> scriptServiceReference = new SetOnce<>();
-    private SetOnce<OperatorOnlyRegistry.Factory> operatorOnlyRegistryFactory = new SetOnce<>();
+    private SetOnce<OperatorOnlyRegistry> operatorOnlyRegistry = new SetOnce<>();
+    private SetOnce<RestRestrictionsFactory> restRestrictionsFactory = new SetOnce<>();
+    private SetOnce<RestRestrictions> restRestrictions = new SetOnce<>();
 
     OperatorPrivilegesService operatorPrivilegesService; //TODO: setonce
 
@@ -878,16 +883,28 @@ public class Security extends Plugin
 
         final AuthenticationFailureHandler failureHandler = createAuthenticationFailureHandler(realms, extensionComponents);
 
-        final boolean operatorPrivilegesEnabled = OPERATOR_PRIVILEGES_ENABLED.get(settings);
+        //operator privileges are enabled either explicitly via the setting or if an SPI entry for an alternative registry is found
+        final boolean operatorPrivilegesEnabled = OPERATOR_PRIVILEGES_ENABLED.get(settings) || operatorOnlyRegistry.get() != null;
+
         if (operatorPrivilegesEnabled) {
             logger.info("operator privileges are enabled");
+            if(operatorOnlyRegistry.get() == null){
+                operatorOnlyRegistry.set(new DefaultOperatorOnlyRegistry(clusterService.getClusterSettings()));
+            }
             operatorPrivilegesService = new OperatorPrivileges.RBACOperatorPrivilegesService(
                 getLicenseState(),
                 new FileOperatorUsersStore(environment, resourceWatcherService),
-                operatorOnlyRegistryFactory.get().create(clusterService.getClusterSettings())
+                operatorOnlyRegistry.get()
             );
+            if(restRestrictionsFactory.get() == null){
+                restRestrictions.set(new RestRestrictions() {});
+            } else {
+                restRestrictions.set(restRestrictionsFactory.get().create(operatorPrivilegesService));
+            }
+
         } else {
             operatorPrivilegesService = OperatorPrivileges.NOOP_OPERATOR_PRIVILEGES_SERVICE;
+            restRestrictions.set(new RestRestrictions() {});
         }
         authcService.set(
             new AuthenticationService(
@@ -1727,7 +1744,7 @@ public class Security extends Plugin
 
     @Override
     public UnaryOperator<RestHandler> getRestHandlerInterceptor(ThreadContext threadContext) {
-        return handler -> new SecurityRestFilter(enabled, threadContext, secondayAuthc.get(), auditTrailService.get(), operatorPrivilegesService, handler);
+        return handler -> new SecurityRestFilter(enabled, threadContext, secondayAuthc.get(), auditTrailService.get(), restRestrictions.get(), handler);
 
     }
 
@@ -1832,23 +1849,28 @@ public class Security extends Plugin
     public void loadExtensions(ExtensionLoader loader) {
         securityExtensions.addAll(loader.loadExtensions(SecurityExtension.class));
 
-        List<OperatorOnlyRegistry.Factory> factories = loader.loadExtensions(OperatorOnlyRegistry.Factory.class);
-        //todo ensure only 1
-       // if(factories == null || factories.size() < 1 ) {
-        if(1 == 2) {
-            operatorOnlyRegistryFactory.set(new DefaultOperatorOnlyRegistryFactory());
-        } else {
-            operatorOnlyRegistryFactory.set(new ServerlessOperatorOnlyRegistryFactory());
-        }
-       // } else if (factories.size() == 1){
-       //     operatorOnlyRegistryFactory.set(factories.get(0));
-    //        }
-//        } else {
-//            throw new RuntimeException("boom ... must be 0 or 1 ");
+        //emulate serverless
+        System.out.println("adding serverless SPI manually...");
+        this.operatorOnlyRegistry.set(new ServerlessOperatorOnlyRegistry());
+        this.restRestrictionsFactory.set(new ServerlessRestRestrictionsFactory());
+
+        //TODO: remove the serverless emulation in favor a real SPI implementation like below
+//        //operator registry SPI, expects implementations to have no arg constructor
+//        List<OperatorOnlyRegistry> operatorOnlyRegistries = loader.loadExtensions(OperatorOnlyRegistry.class);
+//        if(operatorOnlyRegistries.size() == 1){
+//            this.operatorOnlyRegistry.set(operatorOnlyRegistries.get(0));
+//        } else if (operatorOnlyRegistries.size() > 1) {
+//           throw new RuntimeException("Can not have multiple implementations");
+//        }
+//
+//        //rest restrictions factory SPI, expects implementations to require constructor args, hence the factory
+//        List<RestRestrictionsFactory> restRestrictionsFactories = loader.loadExtensions(RestRestrictionsFactory.class);
+//        if(restRestrictionsFactories.size() == 1){
+//            this.restRestrictionsFactory.set(restRestrictionsFactories.get(0));
+//        } else if (restRestrictionsFactories.size() > 1) {
+//            throw new RuntimeException("Can not have multiple implementations");
 //        }
     }
-
-
 
     private synchronized SharedGroupFactory getNettySharedGroupFactory(Settings settings) {
         if (sharedGroupFactory.get() != null) {

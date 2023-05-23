@@ -20,7 +20,6 @@ import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsRequ
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
-import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.license.DeleteLicenseAction;
 import org.elasticsearch.license.PutLicenseAction;
 import org.elasticsearch.rest.RestHandler;
@@ -62,7 +61,7 @@ public class DefaultOperatorOnlyRegistry implements OperatorOnlyRegistry {
 
     private final ClusterSettings clusterSettings;
 
-    DefaultOperatorOnlyRegistry(ClusterSettings clusterSettings) {
+    public DefaultOperatorOnlyRegistry(ClusterSettings clusterSettings) {
         this.clusterSettings = clusterSettings;
     }
 
@@ -71,7 +70,7 @@ public class DefaultOperatorOnlyRegistry implements OperatorOnlyRegistry {
      * null if the action+request is NOT operator-only. Other it returns a violation object
      * that contains the message for details.
      */
-    public OperatorPrivilegesViolation checkTransportAction(String action, TransportRequest request) {
+    public OperatorPrivilegesViolation check(String action, TransportRequest request) {
         if (SIMPLE_ACTIONS.contains(action)) {
             return () -> "action [" + action + "]";
         } else if (ClusterUpdateSettingsAction.NAME.equals(action)) {
@@ -83,12 +82,13 @@ public class DefaultOperatorOnlyRegistry implements OperatorOnlyRegistry {
     }
 
     @Override
-    public OperatorPrivilegesViolation checkRestAccess(RestHandler restHandler, ThreadContext threadContext) {
-        //Do nothing, default operator privs does not support REST handlers
+    public OperatorPrivilegesViolation checkRest(RestHandler restHandler) {
+        System.out.println("in default registry");
+        //Do nothing, default operator privs do not enforce any REST handlers
         return null;
     }
 
-    public OperatorPrivilegesViolation checkClusterUpdateSettings(ClusterUpdateSettingsRequest request) {
+    private OperatorPrivilegesViolation checkClusterUpdateSettings(ClusterUpdateSettingsRequest request) {
         List<String> operatorOnlySettingKeys = Stream.concat(
             request.transientSettings().keySet().stream(),
             request.persistentSettings().keySet().stream()

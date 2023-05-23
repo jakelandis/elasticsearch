@@ -388,7 +388,7 @@ public class AuthorizationService {
         if (operatorException != null) {
             throw actionDenied(authentication, null, action, originalRequest, "because it requires operator privileges", operatorException);
         }
-        operatorPrivilegesService.maybeInterceptRequest(threadContext, originalRequest);
+        operatorPrivilegesService.maybeInterceptTransportRequest(threadContext, originalRequest);
     }
 
     private void maybeAuthorizeRunAs(
