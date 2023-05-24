@@ -8,19 +8,18 @@
 package org.elasticsearch.xpack.security.rest.internal;
 
 import org.elasticsearch.common.util.concurrent.ThreadContext;
-import org.elasticsearch.core.Tuple;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 
 public interface RestRestrictions {
 
-    //channel can retrun from here if access is denied
-    default void maybeDenyAccess( RestHandler restHandler, RestChannel channel, ThreadContext threadContext) {
-        //do nothing - i.e. allow access;
+    //void if
+    default RestResponse checkFullyRestricted(RestHandler restHandler, RestRequest request, ThreadContext threadContext) {
+        return null;  //allow access;
     }
 
-    default Tuple<RestHandler, RestRequest> maybeRedirect(RestHandler handler, RestRequest request, ThreadContext threadContext) {
-        return new Tuple<>(handler, request);
+    default RestRequest checkPartiallyRestricted(RestHandler restHandler, RestRequest request, ThreadContext threadContext) {
+        return request;
     }
 }

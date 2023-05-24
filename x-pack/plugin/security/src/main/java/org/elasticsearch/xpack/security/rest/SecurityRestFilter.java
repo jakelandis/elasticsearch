@@ -12,7 +12,6 @@ import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
-import org.elasticsearch.core.Tuple;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
@@ -88,14 +87,17 @@ public class SecurityRestFilter implements RestHandler {
 
     private void doHandleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         threadContext.sanitizeHeaders();
-        restRestrictions.maybeDenyAccess(restHandler, channel, threadContext);
-        Tuple<RestHandler, RestRequest> maybeRedirectRequest = restRestrictions.maybeRedirect(restHandler, request, threadContext);
-
-        try {
-            maybeRedirectRequest.v1().handleRequest(maybeRedirectRequest.v2(), channel, client);
-        } catch (Exception e) {
-            logger.debug(() -> format("Request handling failed for REST request [%s]", request.uri()), e);
-            throw e;
+        RestResponse fullyRestrictedResponse = restRestrictions.checkFullyRestricted(restHandler, request, threadContext);
+        if(fullyRestrictedResponse == null) {
+          //  RestRequest maybePartiallyRestrictedRequest = restRestrictions.checkPartiallyRestricted(request, threadContext);
+            try {
+                restHandler.handleRequest(request, channel, client);
+            } catch (Exception e) {
+                logger.debug(() -> format("Request handling failed for REST request [%s]", request.uri()), e);
+                throw e;
+            }
+        } else {
+            channel.sendResponse(fullyRestrictedResponse);
         }
     }
 
