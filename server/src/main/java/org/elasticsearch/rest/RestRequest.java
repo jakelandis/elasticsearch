@@ -122,7 +122,12 @@ public class RestRequest implements ToXContent.Params {
     }
 
     protected RestRequest(RestRequest other) {
+        this(other, other.params);
+    }
+
+    private RestRequest(RestRequest other, Map<String, String> params) {
         assert other.parserConfig.restApiVersion().equals(other.restApiVersion);
+        this.params = params; //allow construction with custom params
         this.parsedAccept = other.parsedAccept;
         this.parsedContentType = other.parsedContentType;
         if (other.xContentType.get() != null) {
@@ -132,10 +137,10 @@ public class RestRequest implements ToXContent.Params {
         this.parserConfig = other.parserConfig;
         this.httpRequest = other.httpRequest;
         this.httpChannel = other.httpChannel;
-        this.params = other.params;
         this.rawPath = other.rawPath;
         this.headers = other.headers;
         this.requestId = other.requestId;
+
     }
 
     private static @Nullable ParsedMediaType parseHeaderWithMediaType(Map<String, List<String>> headers, String headerName) {
@@ -181,6 +186,10 @@ public class RestRequest implements ToXContent.Params {
             httpChannel,
             requestIdGenerator.incrementAndGet()
         );
+    }
+
+    public static RestRequest updateWithCustomParams(RestRequest original, Map<String, String> params) {
+        return new RestRequest(original, params);
     }
 
     private static Map<String, String> params(final String uri) {
@@ -369,6 +378,13 @@ public class RestRequest implements ToXContent.Params {
 
     public Map<String, String> params() {
         return params;
+    }
+
+    /**
+     * @return an immutable copy of the all of the params
+     */
+    public Map<String, String> getParams() {
+        return Collections.unmodifiableMap(params);
     }
 
     /**

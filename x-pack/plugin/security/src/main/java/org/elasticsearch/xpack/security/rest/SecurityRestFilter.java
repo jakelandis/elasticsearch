@@ -89,9 +89,9 @@ public class SecurityRestFilter implements RestHandler {
         threadContext.sanitizeHeaders();
         RestResponse fullyRestrictedResponse = restRestrictions.checkFullyRestricted(restHandler, request, threadContext);
         if(fullyRestrictedResponse == null) {
-          //  RestRequest maybePartiallyRestrictedRequest = restRestrictions.checkPartiallyRestricted(request, threadContext);
+            RestRequest maybeRestrictedRequest = restRestrictions.checkPartiallyRestricted(restHandler, request, threadContext);
             try {
-                restHandler.handleRequest(request, channel, client);
+                restHandler.handleRequest(maybeRestrictedRequest, channel, client);
             } catch (Exception e) {
                 logger.debug(() -> format("Request handling failed for REST request [%s]", request.uri()), e);
                 throw e;

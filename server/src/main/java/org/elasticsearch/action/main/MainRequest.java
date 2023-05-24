@@ -16,10 +16,18 @@ import java.io.IOException;
 
 public class MainRequest extends ActionRequest {
 
-    public MainRequest() {}
+    final boolean restricted;
+    public MainRequest(boolean restricted) {
+        this.restricted = restricted;
+    }
 
     MainRequest(StreamInput in) throws IOException {
         super(in);
+        restricted = false; //FIXME: properly handle wire serialization
+    }
+
+    public boolean isRestricted() {
+        return restricted;
     }
 
     @Override

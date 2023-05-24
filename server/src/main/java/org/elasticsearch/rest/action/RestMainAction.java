@@ -41,7 +41,8 @@ public class RestMainAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
-        return channel -> client.execute(MainAction.INSTANCE, new MainRequest(), new RestBuilderListener<MainResponse>(channel) {
+        boolean restricted = request.paramAsBoolean("restricted", false);
+        return channel -> client.execute(MainAction.INSTANCE, new MainRequest(restricted), new RestBuilderListener<MainResponse>(channel) {
             @Override
             public RestResponse buildResponse(MainResponse mainResponse, XContentBuilder builder) throws Exception {
                 return convertMainResponse(mainResponse, request, builder);

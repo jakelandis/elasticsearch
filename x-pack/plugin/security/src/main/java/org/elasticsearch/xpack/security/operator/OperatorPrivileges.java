@@ -15,6 +15,7 @@ import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.rest.RestHandler;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.core.security.authc.Authentication;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
@@ -51,9 +52,9 @@ public class OperatorPrivileges {
             ThreadContext threadContext
         );
 
-        ElasticsearchSecurityException checkRest(RestHandler restHandler, ThreadContext threadContext);
+        ElasticsearchSecurityException checkRestFull(RestHandler restHandler, ThreadContext threadContext);
 
-
+        RestRequest checkRestPartial(RestHandler restHandler, RestRequest restRequest, ThreadContext threadContext);
         /**
          * When operator privileges are enabled, certain requests needs to be configured in a specific way
          * so that they respect operator only settings. For an example, the restore snapshot request
@@ -101,7 +102,7 @@ public class OperatorPrivileges {
         }
 
 
-        public ElasticsearchSecurityException checkRest(RestHandler restHandler, ThreadContext threadContext) {
+        public ElasticsearchSecurityException checkRestFull(RestHandler restHandler, ThreadContext threadContext) {
 //            if (false == shouldProcess()) {
 //                return null;
 //            }
@@ -115,10 +116,31 @@ public class OperatorPrivileges {
                     logger.trace("Checking operator-only violation for user [{}] and routes [{}]", user, restHandler.routes().stream().map(RestHandler.Route::getPath).collect(Collectors.joining(",")));
                 }
                 System.out.println("Checking rest via registry ...");
-                OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.checkRest(restHandler);
+                OperatorOnlyRegistry.OperatorPrivilegesViolation violation = operatorOnlyRegistry.checkRestFull(restHandler);
                 return violation == null ? null : new ElasticsearchSecurityException(violation.message());
             }
             return null;
+        }
+
+        @Override
+        public RestRequest checkRestPartial(RestHandler restHandler, RestRequest restRequest, ThreadContext threadContext) {
+            //            if (false == shouldProcess()) {
+//                return null;
+//            }
+            if (false == AuthenticationField.PRIVILEGE_CATEGORY_VALUE_OPERATOR.equals(
+                threadContext.getHeader(AuthenticationField.PRIVILEGE_CATEGORY_KEY)
+            )) {
+                // Only check whether request is operator-only when user is NOT an operator
+                if (logger.isTraceEnabled()) {
+                    Authentication authentication = threadContext.getTransient(AuthenticationField.AUTHENTICATION_KEY);
+                    final User user = authentication.getEffectiveSubject().getUser();
+                    logger.trace("Checking operator-only violation for user [{}] and routes [{}]", user, restHandler.routes().stream().map(RestHandler.Route::getPath).collect(Collectors.joining(",")));
+                }
+                System.out.println("Checking rest partial via registry ...");
+                return operatorOnlyRegistry.checkRestPartial(restHandler, restRequest);
+
+            }
+            return restRequest;
         }
 
         public ElasticsearchSecurityException check(
@@ -175,8 +197,13 @@ public class OperatorPrivileges {
         }
 
         @Override
-        public ElasticsearchSecurityException checkRest(RestHandler restHandler, ThreadContext threadContext) {
+        public ElasticsearchSecurityException checkRestFull(RestHandler restHandler, ThreadContext threadContext) {
             System.out.println("in no-op check rest");
+            return null;
+        }
+
+        @Override
+        public RestRequest checkRestPartial(RestHandler restHandler, RestRequest restRequest, ThreadContext threadContext) {
             return null;
         }
 

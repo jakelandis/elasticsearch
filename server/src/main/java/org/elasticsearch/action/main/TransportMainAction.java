@@ -41,8 +41,16 @@ public class TransportMainAction extends HandledTransportAction<MainRequest, Mai
     @Override
     protected void doExecute(Task task, MainRequest request, ActionListener<MainResponse> listener) {
         ClusterState clusterState = clusterService.state();
-        listener.onResponse(
-            new MainResponse(nodeName, Version.CURRENT, clusterState.getClusterName(), clusterState.metadata().clusterUUID(), Build.CURRENT)
-        );
+        if(request.isRestricted()) {
+            listener.onResponse(
+                new RestrictedMainResponse() //TODO: inject an IVersion object that can have a serverless implementation so the response can serialize
+                // serverless specific content without expliciltly referencing serverless, similar to TransportGetLicenseAction and LicenseService
+            );
+        }else {
+            listener.onResponse(
+                new MainResponse(nodeName, Version.CURRENT, clusterState.getClusterName(), clusterState.metadata().clusterUUID(), Build.CURRENT)
+            );
+        }
+
     }
 }

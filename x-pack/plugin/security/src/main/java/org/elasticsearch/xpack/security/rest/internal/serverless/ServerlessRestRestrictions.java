@@ -17,16 +17,18 @@ import org.elasticsearch.rest.Scope;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
 import org.elasticsearch.xpack.security.rest.internal.RestRestrictions;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ServerlessRestRestrictions implements RestRestrictions {
 
     private final OperatorPrivileges.OperatorPrivilegesService operatorPrivilegesService;
+    //addParamterForPath("/", "restricted=true")
 
     public ServerlessRestRestrictions(OperatorPrivileges.OperatorPrivilegesService operatorPrivilegesService) {
         this.operatorPrivilegesService = operatorPrivilegesService;
     }
-
 
     @Override
     public RestResponse checkFullyRestricted(RestHandler restHandler, RestRequest restRequest, ThreadContext threadContext) {
@@ -37,8 +39,8 @@ public class ServerlessRestRestrictions implements RestRestrictions {
         if(scope == null) {
             return new RestResponse(RestStatus.NOT_FOUND, ""); //no one has access
         } else {
-            System.out.println("checking operator privs...");
-            ElasticsearchSecurityException securityException = operatorPrivilegesService.checkRest(restHandler, threadContext);
+            System.out.println("checking fully restricted operator privs...");
+            ElasticsearchSecurityException securityException = operatorPrivilegesService.checkRestFull(restHandler, threadContext);
             if(securityException != null) {
                 System.out.println("found violation of operator privs...");
                 return new RestResponse(RestStatus.NOT_FOUND, securityException.getMessage()); //must be an operator
@@ -51,6 +53,6 @@ public class ServerlessRestRestrictions implements RestRestrictions {
 
     @Override
     public RestRequest checkPartiallyRestricted(RestHandler restHandler, RestRequest restRequest, ThreadContext threadContext) {
-        return restRequest;
+        return operatorPrivilegesService.checkRestPartial(restHandler, restRequest, threadContext);
     }
 }
