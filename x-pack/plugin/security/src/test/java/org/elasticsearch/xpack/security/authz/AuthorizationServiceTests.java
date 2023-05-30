@@ -164,7 +164,7 @@ import org.elasticsearch.xpack.security.audit.AuditUtil;
 import org.elasticsearch.xpack.security.audit.logfile.LoggingAuditTrail;
 import org.elasticsearch.xpack.security.authz.store.CompositeRolesStore;
 import org.elasticsearch.xpack.security.authz.store.NativePrivilegeStore;
-import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
+import org.elasticsearch.xpack.security.operator.OperatorPrivilegesService;
 import org.elasticsearch.xpack.sql.action.SqlQueryAction;
 import org.elasticsearch.xpack.sql.action.SqlQueryRequest;
 import org.junit.Before;
@@ -239,7 +239,7 @@ public class AuthorizationServiceTests extends ESTestCase {
     private Map<String, RoleDescriptor> roleMap = new HashMap<>();
     private CompositeRolesStore rolesStore;
     private FieldPermissionsCache fieldPermissionsCache;
-    private OperatorPrivileges.OperatorPrivilegesService operatorPrivilegesService;
+    private OperatorPrivilegesService operatorPrivilegesService;
     private boolean shouldFailOperatorPrivilegesCheck = false;
     private boolean setFakeOriginatingAction = true;
     private SecurityContext securityContext;
@@ -291,7 +291,7 @@ public class AuthorizationServiceTests extends ESTestCase {
             return null;
         }).when(rolesStore).getRole(any(Subject.class), anyActionListener());
         roleMap.put(ReservedRolesStore.SUPERUSER_ROLE_DESCRIPTOR.getName(), ReservedRolesStore.SUPERUSER_ROLE_DESCRIPTOR);
-        operatorPrivilegesService = mock(OperatorPrivileges.OperatorPrivilegesService.class);
+        operatorPrivilegesService = mock(OperatorPrivilegesService.class);
         authorizationService = new AuthorizationService(
             settings,
             rolesStore,

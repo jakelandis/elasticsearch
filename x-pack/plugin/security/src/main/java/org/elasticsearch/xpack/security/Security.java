@@ -289,7 +289,7 @@ import org.elasticsearch.xpack.security.operator.DefaultOperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.operator.FileOperatorUsersStore;
 import org.elasticsearch.xpack.security.operator.OperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
-import org.elasticsearch.xpack.security.operator.OperatorPrivileges.OperatorPrivilegesService;
+import org.elasticsearch.xpack.security.operator.OperatorPrivilegesService;
 import org.elasticsearch.xpack.security.operator.serverless.ServerlessOperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.profile.ProfileService;
 import org.elasticsearch.xpack.security.rest.RemoteHostHeader;
@@ -349,9 +349,6 @@ import org.elasticsearch.xpack.security.rest.action.user.RestHasPrivilegesAction
 import org.elasticsearch.xpack.security.rest.action.user.RestProfileHasPrivilegesAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestPutUserAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestSetEnabledAction;
-import org.elasticsearch.xpack.security.rest.internal.RestRestrictions;
-import org.elasticsearch.xpack.security.rest.internal.RestRestrictionsFactory;
-import org.elasticsearch.xpack.security.rest.internal.serverless.ServerlessRestRestrictionsFactory;
 import org.elasticsearch.xpack.security.support.CacheInvalidatorRegistry;
 import org.elasticsearch.xpack.security.support.ExtensionComponents;
 import org.elasticsearch.xpack.security.support.SecuritySystemIndices;
@@ -537,10 +534,7 @@ public class Security extends Plugin
     private final SetOnce<Transport> transportReference = new SetOnce<>();
     private final SetOnce<ScriptService> scriptServiceReference = new SetOnce<>();
     private SetOnce<OperatorOnlyRegistry> operatorOnlyRegistry = new SetOnce<>();
-    private SetOnce<RestRestrictionsFactory> restRestrictionsFactory = new SetOnce<>();
-    private SetOnce<RestRestrictions> restRestrictions = new SetOnce<>();
-
-    OperatorPrivilegesService operatorPrivilegesService; //TODO: setonce
+    private SetOnce<OperatorPrivilegesService> operatorPrivilegesService = new SetOnce<>();
 
     private final SetOnce<ReservedRoleMappingAction> reservedRoleMappingAction = new SetOnce<>();
 
@@ -891,20 +885,14 @@ public class Security extends Plugin
             if(operatorOnlyRegistry.get() == null){
                 operatorOnlyRegistry.set(new DefaultOperatorOnlyRegistry(clusterService.getClusterSettings()));
             }
-            operatorPrivilegesService = new OperatorPrivileges.RBACOperatorPrivilegesService(
+            operatorPrivilegesService.set(new OperatorPrivileges.RBACOperatorPrivilegesService(
                 getLicenseState(),
                 new FileOperatorUsersStore(environment, resourceWatcherService),
                 operatorOnlyRegistry.get()
-            );
-            if(restRestrictionsFactory.get() == null){
-                restRestrictions.set(new RestRestrictions() {});
-            } else {
-                restRestrictions.set(restRestrictionsFactory.get().create(operatorPrivilegesService));
-            }
+            ));
 
         } else {
-            operatorPrivilegesService = OperatorPrivileges.NOOP_OPERATOR_PRIVILEGES_SERVICE;
-            restRestrictions.set(new RestRestrictions() {});
+            operatorPrivilegesService.set(OperatorPrivileges.NOOP_OPERATOR_PRIVILEGES_SERVICE);
         }
         authcService.set(
             new AuthenticationService(
@@ -917,7 +905,7 @@ public class Security extends Plugin
                 tokenService,
                 apiKeyService,
                 serviceAccountService,
-                operatorPrivilegesService
+                operatorPrivilegesService.get()
             )
         );
         components.add(authcService.get());
@@ -954,7 +942,7 @@ public class Security extends Plugin
             requestInterceptors,
             getLicenseState(),
             expressionResolver,
-            operatorPrivilegesService,
+            operatorPrivilegesService.get(),
             restrictedIndices
         );
 
@@ -1744,7 +1732,7 @@ public class Security extends Plugin
 
     @Override
     public UnaryOperator<RestHandler> getRestHandlerInterceptor(ThreadContext threadContext) {
-        return handler -> new SecurityRestFilter(enabled, threadContext, secondayAuthc.get(), auditTrailService.get(), restRestrictions.get(), handler);
+        return handler -> new SecurityRestFilter(enabled, threadContext, secondayAuthc.get(), auditTrailService.get(), operatorPrivilegesService.get(), handler);
 
     }
 
@@ -1852,7 +1840,6 @@ public class Security extends Plugin
         //emulate serverless
         System.out.println("adding serverless SPI manually...");
         this.operatorOnlyRegistry.set(new ServerlessOperatorOnlyRegistry());
-        this.restRestrictionsFactory.set(new ServerlessRestRestrictionsFactory());
 
         //TODO: remove the serverless emulation in favor a real SPI implementation like below
 //        //operator registry SPI, expects implementations to have no arg constructor

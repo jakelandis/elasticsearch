@@ -100,7 +100,7 @@ import org.elasticsearch.xpack.security.authc.esnative.ReservedRealm;
 import org.elasticsearch.xpack.security.authc.file.FileRealm;
 import org.elasticsearch.xpack.security.authc.service.ServiceAccountService;
 import org.elasticsearch.xpack.security.authc.service.ServiceAccountToken;
-import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
+import org.elasticsearch.xpack.security.operator.OperatorPrivilegesService;
 import org.elasticsearch.xpack.security.support.CacheInvalidatorRegistry;
 import org.elasticsearch.xpack.security.support.SecurityIndexManager;
 import org.junit.After;
@@ -190,7 +190,7 @@ public class AuthenticationServiceTests extends ESTestCase {
     private SecurityIndexManager securityIndex;
     private Client client;
     private InetSocketAddress remoteAddress;
-    private OperatorPrivileges.OperatorPrivilegesService operatorPrivilegesService;
+    private OperatorPrivilegesService operatorPrivilegesService;
     private String concreteSecurityIndexName;
 
     @Before
@@ -339,7 +339,7 @@ public class AuthenticationServiceTests extends ESTestCase {
             return null;
         }).when(serviceAccountService).authenticateToken(any(), any(), any());
 
-        operatorPrivilegesService = mock(OperatorPrivileges.OperatorPrivilegesService.class);
+        operatorPrivilegesService = mock(OperatorPrivilegesService.class);
         service = new AuthenticationService(
             settings,
             realms,

@@ -305,6 +305,10 @@ public class RestController implements HttpServerTransport.Dispatcher {
         handler.routes().forEach(route -> registerHandler(route, handler));
     }
 
+    public void dispatchRestrictedResponse(RestResponse response){
+        //TODO:
+    }
+
     @Override
     public void dispatchRequest(RestRequest request, RestChannel channel, ThreadContext threadContext) {
         threadContext.addResponseHeader(ELASTIC_PRODUCT_HTTP_HEADER, ELASTIC_PRODUCT_HTTP_HEADER_VALUE);
@@ -372,20 +376,6 @@ public class RestController implements HttpServerTransport.Dispatcher {
             }
         }
         RestChannel responseChannel = channel;
-//        if (serverlessEnabled) {
-//            Scope scope = handler.getServerlessScope();
-//            if (Scope.INTERNAL.equals(scope)) {
-//                final String internalOrigin = request.header(ELASTIC_INTERNAL_ORIGIN_HTTP_HEADER);
-//                boolean internalRequest = internalOrigin != null;
-//                if (internalRequest == false) {
-//                    handleServerlessRequestToProtectedResource(request.uri(), request.method(), responseChannel);
-//                    return;
-//                }
-//            } else if (Scope.PUBLIC.equals(scope) == false) {
-//                handleServerlessRequestToProtectedResource(request.uri(), request.method(), responseChannel);
-//                return;
-//            }
-//        }
         try {
             if (handler.canTripCircuitBreaker()) {
                 inFlightRequestsBreaker(circuitBreakerService).addEstimateBytesAndMaybeBreak(contentLength, "<http_request>");

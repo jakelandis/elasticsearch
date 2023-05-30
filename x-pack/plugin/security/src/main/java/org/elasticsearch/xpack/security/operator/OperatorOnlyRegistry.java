@@ -9,6 +9,7 @@ package org.elasticsearch.xpack.security.operator;
 
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.transport.TransportRequest;
 
 public interface OperatorOnlyRegistry {
@@ -29,7 +30,7 @@ public interface OperatorOnlyRegistry {
      * request is dispatched.
      * @return the OperatorPrivilegesViolation if failed the check, null otherwise
      */
-    OperatorPrivilegesViolation checkRestFull(RestHandler restHandler);
+    RestResponse checkRestFull(RestHandler restHandler);
 
     RestRequest checkRestPartial(RestHandler restHandler, RestRequest restRequest);
 

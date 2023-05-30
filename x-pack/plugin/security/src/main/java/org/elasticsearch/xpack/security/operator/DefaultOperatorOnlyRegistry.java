@@ -24,6 +24,7 @@ import org.elasticsearch.license.DeleteLicenseAction;
 import org.elasticsearch.license.PutLicenseAction;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.transport.TransportRequest;
 
 import java.util.List;
@@ -83,7 +84,7 @@ public class DefaultOperatorOnlyRegistry implements OperatorOnlyRegistry {
     }
 
     @Override
-    public OperatorPrivilegesViolation checkRestFull(RestHandler restHandler) {
+    public RestResponse checkRestFull(RestHandler restHandler) {
         System.out.println("in default registry");
         //Do nothing, default operator privs do not enforce any REST handlers
         return null;

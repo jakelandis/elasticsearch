@@ -9,6 +9,8 @@ package org.elasticsearch.xpack.security.operator.serverless;
 
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.Scope;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.security.operator.OperatorOnlyRegistry;
@@ -26,15 +28,14 @@ public class ServerlessOperatorOnlyRegistry implements OperatorOnlyRegistry {
     }
 
     @Override
-    public OperatorOnlyRegistry.OperatorPrivilegesViolation checkRestFull(RestHandler restHandler) {
+    public RestResponse checkRestFull(RestHandler restHandler) {
         System.out.println(String.format("checking maybe deny access for routes [%s] for scope [%s]", restHandler.routes().stream().map(RestHandler.Route::getPath).collect(Collectors.joining(",")), restHandler.getServerlessScope()));
-
         Scope scope = restHandler.getServerlessScope();
         Objects.requireNonNull(scope, "scope can not be null"); //upstream needs to guarantee this is never null
         if(Scope.PUBLIC.equals(scope)) {
             return null; //allow access
         }else {
-            return () -> "you must be an operator to call this rest handler"; //deny access
+            return new RestResponse(RestStatus.NOT_FOUND, "you must be an operator to call this rest handler");
         }
     }
 

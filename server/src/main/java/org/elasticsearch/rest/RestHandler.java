@@ -18,6 +18,7 @@ import org.elasticsearch.xcontent.XContent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Handler for REST requests
