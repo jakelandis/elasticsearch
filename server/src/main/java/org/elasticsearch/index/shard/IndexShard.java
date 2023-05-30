@@ -231,11 +231,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     final EngineFactory engineFactory;
 
     private final IndexingOperationListener indexingOperationListeners;
-    private final Runnable globalCheckpointSyncer;
-
-    Runnable getGlobalCheckpointSyncer() {
-        return globalCheckpointSyncer;
-    }
+    private final GlobalCheckpointSyncer globalCheckpointSyncer;
 
     private final RetentionLeaseSyncer retentionLeaseSyncer;
 
@@ -307,7 +303,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         final Engine.Warmer warmer,
         final List<SearchOperationListener> searchOperationListener,
         final List<IndexingOperationListener> listeners,
-        final Runnable globalCheckpointSyncer,
+        final GlobalCheckpointSyncer globalCheckpointSyncer,
         final RetentionLeaseSyncer retentionLeaseSyncer,
         final CircuitBreakerService circuitBreakerService,
         final IndexStorePlugin.SnapshotCommitSupplier snapshotCommitSupplier,
@@ -1202,6 +1198,15 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     public Engine.GetResult get(Engine.Get get) {
+        return innerGet(get, false);
+    }
+
+    public Engine.GetResult getFromTranslog(Engine.Get get) {
+        assert get.realtime();
+        return innerGet(get, true);
+    }
+
+    private Engine.GetResult innerGet(Engine.Get get, boolean translogOnly) {
         readAllowed();
         MappingLookup mappingLookup = mapperService.mappingLookup();
         if (mappingLookup.hasMappings() == false) {
@@ -1209,6 +1214,9 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         }
         if (indexSettings.getIndexVersionCreated().isLegacyIndexVersion()) {
             throw new IllegalStateException("get operations not allowed on a legacy index");
+        }
+        if (translogOnly) {
+            return getEngine().getFromTranslog(get, mappingLookup, mapperService.documentParser(), this::wrapSearcher);
         }
         return getEngine().get(get, mappingLookup, mapperService.documentParser(), this::wrapSearcher);
     }
@@ -1220,6 +1228,11 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         verifyNotClosed();
         logger.trace("refresh with source [{}]", source);
         return getEngine().refresh(source);
+    }
+
+    public void externalRefresh(String source, ActionListener<Engine.RefreshResult> listener) {
+        verifyNotClosed();
+        getEngine().externalRefresh(source, listener);
     }
 
     /**
@@ -1989,7 +2002,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             : "opening index which was created post 5.5.0 but " + Engine.MAX_UNSAFE_AUTO_ID_TIMESTAMP_COMMIT_ID + " is not found in commit";
         final org.apache.lucene.util.Version commitLuceneVersion = segmentCommitInfos.getCommitLuceneVersion();
         // This relies in the previous minor having another lucene version
-        assert commitLuceneVersion.onOrAfter(RecoverySettings.SEQ_NO_SNAPSHOT_RECOVERIES_SUPPORTED_VERSION.luceneVersion) == false
+        assert commitLuceneVersion.onOrAfter(RecoverySettings.SEQ_NO_SNAPSHOT_RECOVERIES_SUPPORTED_VERSION.luceneVersion()) == false
             || userData.containsKey(Engine.ES_VERSION) && Version.fromString(userData.get(Engine.ES_VERSION)).onOrBefore(Version.CURRENT)
             : "commit point has an invalid ES_VERSION value. commit point lucene version ["
                 + commitLuceneVersion
@@ -2732,10 +2745,19 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 || trackedGlobalCheckpointsNeedSync;
             // only sync if index is not closed and there is a shard lagging the primary
             if (syncNeeded && indexSettings.getIndexMetadata().getState() == IndexMetadata.State.OPEN) {
-                logger.trace("syncing global checkpoint for [{}]", reason);
-                globalCheckpointSyncer.run();
+                syncGlobalCheckpoints(reason);
             }
         }
+    }
+
+    private void syncGlobalCheckpoints(String reason) {
+        logger.trace("syncing global checkpoint for [{}]", reason);
+        globalCheckpointSyncer.syncGlobalCheckpoints(shardId);
+    }
+
+    // exposed for tests
+    GlobalCheckpointSyncer getGlobalCheckpointSyncer() {
+        return globalCheckpointSyncer;
     }
 
     /**
@@ -3593,6 +3615,17 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         getEngine().asyncEnsureTranslogSynced(location, syncListener);
     }
 
+    /**
+     * This method provides the same behavior as #sync but for persisting the global checkpoint. It will initiate a sync
+     * if the request global checkpoint is greater than the currently persisted global checkpoint. However, same as #sync it
+     * will not ensure that the request global checkpoint is available to be synced. It is the caller's duty to only call this
+     * method with a valid processed global checkpoint that is available to sync.
+     */
+    public void syncGlobalCheckpoint(long globalCheckpoint, Consumer<Exception> syncListener) {
+        verifyNotClosed();
+        getEngine().asyncEnsureGlobalCheckpointSynced(globalCheckpoint, syncListener);
+    }
+
     public void sync() throws IOException {
         verifyNotClosed();
         getEngine().syncTranslog();
@@ -3735,6 +3768,10 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         return (threadPool.relativeTimeInMillis() - lastSearcherAccess.get()) >= indexSettings.getSearchIdleAfter().getMillis();
     }
 
+    public long searchIdleTime() {
+        return threadPool.relativeTimeInMillis() - lastSearcherAccess.get();
+    }
+
     /**
      * Returns the last timestamp the searcher was accessed. This is a relative timestamp in milliseconds.
      */
@@ -3838,9 +3875,10 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
      * Add a listener for refreshes.
      *
      * @param checkpoint the seqNo checkpoint to listen for
+     * @param allowUnIssuedSequenceNumber whether to allow waiting for checkpoints larger than the processed local checkpoint
      * @param listener for the refresh.
      */
-    public void addRefreshListener(long checkpoint, ActionListener<Void> listener) {
+    public void addRefreshListener(long checkpoint, boolean allowUnIssuedSequenceNumber, ActionListener<Void> listener) {
         final boolean readAllowed;
         if (isReadAllowed()) {
             readAllowed = true;
@@ -3853,7 +3891,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             }
         }
         if (readAllowed) {
-            refreshListeners.addOrNotify(checkpoint, listener);
+            refreshListeners.addOrNotify(checkpoint, allowUnIssuedSequenceNumber, listener);
         } else {
             // we're not yet ready for reads, fail to notify client
             listener.onFailure(new IllegalIndexShardStateException(shardId, state, "Read not allowed on IndexShard"));

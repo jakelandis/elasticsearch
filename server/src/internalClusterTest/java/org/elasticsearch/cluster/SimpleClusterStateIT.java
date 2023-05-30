@@ -59,6 +59,7 @@ import java.util.function.Supplier;
 import static org.elasticsearch.gateway.GatewayService.STATE_NOT_RECOVERED_BLOCK;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertIndexTemplateExists;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -139,9 +140,7 @@ public class SimpleClusterStateIT extends ESIntegTestCase {
     }
 
     public void testIndexTemplates() throws Exception {
-        client().admin()
-            .indices()
-            .preparePutTemplate("foo_template")
+        indicesAdmin().preparePutTemplate("foo_template")
             .setPatterns(Collections.singletonList("te*"))
             .setOrder(0)
             .setMapping(
@@ -163,9 +162,7 @@ public class SimpleClusterStateIT extends ESIntegTestCase {
             )
             .get();
 
-        client().admin()
-            .indices()
-            .preparePutTemplate("fuu_template")
+        indicesAdmin().preparePutTemplate("fuu_template")
             .setPatterns(Collections.singletonList("test*"))
             .setOrder(1)
             .setMapping(
@@ -252,9 +249,7 @@ public class SimpleClusterStateIT extends ESIntegTestCase {
         int numberOfShards = scaledRandomIntBetween(1, cluster().numDataNodes());
         // if the create index is ack'ed, then all nodes have successfully processed the cluster state
         assertAcked(
-            client().admin()
-                .indices()
-                .prepareCreate("test")
+            indicesAdmin().prepareCreate("test")
                 .setSettings(
                     indexSettings(numberOfShards, 0).put(MapperService.INDEX_MAPPING_TOTAL_FIELDS_LIMIT_SETTING.getKey(), Long.MAX_VALUE)
                 )
@@ -461,4 +456,18 @@ public class SimpleClusterStateIT extends ESIntegTestCase {
             return Collections.emptyList();
         }
     }
+
+    public void testNodeLeftGeneration() throws IOException {
+        final var clusterService = internalCluster().getInstance(ClusterService.class);
+        final var initialGeneration = clusterService.state().nodes().getNodeLeftGeneration();
+        assertThat(clusterService.state().toString(), containsString("node-left generation: " + initialGeneration));
+
+        final var newNode = internalCluster().startNode();
+        assertEquals(initialGeneration, clusterService.state().nodes().getNodeLeftGeneration());
+        internalCluster().stopNode(newNode);
+        assertEquals(initialGeneration + 1, clusterService.state().nodes().getNodeLeftGeneration());
+
+        assertThat(clusterService.state().toString(), containsString("node-left generation: " + (initialGeneration + 1)));
+    }
+
 }
