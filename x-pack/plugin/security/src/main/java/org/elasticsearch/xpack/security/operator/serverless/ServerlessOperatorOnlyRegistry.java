@@ -35,7 +35,7 @@ public class ServerlessOperatorOnlyRegistry implements OperatorOnlyRegistry {
         if(Scope.PUBLIC.equals(scope)) {
             return null; //allow access
         }else {
-            return new RestResponse(RestStatus.NOT_FOUND, "you must be an operator to call this rest handler");
+            return new RestResponse(RestStatus.NOT_FOUND, "you must be anRestrictedMainResponse operator to call this rest handler");
         }
     }
 
