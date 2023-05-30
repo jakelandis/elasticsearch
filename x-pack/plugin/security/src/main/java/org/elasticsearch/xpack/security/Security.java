@@ -885,7 +885,7 @@ public class Security extends Plugin
             if(operatorOnlyRegistry.get() == null){
                 operatorOnlyRegistry.set(new DefaultOperatorOnlyRegistry(clusterService.getClusterSettings()));
             }
-            operatorPrivilegesService.set(new OperatorPrivileges.RBACOperatorPrivilegesService(
+            operatorPrivilegesService.set(new OperatorPrivileges.DefaultOperatorPrivilegesService(
                 getLicenseState(),
                 new FileOperatorUsersStore(environment, resourceWatcherService),
                 operatorOnlyRegistry.get()

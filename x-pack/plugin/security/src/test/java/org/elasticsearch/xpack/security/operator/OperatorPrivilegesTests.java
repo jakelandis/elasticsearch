@@ -24,7 +24,7 @@ import org.elasticsearch.xpack.core.security.authc.AuthenticationField;
 import org.elasticsearch.xpack.core.security.authc.AuthenticationTestHelper;
 import org.elasticsearch.xpack.core.security.user.User;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.operator.OperatorPrivileges.RBACOperatorPrivilegesService;
+import org.elasticsearch.xpack.security.operator.OperatorPrivileges.DefaultOperatorPrivilegesService;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -54,7 +54,7 @@ public class OperatorPrivilegesTests extends ESTestCase {
         xPackLicenseState = mock(MockLicenseState.class);
         fileOperatorUsersStore = mock(FileOperatorUsersStore.class);
         defaultOperatorOnlyRegistry = mock(DefaultOperatorOnlyRegistry.class);
-        operatorPrivilegesService = new RBACOperatorPrivilegesService(xPackLicenseState, fileOperatorUsersStore, defaultOperatorOnlyRegistry);
+        operatorPrivilegesService = new DefaultOperatorPrivilegesService(xPackLicenseState, fileOperatorUsersStore, defaultOperatorOnlyRegistry);
     }
 
     public void testWillMarkThreadContextForAllLicenses() {

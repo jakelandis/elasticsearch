@@ -35,13 +35,13 @@ public class OperatorPrivileges {
         Setting.Property.NodeScope
     );
 
-    public static final class RBACOperatorPrivilegesService implements OperatorPrivilegesService {
+    public static final class DefaultOperatorPrivilegesService implements OperatorPrivilegesService {
 
         private final FileOperatorUsersStore fileOperatorUsersStore;
         private final OperatorOnlyRegistry operatorOnlyRegistry;
         private final XPackLicenseState licenseState;
 
-        public RBACOperatorPrivilegesService(
+        public DefaultOperatorPrivilegesService(
             XPackLicenseState licenseState,
             FileOperatorUsersStore fileOperatorUsersStore,
             OperatorOnlyRegistry operatorOnlyRegistry
