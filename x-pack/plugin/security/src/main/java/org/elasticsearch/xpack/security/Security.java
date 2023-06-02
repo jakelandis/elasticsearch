@@ -299,7 +299,6 @@ import org.elasticsearch.xpack.security.operator.FileOperatorUsersStore;
 import org.elasticsearch.xpack.security.operator.OperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.operator.OperatorPrivileges;
 import org.elasticsearch.xpack.security.operator.OperatorPrivilegesService;
-import org.elasticsearch.xpack.security.operator.serverless.ServerlessOperatorOnlyRegistry;
 import org.elasticsearch.xpack.security.profile.ProfileService;
 import org.elasticsearch.xpack.security.rest.RemoteHostHeader;
 import org.elasticsearch.xpack.security.rest.SecurityRestFilter;
@@ -1905,26 +1904,13 @@ public class Security extends Plugin
     public void loadExtensions(ExtensionLoader loader) {
         securityExtensions.addAll(loader.loadExtensions(SecurityExtension.class));
 
-        //emulate serverless
-        System.out.println("adding serverless SPI manually...");
-        this.operatorOnlyRegistry.set(new ServerlessOperatorOnlyRegistry());
-
-        //TODO: remove the serverless emulation in favor a real SPI implementation like below
-//        //operator registry SPI, expects implementations to have no arg constructor
-//        List<OperatorOnlyRegistry> operatorOnlyRegistries = loader.loadExtensions(OperatorOnlyRegistry.class);
-//        if(operatorOnlyRegistries.size() == 1){
-//            this.operatorOnlyRegistry.set(operatorOnlyRegistries.get(0));
-//        } else if (operatorOnlyRegistries.size() > 1) {
-//           throw new RuntimeException("Can not have multiple implementations");
-//        }
-//
-//        //rest restrictions factory SPI, expects implementations to require constructor args, hence the factory
-//        List<RestRestrictionsFactory> restRestrictionsFactories = loader.loadExtensions(RestRestrictionsFactory.class);
-//        if(restRestrictionsFactories.size() == 1){
-//            this.restRestrictionsFactory.set(restRestrictionsFactories.get(0));
-//        } else if (restRestrictionsFactories.size() > 1) {
-//            throw new RuntimeException("Can not have multiple implementations");
-//        }
+        //operator registry SPI, expects implementations to have no arg constructor
+        List<OperatorOnlyRegistry> operatorOnlyRegistries = loader.loadExtensions(OperatorOnlyRegistry.class);
+        if(operatorOnlyRegistries.size() == 1){
+            this.operatorOnlyRegistry.set(operatorOnlyRegistries.get(0));
+        } else if (operatorOnlyRegistries.size() > 1) {
+           throw new RuntimeException("Can not have multiple implementations");
+        }
     }
 
     private synchronized SharedGroupFactory getNettySharedGroupFactory(Settings settings) {

@@ -80,4 +80,7 @@ module org.elasticsearch.security {
     provides org.elasticsearch.reservedstate.ReservedClusterStateHandlerProvider
         with
             org.elasticsearch.xpack.security.ReservedSecurityStateHandlerProvider;
+
+
+    exports org.elasticsearch.xpack.security.operator;
 }
