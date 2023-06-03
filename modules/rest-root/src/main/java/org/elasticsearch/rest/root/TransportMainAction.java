@@ -10,6 +10,7 @@ package org.elasticsearch.rest.root;
 
 import org.elasticsearch.Build;
 import org.elasticsearch.Version;
+import org.elasticsearch.VersionInfo;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
@@ -25,32 +26,34 @@ public class TransportMainAction extends HandledTransportAction<MainRequest, Mai
 
     private final String nodeName;
     private final ClusterService clusterService;
+    private final VersionInfo versionInfo;
 
     @Inject
     public TransportMainAction(
         Settings settings,
         TransportService transportService,
         ActionFilters actionFilters,
-        ClusterService clusterService
+        ClusterService clusterService,
+        VersionInfo versionInfo
     ) {
         super(MainAction.NAME, transportService, actionFilters, MainRequest::new);
         this.nodeName = Node.NODE_NAME_SETTING.get(settings);
         this.clusterService = clusterService;
+        this.versionInfo = versionInfo;
     }
 
     @Override
     protected void doExecute(Task task, MainRequest request, ActionListener<MainResponse> listener) {
         ClusterState clusterState = clusterService.state();
-        if(request.isRestricted()) {
-            listener.onResponse(
-                new RestrictedMainResponse() //TODO: inject an IVersion object that can have a serverless implementation so the response can serialize
-                // serverless specific content without expliciltly referencing serverless, similar to TransportGetLicenseAction and LicenseService
-            );
-        }else {
-            listener.onResponse(
-                new MainResponse(nodeName, Version.CURRENT, clusterState.getClusterName(), clusterState.metadata().clusterUUID(), Build.CURRENT)
-            );
-        }
-
+        listener.onResponse(
+            new MainResponse(
+                nodeName,
+                versionInfo,
+                clusterState.getClusterName(),
+                clusterState.metadata().clusterUUID(),
+                request.isRestricted()
+            )
+        );
     }
+
 }

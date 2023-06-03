@@ -9,7 +9,9 @@
 package org.elasticsearch.rest.root;
 
 import org.elasticsearch.Build;
+import org.elasticsearch.DefaultVersionInfo;
 import org.elasticsearch.Version;
+import org.elasticsearch.VersionInfo;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -21,15 +23,18 @@ import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentParser;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 
 public class MainResponse extends ActionResponse implements ToXContentObject {
 
     private String nodeName;
-    private Version version;
+    private Version version; // TODO: delete in favor of VersionInfo
     private ClusterName clusterName;
     private String clusterUuid;
-    private Build build;
+    private Build build; // TODO: delete in favor of VersionInfo
+    private VersionInfo versionInfo;
+    private boolean restricted;
 
     MainResponse() {}
 
@@ -42,6 +47,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
         build = Build.readBuild(in);
     }
 
+    // TODO: delete this constuctor and only use the one that uses VersionInfo (need to fix the tests first)
     public MainResponse(String nodeName, Version version, ClusterName clusterName, String clusterUuid, Build build) {
         this.nodeName = nodeName;
         this.version = version;
@@ -50,11 +56,20 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
         this.build = build;
     }
 
+    public MainResponse(String nodeName, VersionInfo versionInfo, ClusterName clusterName, String clusterUuid, boolean restricted) {
+        this.nodeName = nodeName;
+        this.versionInfo = versionInfo;
+        this.clusterName = clusterName;
+        this.clusterUuid = clusterUuid;
+        this.restricted = restricted;
+
+    }
+
     public String getNodeName() {
         return nodeName;
     }
 
-    public Version getVersion() {
+    public Version getVersion() { // TODO: delete
         return version;
     }
 
@@ -66,8 +81,16 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
         return clusterUuid;
     }
 
-    public Build getBuild() {
+    public Build getBuild() { // TODO: delete
         return build;
+    }
+
+    public VersionInfo getVersionInfo() {
+        return versionInfo;
+    }
+
+    public void setVersionInfo(VersionInfo versionInfo) {
+        this.versionInfo = versionInfo;
     }
 
     @Override
@@ -82,21 +105,19 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field("name", nodeName);
-        builder.field("cluster_name", clusterName.value());
-        builder.field("cluster_uuid", clusterUuid);
-        builder.startObject("version")
-            .field("number", build.qualifiedVersion())
-            .field("build_flavor", "default")
-            .field("build_type", build.type().displayName())
-            .field("build_hash", build.hash())
-            .field("build_date", build.date())
-            .field("build_snapshot", build.isSnapshot())
-            .field("lucene_version", version.luceneVersion().toString())
-            .field("minimum_wire_compatibility_version", version.minimumCompatibilityVersion().toString())
-            .field("minimum_index_compatibility_version", version.minimumIndexCompatibilityVersion().toString())
-            .endObject();
-        builder.field("tagline", "You Know, for Search");
+        if (restricted) {
+            builder.field("version");
+            builder.map(versionInfo.get());
+            builder.field("tagline", "You Know, for Search");
+        } else {
+            builder.field("name", nodeName);
+            builder.field("cluster_name", clusterName.value());
+            builder.field("cluster_uuid", clusterUuid);
+            builder.field("version");
+            builder.map(versionInfo.get());
+            builder.field("tagline", "You Know, for Search");
+        }
+
         builder.endObject();
         return builder;
     }
