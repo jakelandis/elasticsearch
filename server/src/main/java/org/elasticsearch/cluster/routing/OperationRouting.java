@@ -270,8 +270,10 @@ public class OperationRouting {
 
     public static boolean canSearchShard(ShardRouting shardRouting, ClusterState clusterState) {
         if (INDEX_FAST_REFRESH_SETTING.get(clusterState.metadata().index(shardRouting.index()).getSettings())) {
+            System.out.println("********** isPromotableToPrimary");
             return shardRouting.isPromotableToPrimary();
         } else {
+            System.out.println("********** isSearchable");
             return shardRouting.isSearchable();
         }
     }

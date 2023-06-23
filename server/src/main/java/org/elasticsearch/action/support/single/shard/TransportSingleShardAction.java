@@ -28,6 +28,7 @@ import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.logging.LoggerMessageFormat;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.core.Nullable;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.tasks.Task;
@@ -193,6 +194,20 @@ public abstract class TransportSingleShardAction<Request extends SingleShardRequ
                 this.lastFailure = currentFailure;
             }
             final ShardRouting shardRouting = shardIt.nextOrNull();
+
+            System.out.println("******* checking failure");
+            if(this.lastFailure != null) {
+                System.out.println("******** last failure: ");
+                this.lastFailure.printStackTrace();
+            }
+            if(currentFailure != null) {
+                System.out.println("******** current failure: ");
+                currentFailure.printStackTrace();
+            }
+
+
+
+            System.out.println("****************** user: " +   clusterService.threadPool().getThreadContext().getTransient("_xpack_security_authentication"));
             if (shardRouting == null) {
                 Exception failure = lastFailure;
                 if (failure == null || isShardNotAvailableException(failure)) {

@@ -132,6 +132,7 @@ public class SecuritySystemIndices {
             .putList("analysis.filter.email.patterns", List.of("([^@]+)", "(\\p{L}+)", "(\\d+)", "@(.+)"))
             .put("analysis.analyzer.email.tokenizer", "uax_url_email")
             .putList("analysis.analyzer.email.filter", List.of("email", "lowercase", "unique"))
+           // .put("index.fast_refresh", true)
             .build();
     }
 

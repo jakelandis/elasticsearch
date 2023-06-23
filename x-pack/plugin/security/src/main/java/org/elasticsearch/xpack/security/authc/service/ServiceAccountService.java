@@ -141,7 +141,10 @@ public class ServiceAccountService {
                 logger.debug(e.getMessage());
                 listener.onFailure(e);
             }
-        }, listener::onFailure));
+        }, e -> {
+            logger.error("failure while authenticating service account", e); //TODO: debug level
+            listener.onFailure(e);
+        }));
     }
 
     public void createIndexToken(

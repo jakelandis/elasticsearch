@@ -85,6 +85,7 @@ public class TransportGetAction extends TransportSingleShardAction<GetRequest, G
 
     @Override
     protected ShardIterator shards(ClusterState state, InternalRequest request) {
+        System.out.println("********** internal request index: " + request.concreteIndex());
         ShardIterator iterator = clusterService.operationRouting()
             .getShards(
                 clusterService.state(),
@@ -94,12 +95,15 @@ public class TransportGetAction extends TransportSingleShardAction<GetRequest, G
                 request.request().preference()
             );
         if (iterator == null) {
+            System.out.println("********** returning null from get action iterator");
             return null;
         }
-        return new PlainShardIterator(
+        ShardIterator a = new PlainShardIterator(
             iterator.shardId(),
             iterator.getShardRoutings().stream().filter(shardRouting -> OperationRouting.canSearchShard(shardRouting, state)).toList()
         );
+        System.out.println("********** created shard iterator for shard : " + a.shardId());
+        return a;
     }
 
     @Override
