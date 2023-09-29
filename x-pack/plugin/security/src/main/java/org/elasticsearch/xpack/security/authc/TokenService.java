@@ -553,7 +553,7 @@ public final class TokenService {
     ) {
         final SecurityIndexManager tokensIndex = getTokensIndexForVersion(tokenVersion);
         final SecurityIndexManager frozenTokensIndex = tokensIndex.freeze();
-        if (frozenTokensIndex.isAvailable() == false) {
+        if (frozenTokensIndex.isAvailableForSearch() == false) {
             logger.warn("failed to get access token [{}] because index [{}] is not available", tokenId, tokensIndex.aliasName());
             listener.onFailure(frozenTokensIndex.getUnavailableReason());
             return;
@@ -1172,7 +1172,7 @@ public final class TokenService {
         if (frozenTokensIndex.indexExists() == false) {
             logger.warn("index [{}] does not exist so we can't find token from refresh token", frozenTokensIndex.aliasName());
             listener.onFailure(frozenTokensIndex.getUnavailableReason());
-        } else if (frozenTokensIndex.isAvailable() == false) {
+        } else if (frozenTokensIndex.isAvailableForSearch() == false) {
             logger.debug("index [{}] is not available to find token from refresh token, retrying", frozenTokensIndex.aliasName());
             maybeRetryOnFailure.accept(frozenTokensIndex.getUnavailableReason());
         } else {
@@ -1789,7 +1789,7 @@ public final class TokenService {
         final SecurityIndexManager frozenTokensIndex = securityTokensIndex.freeze();
         if (frozenTokensIndex.indexExists()) {
             // an existing tokens index always contains tokens (if available and version allows)
-            if (false == frozenTokensIndex.isAvailable()) {
+            if (false == frozenTokensIndex.isAvailableForSearch()) {
                 listener.onFailure(frozenTokensIndex.getUnavailableReason());
                 return;
             }
@@ -1812,7 +1812,7 @@ public final class TokenService {
             if (false == frozenTokensIndex.indexExists()
                 || frozenTokensIndex.getCreationTime()
                     .isAfter(clock.instant().minus(ExpiredTokenRemover.MAXIMUM_TOKEN_LIFETIME_HOURS, ChronoUnit.HOURS))) {
-                if (false == frozenMainIndex.isAvailable()) {
+                if (false == frozenMainIndex.isAvailableForSearch()) {
                     listener.onFailure(frozenMainIndex.getUnavailableReason());
                     return;
                 }

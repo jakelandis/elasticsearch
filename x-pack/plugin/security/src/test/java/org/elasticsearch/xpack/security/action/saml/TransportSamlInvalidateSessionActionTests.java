@@ -263,7 +263,7 @@ public class TransportSamlInvalidateSessionActionTests extends SamlTestCase {
             ((Runnable) inv.getArguments()[1]).run();
             return null;
         }).when(securityIndex).checkIndexVersionThenExecute(anyConsumer(), any(Runnable.class));
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         when(securityIndex.indexExists()).thenReturn(true);
         when(securityIndex.isIndexUpToDate()).thenReturn(true);
         when(securityIndex.getCreationTime()).thenReturn(Clock.systemUTC().instant());

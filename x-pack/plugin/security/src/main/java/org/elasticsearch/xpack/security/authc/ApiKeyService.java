@@ -1313,7 +1313,7 @@ public class ApiKeyService {
         if (frozenSecurityIndex.indexExists() == false) {
             logger.debug("security index does not exist");
             listener.onResponse(Map.of("total", 0, "ccs", 0, "ccr", 0, "ccs_ccr", 0));
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
@@ -1641,7 +1641,7 @@ public class ApiKeyService {
         final SecurityIndexManager frozenSecurityIndex = securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(Collections.emptyList());
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().filter(QueryBuilders.termQuery("doc_type", "api_key"));
@@ -1879,7 +1879,7 @@ public class ApiKeyService {
     }
 
     private void maybeStartApiKeyRemover() {
-        if (securityIndex.isAvailable()) {
+        if (securityIndex.isAvailableForSearch()) {
             if (client.threadPool().relativeTimeInMillis() - lastExpirationRunMs > deleteInterval.getMillis()) {
                 inactiveApiKeysRemover.submit(client.threadPool());
                 lastExpirationRunMs = client.threadPool().relativeTimeInMillis();
@@ -1939,7 +1939,7 @@ public class ApiKeyService {
         if (frozenSecurityIndex.indexExists() == false) {
             logger.debug("security index does not exist");
             listener.onResponse(QueryApiKeyResponse.emptyResponse());
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(

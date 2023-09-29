@@ -922,12 +922,12 @@ public class TokenServiceTests extends ESTestCase {
         final SecurityIndexManager tokensIndex;
         if (pre72OldNode != null) {
             tokensIndex = securityMainIndex;
-            when(securityTokensIndex.isAvailable()).thenReturn(false);
+            when(securityTokensIndex.isAvailableForSearch()).thenReturn(false);
             when(securityTokensIndex.indexExists()).thenReturn(false);
             when(securityTokensIndex.freeze()).thenReturn(securityTokensIndex);
         } else {
             tokensIndex = securityTokensIndex;
-            when(securityMainIndex.isAvailable()).thenReturn(false);
+            when(securityMainIndex.isAvailableForSearch()).thenReturn(false);
             when(securityMainIndex.indexExists()).thenReturn(false);
             when(securityMainIndex.freeze()).thenReturn(securityMainIndex);
         }
@@ -937,7 +937,7 @@ public class TokenServiceTests extends ESTestCase {
             tokenService.tryAuthenticateToken(bearerToken3, future);
             assertNull(future.get());
 
-            when(tokensIndex.isAvailable()).thenReturn(false);
+            when(tokensIndex.isAvailableForSearch()).thenReturn(false);
             when(tokensIndex.getUnavailableReason()).thenReturn(new UnavailableShardsException(null, "unavailable"));
             when(tokensIndex.indexExists()).thenReturn(true);
             future = new PlainActionFuture<>();
@@ -951,7 +951,7 @@ public class TokenServiceTests extends ESTestCase {
             tokenService.tryAuthenticateToken(bearerToken1, future);
             assertNull(future.get());
 
-            when(tokensIndex.isAvailable()).thenReturn(true);
+            when(tokensIndex.isAvailableForSearch()).thenReturn(true);
             when(tokensIndex.indexExists()).thenReturn(true);
             mockGetTokenFromAccessTokenBytes(tokenService, newTokenBytes.v1(), authentication, false, null);
             future = new PlainActionFuture<>();

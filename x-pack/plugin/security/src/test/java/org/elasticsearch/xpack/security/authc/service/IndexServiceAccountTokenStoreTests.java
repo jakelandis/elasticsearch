@@ -132,7 +132,7 @@ public class IndexServiceAccountTokenStoreTests extends ESTestCase {
         cacheInvalidatorRegistry = mock(CacheInvalidatorRegistry.class);
 
         securityIndex = mock(SecurityIndexManager.class);
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         when(securityIndex.indexExists()).thenReturn(true);
         when(securityIndex.isIndexUpToDate()).thenReturn(true);
         when(securityIndex.freeze()).thenReturn(securityIndex);
@@ -396,7 +396,7 @@ public class IndexServiceAccountTokenStoreTests extends ESTestCase {
         Mockito.reset(securityIndex);
         when(securityIndex.freeze()).thenReturn(securityIndex);
         when(securityIndex.indexExists()).thenReturn(true);
-        when(securityIndex.isAvailable()).thenReturn(false);
+        when(securityIndex.isAvailableForSearch()).thenReturn(false);
         final ElasticsearchException e = new ElasticsearchException("fail");
         when(securityIndex.getUnavailableReason()).thenReturn(e);
 

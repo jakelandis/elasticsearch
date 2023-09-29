@@ -138,7 +138,7 @@ public class NativeRolesStore implements BiConsumer<Set<String>, ActionListener<
         if (frozenSecurityIndex.indexExists() == false) {
             // TODO remove this short circuiting and fix tests that fail without this!
             listener.onResponse(RoleRetrievalResult.success(Collections.emptySet()));
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onResponse(RoleRetrievalResult.failure(frozenSecurityIndex.getUnavailableReason()));
         } else if (names == null || names.isEmpty()) {
             securityIndex.checkIndexVersionThenExecute(listener::onFailure, () -> {
@@ -212,7 +212,7 @@ public class NativeRolesStore implements BiConsumer<Set<String>, ActionListener<
         final SecurityIndexManager frozenSecurityIndex = securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(false);
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(listener::onFailure, () -> {
@@ -310,7 +310,7 @@ public class NativeRolesStore implements BiConsumer<Set<String>, ActionListener<
 
     public void usageStats(ActionListener<Map<String, Object>> listener) {
         Map<String, Object> usageStats = Maps.newMapWithExpectedSize(3);
-        if (securityIndex.isAvailable() == false) {
+        if (securityIndex.isAvailableForSearch() == false) {
             usageStats.put("size", 0L);
             usageStats.put("fls", false);
             usageStats.put("dls", false);
@@ -411,7 +411,7 @@ public class NativeRolesStore implements BiConsumer<Set<String>, ActionListener<
         if (frozenSecurityIndex.indexExists() == false) {
             // TODO remove this short circuiting and fix tests that fail without this!
             resultListener.onResponse(RoleRetrievalResult.success(Collections.emptySet()));
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             resultListener.onResponse(RoleRetrievalResult.failure(frozenSecurityIndex.getUnavailableReason()));
         } else {
             securityIndex.checkIndexVersionThenExecute(

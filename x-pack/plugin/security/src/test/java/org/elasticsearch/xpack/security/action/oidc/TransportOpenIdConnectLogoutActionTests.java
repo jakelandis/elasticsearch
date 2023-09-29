@@ -173,7 +173,7 @@ public class TransportOpenIdConnectLogoutActionTests extends OpenIdConnectTestCa
             ((Runnable) inv.getArguments()[1]).run();
             return null;
         }).when(securityIndex).checkIndexVersionThenExecute(anyConsumer(), any(Runnable.class));
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         when(securityIndex.freeze()).thenReturn(securityIndex);
 
         final ClusterService clusterService = ClusterServiceUtils.createClusterService(threadPool);

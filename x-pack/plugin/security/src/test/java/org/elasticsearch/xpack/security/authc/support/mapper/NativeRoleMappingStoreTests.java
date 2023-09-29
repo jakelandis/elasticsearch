@@ -125,7 +125,7 @@ public class NativeRoleMappingStoreTests extends ESTestCase {
             ScriptModule.CORE_CONTEXTS,
             () -> 1L
         );
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
 
         final NativeRoleMappingStore store = new NativeRoleMappingStore(Settings.EMPTY, client, securityIndex, scriptService) {
             @Override
@@ -188,6 +188,7 @@ public class NativeRoleMappingStoreTests extends ESTestCase {
         return new SecurityIndexManager.State(
             Instant.now(),
             isUpToDate,
+            true,
             true,
             true,
             null,

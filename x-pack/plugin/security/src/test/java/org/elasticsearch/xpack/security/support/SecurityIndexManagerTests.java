@@ -123,7 +123,8 @@ public class SecurityIndexManagerTests extends ESTestCase {
         manager.clusterChanged(event(markShardsAvailable(clusterStateBuilder)));
 
         assertThat(manager.indexExists(), Matchers.equalTo(true));
-        assertThat(manager.isAvailable(), Matchers.equalTo(true));
+        assertThat(manager.isAvailableForSearch(), Matchers.equalTo(true));
+        assertThat(manager.isAvailableForWrite(), Matchers.equalTo(true));
         assertThat(manager.isMappingUpToDate(), Matchers.equalTo(true));
     }
 
@@ -419,7 +420,8 @@ public class SecurityIndexManagerTests extends ESTestCase {
         );
         manager.clusterChanged(event(markShardsAvailable(indexAvailable)));
         assertThat(manager.indexExists(), is(true));
-        assertThat(manager.isAvailable(), is(true));
+        assertThat(manager.isAvailableForSearch(), is(true));
+        assertThat(manager.isAvailableForWrite(), is(true));
 
         // Now close it
         ClusterState.Builder indexClosed = createClusterState(
@@ -436,19 +438,22 @@ public class SecurityIndexManagerTests extends ESTestCase {
 
         manager.clusterChanged(event(indexClosed.build()));
         assertThat(manager.indexExists(), is(true));
-        assertThat(manager.isAvailable(), is(false));
+        assertThat(manager.isAvailableForSearch(), is(false));
+        assertThat(manager.isAvailableForWrite(), is(false));
     }
 
     private void assertInitialState() {
         assertThat(manager.indexExists(), Matchers.equalTo(false));
-        assertThat(manager.isAvailable(), Matchers.equalTo(false));
+        assertThat(manager.isAvailableForSearch(), Matchers.equalTo(false));
+        assertThat(manager.isAvailableForWrite(), Matchers.equalTo(false));
         assertThat(manager.isMappingUpToDate(), Matchers.equalTo(false));
         assertThat(manager.isStateRecovered(), Matchers.equalTo(false));
     }
 
     private void assertIndexUpToDateButNotAvailable() {
         assertThat(manager.indexExists(), Matchers.equalTo(true));
-        assertThat(manager.isAvailable(), Matchers.equalTo(false));
+        assertThat(manager.isAvailableForSearch(), Matchers.equalTo(false));
+        assertThat(manager.isAvailableForWrite(), Matchers.equalTo(false));
         assertThat(manager.isMappingUpToDate(), Matchers.equalTo(true));
         assertThat(manager.isStateRecovered(), Matchers.equalTo(true));
     }

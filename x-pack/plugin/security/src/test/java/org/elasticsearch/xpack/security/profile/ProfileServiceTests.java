@@ -297,7 +297,7 @@ public class ProfileServiceTests extends ESTestCase {
         assertThat(resultsAndErrors.errors().size(), is(0));
         when(profileIndex.indexExists()).thenReturn(true);
         ElasticsearchException unavailableException = new ElasticsearchException("mock profile index unavailable");
-        when(profileIndex.isAvailable()).thenReturn(false);
+        when(profileIndex.isAvailableForSearch()).thenReturn(false);
         when(profileIndex.getUnavailableReason()).thenReturn(unavailableException);
         PlainActionFuture<ResultsAndErrors<Map.Entry<String, Subject>>> future2 = new PlainActionFuture<>();
         profileService.getProfileSubjects(randomList(1, 5, () -> randomAlphaOfLength(20)), future2);

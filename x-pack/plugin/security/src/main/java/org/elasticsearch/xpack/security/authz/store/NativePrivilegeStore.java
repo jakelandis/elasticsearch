@@ -193,7 +193,7 @@ public class NativePrivilegeStore {
         final SecurityIndexManager frozenSecurityIndex = securityIndexManager.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(Collections.emptyList());
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndexManager.checkIndexVersionThenExecute(listener::onFailure, () -> {
@@ -423,7 +423,7 @@ public class NativePrivilegeStore {
         final SecurityIndexManager frozenSecurityIndex = securityIndexManager.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(Collections.emptyMap());
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndexManager.checkIndexVersionThenExecute(listener::onFailure, () -> {

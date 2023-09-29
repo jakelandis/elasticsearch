@@ -248,7 +248,7 @@ public class NativeRoleMappingStore implements UserRoleMapper {
         final SecurityIndexManager frozenSecurityIndex = securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(false);
-        } else if (securityIndex.isAvailable() == false) {
+        } else if (securityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(listener::onFailure, () -> {
@@ -293,7 +293,7 @@ public class NativeRoleMappingStore implements UserRoleMapper {
     }
 
     private void getMappings(ActionListener<List<ExpressionRoleMapping>> listener) {
-        if (securityIndex.isAvailable()) {
+        if (securityIndex.isAvailableForSearch()) {
             loadMappings(listener);
         } else {
             if (logger.isDebugEnabled()) {
@@ -301,7 +301,7 @@ public class NativeRoleMappingStore implements UserRoleMapper {
                     "The security index is not yet available - no role mappings can be loaded. index [{}] [exists: {}] [available: {}]",
                     SECURITY_MAIN_ALIAS,
                     securityIndex.indexExists(),
-                    securityIndex.isAvailable()
+                    securityIndex.isAvailableForSearch()
                 );
             }
             listener.onResponse(Collections.emptyList());
@@ -318,7 +318,7 @@ public class NativeRoleMappingStore implements UserRoleMapper {
      * </ul>
      */
     public void usageStats(ActionListener<Map<String, Object>> listener) {
-        if (securityIndex.isAvailable() == false) {
+        if (securityIndex.isAvailableForSearch() == false) {
             reportStats(listener, Collections.emptyList());
         } else {
             getMappings(ActionListener.wrap(mappings -> reportStats(listener, mappings), listener::onFailure));

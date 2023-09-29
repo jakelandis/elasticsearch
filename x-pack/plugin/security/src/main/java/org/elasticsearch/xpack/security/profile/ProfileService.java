@@ -1012,7 +1012,7 @@ public class ProfileService {
             logger.debug("profile index does not exist");
             listener.onResponse(null);
             return Optional.empty();
-        } else if (false == frozenProfileIndex.isAvailable()) {
+        } else if (false == frozenProfileIndex.isAvailableForSearch()) {
             listener.onFailure(frozenProfileIndex.getUnavailableReason());
             return Optional.empty();
         }

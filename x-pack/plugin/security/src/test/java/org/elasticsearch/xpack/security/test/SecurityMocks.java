@@ -86,7 +86,7 @@ public final class SecurityMocks {
             return null;
         }).when(securityIndexManager).checkIndexVersionThenExecute(anyConsumer(), any(Runnable.class));
         when(securityIndexManager.indexExists()).thenReturn(exists);
-        when(securityIndexManager.isAvailable()).thenReturn(available);
+        when(securityIndexManager.isAvailableForSearch()).thenReturn(available);
         when(securityIndexManager.aliasName()).thenReturn(alias);
         when(securityIndexManager.freeze()).thenReturn(securityIndexManager);
         return securityIndexManager;

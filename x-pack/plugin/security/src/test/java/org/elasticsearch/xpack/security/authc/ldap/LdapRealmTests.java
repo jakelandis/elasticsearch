@@ -490,7 +490,7 @@ public class LdapRealmTests extends LdapTestCase {
         RealmConfig config = getRealmConfig(REALM_IDENTIFIER, settings);
 
         SecurityIndexManager mockSecurityIndex = mock(SecurityIndexManager.class);
-        when(mockSecurityIndex.isAvailable()).thenReturn(true);
+        when(mockSecurityIndex.isAvailableForSearch()).thenReturn(true);
         when(mockSecurityIndex.isIndexUpToDate()).thenReturn(true);
 
         Client mockClient = mock(Client.class);

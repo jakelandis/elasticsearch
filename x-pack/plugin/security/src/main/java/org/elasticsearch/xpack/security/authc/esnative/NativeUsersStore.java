@@ -122,7 +122,7 @@ public class NativeUsersStore {
         final SecurityIndexManager frozenSecurityIndex = this.securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(Collections.emptyList());
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else if (userNames.length == 1) { // optimization for single user lookup
             final String username = userNames[0];
@@ -164,7 +164,7 @@ public class NativeUsersStore {
         final SecurityIndexManager frozenSecurityIndex = this.securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(0L);
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(
@@ -189,7 +189,7 @@ public class NativeUsersStore {
      */
     private void getUserAndPassword(final String user, final ActionListener<UserAndPassword> listener) {
         final SecurityIndexManager frozenSecurityIndex = securityIndex.freeze();
-        if (frozenSecurityIndex.isAvailable() == false) {
+        if (frozenSecurityIndex.isAvailableForSearch() == false) {
             if (frozenSecurityIndex.indexExists() == false) {
                 logger.trace("could not retrieve user [{}] because security index does not exist", user);
             } else {
@@ -541,7 +541,7 @@ public class NativeUsersStore {
         final SecurityIndexManager frozenSecurityIndex = securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(false);
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(listener::onFailure, () -> {
@@ -599,7 +599,7 @@ public class NativeUsersStore {
         final SecurityIndexManager frozenSecurityIndex = securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(null);
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(
@@ -652,7 +652,7 @@ public class NativeUsersStore {
         final SecurityIndexManager frozenSecurityIndex = securityIndex.freeze();
         if (frozenSecurityIndex.indexExists() == false) {
             listener.onResponse(Collections.emptyMap());
-        } else if (frozenSecurityIndex.isAvailable() == false) {
+        } else if (frozenSecurityIndex.isAvailableForSearch() == false) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(

@@ -114,8 +114,27 @@ public class SecurityIndexManager implements ClusterStateListener {
         return this.state.isIndexUpToDate;
     }
 
-    public boolean isAvailable() {
-        return this.state.indexAvailable;
+    /**
+     * @return <code>true</code> if all searchable shards for the security index are available
+     */
+    public boolean isAvailableForSearch() {
+        return this.state.indexAvailableForSearch;
+    }
+
+    /**
+     * @return <code>true</code> if all primary shards for the security index are available
+     */
+    public boolean isAvailableForWrite() {
+        return this.state.indexAvailableForWrite;
+    }
+
+    /**
+     * @return <code>true</code> if all primary shards OR all searchable shards for the security index are available. Since real time
+     * get can read from either the write shards (via translog) or from the search shards we check if either available. If neither are
+     * available the real time get is guaranteed to fail. If one of the two are unavailable the real time get may or may not fail.
+     */
+    public boolean isAvailableForRealTimeGet() {
+        return this.state.indexAvailableForWrite || this.state.indexAvailableForSearch;
     }
 
     public boolean isMappingUpToDate() {
@@ -128,7 +147,7 @@ public class SecurityIndexManager implements ClusterStateListener {
 
     public ElasticsearchException getUnavailableReason() {
         final State state = this.state; // use a local copy so all checks execute against the same state!
-        if (state.indexAvailable) {
+        if (state.indexAvailableForSearch) {
             throw new IllegalStateException("caller must make sure to use a frozen state and check indexAvailable");
         }
 
@@ -137,7 +156,15 @@ public class SecurityIndexManager implements ClusterStateListener {
         } else if (state.indexExists()) {
             return new UnavailableShardsException(
                 null,
-                "index [" + state.concreteIndexName + "] exists but at least one shard is unavailable"
+                "index ["
+                    + state.concreteIndexName
+                    + "] exists but at least one shard is unavailable. "
+                    + "Is available for search ["
+                    + state.indexAvailableForSearch
+                    + "]"
+                    + "Is available for write ["
+                    + state.indexAvailableForWrite
+                    + "]"
             );
         } else {
             return new IndexNotFoundException(state.concreteIndexName);
@@ -174,7 +201,8 @@ public class SecurityIndexManager implements ClusterStateListener {
         final Instant creationTime = indexMetadata != null ? Instant.ofEpochMilli(indexMetadata.getCreationDate()) : null;
         final boolean isIndexUpToDate = indexMetadata == null
             || INDEX_FORMAT_SETTING.get(indexMetadata.getSettings()) == systemIndexDescriptor.getIndexFormat();
-        final boolean indexAvailable = checkIndexAvailable(event.state());
+        final boolean indexAvailableForSearch = checkIndexAvailableForSearch(event.state());
+        final boolean indexAvailableForWrite = checkIndexAvailableForWrite(event.state());
         final boolean mappingIsUpToDate = indexMetadata == null || checkIndexMappingUpToDate(event.state());
         final Version mappingVersion = oldestIndexMappingVersion(event.state());
         final String concreteIndexName = indexMetadata == null
@@ -199,7 +227,8 @@ public class SecurityIndexManager implements ClusterStateListener {
         final State newState = new State(
             creationTime,
             isIndexUpToDate,
-            indexAvailable,
+            indexAvailableForSearch,
+            indexAvailableForWrite,
             mappingIsUpToDate,
             mappingVersion,
             concreteIndexName,
@@ -230,15 +259,13 @@ public class SecurityIndexManager implements ClusterStateListener {
         stateChangeListeners.add(stateChangeListener);
     }
 
-    private boolean checkIndexAvailable(ClusterState state) {
+    /**
+     * @return <code>true</code> if all shards that needed to service a search request are available
+     */
+    private boolean checkIndexAvailableForSearch(ClusterState state) {
         final String aliasName = systemIndexDescriptor.getAliasName();
-        IndexMetadata metadata = resolveConcreteIndex(aliasName, state.metadata());
+        IndexMetadata metadata = getOpenIndexMetadata(aliasName, state);
         if (metadata == null) {
-            logger.debug("Index [{}] is not available - no metadata", aliasName);
-            return false;
-        }
-        if (metadata.getState() == IndexMetadata.State.CLOSE) {
-            logger.warn("Index [{}] is closed", aliasName);
             return false;
         }
         final IndexRoutingTable routingTable = state.routingTable().index(metadata.getIndex());
@@ -248,6 +275,37 @@ public class SecurityIndexManager implements ClusterStateListener {
         } else {
             return true;
         }
+    }
+
+    /**
+     * @return <code>true</code> if all primary shards are available.
+     */
+    private boolean checkIndexAvailableForWrite(ClusterState state) {
+        final String aliasName = systemIndexDescriptor.getAliasName();
+        IndexMetadata metadata = getOpenIndexMetadata(aliasName, state);
+        if (metadata == null) {
+            return false;
+        }
+        final IndexRoutingTable routingTable = state.routingTable().index(metadata.getIndex());
+        if (routingTable == null || routingTable.allPrimaryShardsActive() == false) {
+            logger.debug("Index [{}] is not yet active", aliasName);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private IndexMetadata getOpenIndexMetadata(String aliasName, ClusterState state) {
+        IndexMetadata metadata = resolveConcreteIndex(aliasName, state.metadata());
+        if (metadata == null) {
+            logger.debug("Index [{}] is not available - no metadata", aliasName);
+            return null;
+        }
+        if (metadata.getState() == IndexMetadata.State.CLOSE) {
+            logger.warn("Index [{}] is closed", aliasName);
+            return null;
+        }
+        return metadata;
     }
 
     private boolean checkIndexMappingUpToDate(ClusterState clusterState) {
@@ -482,10 +540,11 @@ public class SecurityIndexManager implements ClusterStateListener {
      * State of the security index.
      */
     public static class State {
-        public static final State UNRECOVERED_STATE = new State(null, false, false, false, null, null, null, null, null, null);
+        public static final State UNRECOVERED_STATE = new State(null, false, false, false, false, null, null, null, null, null, null);
         public final Instant creationTime;
         public final boolean isIndexUpToDate;
-        public final boolean indexAvailable;
+        public final boolean indexAvailableForSearch;
+        public final boolean indexAvailableForWrite;
         public final boolean mappingUpToDate;
         public final Version mappingVersion;
         public final String concreteIndexName;
@@ -497,7 +556,8 @@ public class SecurityIndexManager implements ClusterStateListener {
         public State(
             Instant creationTime,
             boolean isIndexUpToDate,
-            boolean indexAvailable,
+            boolean indexAvailableForSearch,
+            boolean indexAvailableForWrite,
             boolean mappingUpToDate,
             Version mappingVersion,
             String concreteIndexName,
@@ -508,7 +568,8 @@ public class SecurityIndexManager implements ClusterStateListener {
         ) {
             this.creationTime = creationTime;
             this.isIndexUpToDate = isIndexUpToDate;
-            this.indexAvailable = indexAvailable;
+            this.indexAvailableForSearch = indexAvailableForSearch;
+            this.indexAvailableForWrite = indexAvailableForWrite;
             this.mappingUpToDate = mappingUpToDate;
             this.mappingVersion = mappingVersion;
             this.concreteIndexName = concreteIndexName;
@@ -525,7 +586,8 @@ public class SecurityIndexManager implements ClusterStateListener {
             State state = (State) o;
             return Objects.equals(creationTime, state.creationTime)
                 && isIndexUpToDate == state.isIndexUpToDate
-                && indexAvailable == state.indexAvailable
+                && indexAvailableForSearch == state.indexAvailableForSearch
+                && indexAvailableForWrite == state.indexAvailableForWrite
                 && mappingUpToDate == state.mappingUpToDate
                 && Objects.equals(mappingVersion, state.mappingVersion)
                 && Objects.equals(concreteIndexName, state.concreteIndexName)
@@ -543,7 +605,8 @@ public class SecurityIndexManager implements ClusterStateListener {
             return Objects.hash(
                 creationTime,
                 isIndexUpToDate,
-                indexAvailable,
+                indexAvailableForSearch,
+                indexAvailableForWrite,
                 mappingUpToDate,
                 mappingVersion,
                 concreteIndexName,

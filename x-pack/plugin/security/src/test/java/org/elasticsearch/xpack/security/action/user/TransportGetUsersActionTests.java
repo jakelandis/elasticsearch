@@ -110,7 +110,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
     public void testAnonymousUser() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         SecurityIndexManager securityIndex = mock(SecurityIndexManager.class);
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         AnonymousUser anonymousUser = new AnonymousUser(settings);
         ReservedRealm reservedRealm = new ReservedRealm(mock(Environment.class), settings, usersStore, anonymousUser, threadPool);
         reservedRealm.initRealmRef(
@@ -183,7 +183,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
     public void testReservedUsersOnly() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         SecurityIndexManager securityIndex = mock(SecurityIndexManager.class);
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
 
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         ReservedRealm reservedRealm = new ReservedRealm(
@@ -272,7 +272,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
         );
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         SecurityIndexManager securityIndex = mock(SecurityIndexManager.class);
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         ReservedRealm reservedRealm = new ReservedRealm(
             mock(Environment.class),
@@ -377,7 +377,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
         );
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         SecurityIndexManager securityIndex = mock(SecurityIndexManager.class);
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         ReservedRealm reservedRealm = new ReservedRealm(
             mock(Environment.class),

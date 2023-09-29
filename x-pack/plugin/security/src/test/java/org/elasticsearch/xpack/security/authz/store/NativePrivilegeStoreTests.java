@@ -128,7 +128,7 @@ public class NativePrivilegeStoreTests extends ESTestCase {
         securityIndex = mock(SecurityIndexManager.class);
         when(securityIndex.freeze()).thenReturn(securityIndex);
         when(securityIndex.indexExists()).thenReturn(true);
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         Mockito.doAnswer(invocationOnMock -> {
             assertThat(invocationOnMock.getArguments().length, equalTo(2));
             assertThat(invocationOnMock.getArguments()[1], instanceOf(Runnable.class));
@@ -974,6 +974,7 @@ public class NativePrivilegeStoreTests extends ESTestCase {
         return new SecurityIndexManager.State(
             Instant.now(),
             isIndexUpToDate,
+            true,
             true,
             true,
             null,

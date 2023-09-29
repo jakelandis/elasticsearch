@@ -68,10 +68,10 @@ final class ExpiredTokenRemover extends AbstractRunnable {
     @Override
     public void doRun() {
         final List<String> indicesWithTokens = new ArrayList<>();
-        if (securityTokensIndex.isAvailable()) {
+        if (securityTokensIndex.isAvailableForSearch()) {
             indicesWithTokens.add(securityTokensIndex.aliasName());
         }
-        if (securityMainIndex.isAvailable() && checkMainIndexForExpiredTokens) {
+        if (securityMainIndex.isAvailableForSearch() && checkMainIndexForExpiredTokens) {
             indicesWithTokens.add(securityMainIndex.aliasName());
         }
         if (indicesWithTokens.isEmpty()) {

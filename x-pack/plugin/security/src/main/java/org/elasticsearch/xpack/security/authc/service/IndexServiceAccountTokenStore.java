@@ -171,7 +171,7 @@ public class IndexServiceAccountTokenStore extends CachingServiceAccountTokenSto
         final SecurityIndexManager frozenSecurityIndex = this.securityIndex.freeze();
         if (false == frozenSecurityIndex.indexExists()) {
             listener.onResponse(List.of());
-        } else if (false == frozenSecurityIndex.isAvailable()) {
+        } else if (false == frozenSecurityIndex.isAvailableForSearch()) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             securityIndex.checkIndexVersionThenExecute(listener::onFailure, () -> {
@@ -207,7 +207,7 @@ public class IndexServiceAccountTokenStore extends CachingServiceAccountTokenSto
         final SecurityIndexManager frozenSecurityIndex = this.securityIndex.freeze();
         if (false == frozenSecurityIndex.indexExists()) {
             listener.onResponse(false);
-        } else if (false == frozenSecurityIndex.isAvailable()) {
+        } else if (false == frozenSecurityIndex.isAvailableForSearch()) {
             listener.onFailure(frozenSecurityIndex.getUnavailableReason());
         } else {
             final ServiceAccountId accountId = new ServiceAccountId(request.getNamespace(), request.getServiceName());

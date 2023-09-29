@@ -317,7 +317,7 @@ public class NativeUsersStoreTests extends ESTestCase {
     @SuppressWarnings("unchecked")
     private NativeUsersStore startNativeUsersStore() {
         SecurityIndexManager securityIndex = mock(SecurityIndexManager.class);
-        when(securityIndex.isAvailable()).thenReturn(true);
+        when(securityIndex.isAvailableForSearch()).thenReturn(true);
         when(securityIndex.indexExists()).thenReturn(true);
         when(securityIndex.isIndexUpToDate()).thenReturn(true);
         when(securityIndex.freeze()).thenReturn(securityIndex);
