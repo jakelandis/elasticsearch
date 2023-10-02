@@ -131,13 +131,13 @@ public class SecurityIndexManager implements ClusterStateListener {
 
     /**
      * Optimization to avoid making unnecessary calls when we know the underlying shard state. This call will check that the index exists,
-     * is discoverable from the alias, is not closed, and determine the type of {@link Availability}.
+     * is discoverable from the alias, is not closed, and will determine if available based on the {@link Availability} parameter.
      * @param availability Check availability for search or write/update/real time get workflows. Write/update/realtime get workflows
      *                     should check for availability of primary shards. Search workflows should check availability of search shards
      *                     (which may or may not also be the primary shards).
      * @return
      * when checking for search: <code>true</code> if all searchable shards for the security index are available
-     * when checking for all primary: <code>true</code> if all primary shards for the security index are available
+     * when checking for primary: <code>true</code> if all primary shards for the security index are available
      */
     public boolean isAvailable(Availability availability) {
         switch (availability) {
@@ -176,6 +176,10 @@ public class SecurityIndexManager implements ClusterStateListener {
                     "at least one primary shard for the index [" + state.concreteIndexName + "] is unavailable"
                 );
             } else if (Availability.SEARCH_SHARDS.equals(availability) && state.indexAvailableForSearch == false) {
+                // The current behavior is that when primaries are unavailable and replicas can not be promoted then
+                // any replicas will be marked as unavailable as well. This is applicable in stateless where there index only primaries
+                // with non-promotable replicas (i.e. search only shards). In the case "at least one search ... is unavailable" is
+                // a technically correct statement, but it may be unavailable because it is not promotable and the primary is unavailable
                 return new UnavailableShardsException(
                     null,
                     "at least one search shard for the index [" + state.concreteIndexName + "] is unavailable"
@@ -300,7 +304,7 @@ public class SecurityIndexManager implements ClusterStateListener {
         }
         if (allPrimaryShards == false || searchShards == false) {
             logger.debug(
-                "Index [{}] is not fully available." + "all primary shards available [{}], search shards available, [{}]",
+                "Index [{}] is not fully available." + " all primary shards available [{}], search shards available, [{}]",
                 aliasName,
                 allPrimaryShards,
                 searchShards
