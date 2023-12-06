@@ -17,9 +17,7 @@ import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.TransportVersion;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.*;
 import org.elasticsearch.action.support.ActionFilter;
 import org.elasticsearch.action.support.DestructiveOperations;
 import org.elasticsearch.bootstrap.BootstrapCheck;
@@ -210,6 +208,8 @@ import org.elasticsearch.xpack.security.action.apikey.TransportInvalidateApiKeyA
 import org.elasticsearch.xpack.security.action.apikey.TransportQueryApiKeyAction;
 import org.elasticsearch.xpack.security.action.apikey.TransportUpdateApiKeyAction;
 import org.elasticsearch.xpack.security.action.apikey.TransportUpdateCrossClusterApiKeyAction;
+import org.elasticsearch.xpack.security.action.crosscluster.TransportUpdateRemoteClusterSecurity;
+import org.elasticsearch.xpack.security.action.crosscluster.UpdateRemoteClusterSecurityAction;
 import org.elasticsearch.xpack.security.action.enrollment.TransportKibanaEnrollmentAction;
 import org.elasticsearch.xpack.security.action.enrollment.TransportNodeEnrollmentAction;
 import org.elasticsearch.xpack.security.action.filter.SecurityActionFilter;
@@ -560,6 +560,7 @@ public class Security extends Plugin
     private final SetOnce<WorkflowService> workflowService = new SetOnce<>();
     private final SetOnce<Realms> realms = new SetOnce<>();
     private volatile Supplier<RemoteClusterService> remoteClusterServiceSupplier;
+    private Client client ; //TODO: make set once and final
 
     public Security(Settings settings) {
         this(settings, Collections.emptyList());
@@ -664,6 +665,7 @@ public class Security extends Plugin
     ) throws Exception {
         // TODO hack hack hack
         this.clusterService = clusterService;
+        this.client = client;
 
         logger.info("Security is {}", enabled ? "enabled" : "disabled");
         if (enabled == false) {
@@ -1363,6 +1365,7 @@ public class Security extends Plugin
             new ActionHandler<>(SetProfileEnabledAction.INSTANCE, TransportSetProfileEnabledAction.class),
             new ActionHandler<>(GetSecuritySettingsAction.INSTANCE, TransportGetSecuritySettingsAction.class),
             new ActionHandler<>(UpdateSecuritySettingsAction.INSTANCE, TransportUpdateSecuritySettingsAction.class),
+            new ActionHandler<>(UpdateRemoteClusterSecurityAction.INSTANCE, TransportUpdateRemoteClusterSecurity.class),
             usageAction,
             infoAction
         ).filter(Objects::nonNull).toList();
@@ -1932,18 +1935,26 @@ public class Security extends Plugin
     }
 
     private void reloadRemoteClusterCredentials(Settings settings) {
-        final RemoteClusterService remoteClusterService = remoteClusterServiceSupplier.get();
-        if (remoteClusterService == null) {
-            final String msg = "remote cluster service unavailable during secure settings reload";
-            assert false : msg;
-            throw new IllegalStateException(msg);
+        try {
+            client.execute(UpdateRemoteClusterSecurityAction.INSTANCE,
+                    new UpdateRemoteClusterSecurityAction.Request(settings)).actionGet();
+            System.out.println("success!");
+        } catch (Exception e) {
+            System.out.println("failure :(");
         }
-        // We need cluster settings to capture settings API updates;
-        final Settings persistentSettings = clusterService.state().metadata().persistentSettings();
-        final Settings transientSettings = clusterService.state().metadata().transientSettings();
-        remoteClusterService.updateRemoteClusterCredentials(
-            Settings.builder().put(settings, true).put(persistentSettings).put(transientSettings).build()
-        );
+
+        // final RemoteClusterService remoteClusterService = remoteClusterServiceSupplier.get();
+        // if (remoteClusterService == null) {
+        // final String msg = "remote cluster service unavailable during secure settings reload";
+        // assert false : msg;
+        // throw new IllegalStateException(msg);
+        // }
+        // // We need cluster settings to capture settings API updates;
+        // final Settings persistentSettings = clusterService.state().metadata().persistentSettings();
+        // final Settings transientSettings = clusterService.state().metadata().transientSettings();
+        // remoteClusterService.updateRemoteClusterCredentials(
+        // Settings.builder().put(settings, true).put(persistentSettings).put(transientSettings).build()
+        // );
     }
 
     static final class ValidateLicenseForFIPS implements BiConsumer<DiscoveryNode, ClusterState> {
