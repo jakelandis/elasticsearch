@@ -477,11 +477,12 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             return globalOrd;
         }
 
-        boolean EXCLUDE_DELETE_DOCS = true; //TODO: model this as part of the agg itself
+        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
+
         @Override
         void forEach(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
             assert owningBucketOrd == 0;
-            if(EXCLUDE_DELETE_DOCS) {
+            if (EXCLUDE_DELETE_DOCS) {
                 forEachExcludeDeletedDocs(consumer);
             } else {
                 forEachIgnoreDeletedDocs(consumer);
@@ -491,7 +492,7 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         /**
          * Allows deleted docs in the results by ignoring the associated liveDocs. More performant than excluding them.
          */
-        private void forEachIgnoreDeletedDocs(BucketInfoConsumer consumer) throws IOException{
+        private void forEachIgnoreDeletedDocs(BucketInfoConsumer consumer) throws IOException {
             for (long globalOrd = 0; globalOrd < valueCount; globalOrd++) {
                 if (false == acceptedGlobalOrdinals.test(globalOrd)) {
                     continue;
@@ -506,7 +507,7 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         /**
          * Excludes deleted docs in the results by cross-checking with liveDocs. Less performant than ignoring liveDocs.
          */
-        private void forEachExcludeDeletedDocs(BucketInfoConsumer consumer) throws IOException{
+        private void forEachExcludeDeletedDocs(BucketInfoConsumer consumer) throws IOException {
             LongHash accepted = null;
             boolean acceptedAllGlobalOrdinals = false;
             for (LeafReaderContext ctx : searcher().getTopReaderContext().leaves()) {
@@ -598,9 +599,21 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             return bucketOrds.find(owningBucketOrd, globalOrd);
         }
 
+        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
+
         @Override
         void forEach(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
-            // TODO: fix here too ?
+            if (EXCLUDE_DELETE_DOCS && bucketCountThresholds.getMinDocCount() == 0) {
+                forEachExcludeDeletedDocs(owningBucketOrd, consumer);
+            } else {
+                forEachIgnoreDeletedDocs(owningBucketOrd, consumer);
+            }
+        }
+
+        /**
+         * Allows deleted docs in the results by ignoring the associated liveDocs. More performant than excluding them.
+         */
+        void forEachIgnoreDeletedDocs(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
             if (bucketCountThresholds.getMinDocCount() == 0) {
                 for (long globalOrd = 0; globalOrd < valueCount; globalOrd++) {
                     if (false == acceptedGlobalOrdinals.test(globalOrd)) {
@@ -630,6 +643,71 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
                         continue;
                     }
                     consumer.accept(ordsEnum.value(), ordsEnum.ord(), bucketDocCount(ordsEnum.ord()));
+                }
+            }
+        }
+
+        // FIXME : CHECK THIS LOGIC...ADDED AT END OF DAY IN HASTE
+
+        /**
+         * Excludes deleted docs in the results by cross-checking with liveDocs. Less performant than ignoring liveDocs.
+         */
+        void forEachExcludeDeletedDocs(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
+
+            assert bucketCountThresholds.getMinDocCount() == 0;
+            LongHash accepted = null;
+            boolean acceptedAllGlobalOrdinals = false;
+            for (LeafReaderContext ctx : searcher().getTopReaderContext().leaves()) {
+                if (acceptedAllGlobalOrdinals) {
+                    break;
+                }
+                LeafReader reader = ctx.reader();
+                Bits liveDocs = reader.getLiveDocs();
+                SortedSetDocValues globalOrds = null;
+                for (int docId = 0; docId < reader.maxDoc(); ++docId) {
+                    if (acceptedAllGlobalOrdinals) {
+                        break;
+                    }
+                    if (liveDocs == null || liveDocs.get(docId)) {  // document is not deleted
+                        globalOrds = globalOrds == null ? valuesSource.globalOrdinalsValues(ctx) : globalOrds;
+                        if (globalOrds.advanceExact(docId)) {
+                            long maxDocOrdinals = globalOrds.getValueCount();
+                            for (long globalOrd = globalOrds.nextOrd(); globalOrd != NO_MORE_ORDS; globalOrd = globalOrds.nextOrd()) {
+                                if (accepted != null && accepted.find(globalOrd) >= 0) {
+                                    continue;
+                                }
+                                if (false == acceptedGlobalOrdinals.test(globalOrd)) {
+                                    continue;
+                                }
+                                if (false == acceptedGlobalOrdinals.test(globalOrd)) {
+                                    continue;
+                                }
+                                /*
+                                 * Use `add` instead of `find` here to assign an ordinal
+                                 * even if the global ord wasn't found so we can build
+                                 * sub-aggregations without trouble even though we haven't
+                                 * hit any documents for them. This is wasteful, but
+                                 * settings minDocCount == 0 is wasteful in general.....
+                                 */
+                                long bucketOrd = bucketOrds.add(owningBucketOrd, globalOrd);
+                                long docCount;
+                                if (bucketOrd < 0) {
+                                    bucketOrd = -1 - bucketOrd;
+                                    docCount = bucketDocCount(bucketOrd);
+                                } else {
+                                    docCount = 0;
+                                }
+                                accepted = accepted == null ? new LongHash(maxDocOrdinals / 2, NON_RECYCLING_INSTANCE) : accepted;
+                                assert globalOrd >= 0;
+                                consumer.accept(globalOrd, bucketOrd, docCount);
+                                accepted.add(globalOrd);
+                                if (accepted.size() == maxDocOrdinals) { // stop looking if all of them have been accepted
+                                    acceptedAllGlobalOrdinals = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -667,7 +745,7 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
                     // if minDocCount == 0 then we can end up with more buckets then maxBucketOrd() returns
                     size = (int) Math.min(valueCount, bucketCountThresholds.getShardSize());
 
-                    //TODO: remove all of this
+                    // TODO: remove all of this
                     for (LeafReaderContext ctx : searcher().getIndexReader().leaves()) {
                         Bits liveDocs = ctx.reader().getLiveDocs();
                         if (liveDocs == null) { // all documents are live - no need to check per doc
