@@ -82,7 +82,7 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
      * to take up nearly as much memory anyway it might be worth it to use
      * filters. More experiment is required.
      */
-    static final long MAX_ORDS_TO_TRY_FILTERS = 1;
+    static final long MAX_ORDS_TO_TRY_FILTERS = 1000;
 
     /**
      * This supplier is used for all the field types that should be aggregated as bytes/strings,

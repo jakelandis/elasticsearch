@@ -370,6 +370,8 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
             return primary;
         }
 
+        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
+
         @Override
         void collectZeroDocEntriesIfNeeded(long owningBucketOrd) throws IOException {
             if (bucketCountThresholds.getMinDocCount() != 0) {
@@ -383,6 +385,11 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
                 SortedBinaryDocValues values = valuesSource.bytesValues(ctx);
                 // brute force
                 for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
+                    if(EXCLUDE_DELETE_DOCS){
+                        if(ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false){
+                            continue;
+                        }
+                    }
                     if (values.advanceExact(docId)) {
                         int valueCount = values.docValueCount();
                         for (int i = 0; i < valueCount; ++i) {
