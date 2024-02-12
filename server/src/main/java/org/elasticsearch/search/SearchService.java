@@ -1310,7 +1310,8 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
                 context::isCancelled,
                 context::buildFilteredQuery,
                 enableRewriteAggsToFilterByFilter,
-                source.aggregations().isInSortOrderExecutionRequired()
+                source.aggregations().isInSortOrderExecutionRequired(),
+                true //TODO: FIXME !
             );
             context.addQuerySearchResultReleasable(aggContext);
             try {

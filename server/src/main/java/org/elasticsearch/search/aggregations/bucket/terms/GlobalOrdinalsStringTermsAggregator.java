@@ -98,14 +98,14 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         this.valueCount = valuesSupplier.get().getValueCount();
         this.acceptedGlobalOrdinals = acceptedOrds;
         if (remapGlobalOrds) {
-            this.collectionStrategy = new RemapGlobalOrds(cardinality);
+            this.collectionStrategy = new RemapGlobalOrds(cardinality, context.excludeDeletedDocs());
         } else {
             this.collectionStrategy = cardinality.map(estimate -> {
                 if (estimate > 1) {
                     // This is a 500 class error, because we should never be able to reach it.
                     throw new AggregationExecutionException("Dense ords don't know how to collect from many buckets");
                 }
-                return new DenseGlobalOrds();
+                return new DenseGlobalOrds(context.excludeDeletedDocs());
             });
         }
     }
@@ -450,6 +450,13 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
      * bucket ordinal.
      */
     class DenseGlobalOrds extends CollectionStrategy {
+
+        private final boolean excludeDeletedDocs;
+
+        DenseGlobalOrds(boolean excludeDeletedDocs) {
+            this.excludeDeletedDocs = excludeDeletedDocs;
+        }
+
         @Override
         String describe() {
             return "dense";
@@ -477,12 +484,11 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             return globalOrd;
         }
 
-        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
 
         @Override
         void forEach(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
             assert owningBucketOrd == 0;
-            if (EXCLUDE_DELETE_DOCS) {
+            if (excludeDeletedDocs) {
                 forEachExcludeDeletedDocs(consumer);
             } else {
                 forEachIgnoreDeletedDocs(consumer);
@@ -565,9 +571,11 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
      */
     private class RemapGlobalOrds extends CollectionStrategy {
         private final LongKeyedBucketOrds bucketOrds;
+        private final boolean excludeDeletedDocs;
 
-        private RemapGlobalOrds(CardinalityUpperBound cardinality) {
+        private RemapGlobalOrds(CardinalityUpperBound cardinality, boolean excludeDeletedDocs) {
             bucketOrds = LongKeyedBucketOrds.buildForValueRange(bigArrays(), cardinality, 0, valueCount - 1);
+            this.excludeDeletedDocs = excludeDeletedDocs;
         }
 
         @Override
@@ -599,21 +607,19 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             return bucketOrds.find(owningBucketOrd, globalOrd);
         }
 
-        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
-
         @Override
         void forEach(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
-            if (EXCLUDE_DELETE_DOCS && bucketCountThresholds.getMinDocCount() == 0) {
+            if (excludeDeletedDocs && bucketCountThresholds.getMinDocCount() == 0) {
                 forEachExcludeDeletedDocs(owningBucketOrd, consumer);
             } else {
-                forEachIgnoreDeletedDocs(owningBucketOrd, consumer);
+                forEachInner(owningBucketOrd, consumer);
             }
         }
 
         /**
-         * Allows deleted docs in the results by ignoring the associated liveDocs. More performant than excluding them.
+         * Allows deleted docs in the results by ignoring the associated liveDocs.
          */
-        void forEachIgnoreDeletedDocs(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
+        void forEachInner(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
             if (bucketCountThresholds.getMinDocCount() == 0) {
                 for (long globalOrd = 0; globalOrd < valueCount; globalOrd++) {
                     if (false == acceptedGlobalOrdinals.test(globalOrd)) {
@@ -647,13 +653,12 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             }
         }
 
-        // FIXME : CHECK THIS LOGIC...ADDED AT END OF DAY IN HASTE
-
         /**
-         * Excludes deleted docs in the results by cross-checking with liveDocs. Less performant than ignoring liveDocs.
+         * Excludes deleted docs in the results by cross-checking with liveDocs.
          */
         void forEachExcludeDeletedDocs(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
 
+            //TODO: double check this logic
             assert bucketCountThresholds.getMinDocCount() == 0;
             LongHash accepted = null;
             boolean acceptedAllGlobalOrdinals = false;
@@ -796,6 +801,8 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
                     BytesRef term = BytesRef.deepCopyOf(lookupGlobalOrd.apply(globalOrd));
                     System.out.println("*** global ord -> " + term.utf8ToString() + " <- ***");
                 }
+
+
                 collectionStrategy.forEach(owningBucketOrds[ordIdx], new BucketInfoConsumer() {
                     TB spare = null;
 

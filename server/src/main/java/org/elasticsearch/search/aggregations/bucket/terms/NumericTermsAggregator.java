@@ -257,9 +257,11 @@ public final class NumericTermsAggregator extends TermsAggregator {
     abstract class StandardTermsResultStrategy<R extends InternalMappedTerms<R, B>, B extends InternalTerms.Bucket<B>> extends
         ResultStrategy<R, B> {
         protected final boolean showTermDocCountError;
+        private final boolean excludeDeletedDocs;
 
-        StandardTermsResultStrategy(boolean showTermDocCountError) {
+        StandardTermsResultStrategy(boolean showTermDocCountError, boolean excludeDeletedDocs) {
             this.showTermDocCountError = showTermDocCountError;
+            this.excludeDeletedDocs = excludeDeletedDocs;
         }
 
         @Override
@@ -284,8 +286,6 @@ public final class NumericTermsAggregator extends TermsAggregator {
 
         abstract B buildEmptyBucket();
 
-        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
-
         @Override
         final void collectZeroDocEntriesIfNeeded(long owningBucketOrd) throws IOException {
             if (bucketCountThresholds.getMinDocCount() != 0) {
@@ -299,7 +299,7 @@ public final class NumericTermsAggregator extends TermsAggregator {
             for (LeafReaderContext ctx : searcher().getTopReaderContext().leaves()) {
                 SortedNumericDocValues values = getValues(ctx);
                 for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
-                    if(EXCLUDE_DELETE_DOCS){
+                    if(excludeDeletedDocs){
                         if(ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false){ //deleted doc
                             continue;
                         }
@@ -322,8 +322,8 @@ public final class NumericTermsAggregator extends TermsAggregator {
     }
 
     class LongTermsResults extends StandardTermsResultStrategy<LongTerms, LongTerms.Bucket> {
-        LongTermsResults(boolean showTermDocCountError) {
-            super(showTermDocCountError);
+        LongTermsResults(boolean showTermDocCountError, boolean excludeDeletedDocs) {
+            super(showTermDocCountError, excludeDeletedDocs);
         }
 
         @Override
@@ -404,8 +404,8 @@ public final class NumericTermsAggregator extends TermsAggregator {
 
     class DoubleTermsResults extends StandardTermsResultStrategy<DoubleTerms, DoubleTerms.Bucket> {
 
-        DoubleTermsResults(boolean showTermDocCountError) {
-            super(showTermDocCountError);
+        DoubleTermsResults(boolean showTermDocCountError, boolean excludeDeletedDocs) {
+            super(showTermDocCountError, excludeDeletedDocs);
         }
 
         @Override

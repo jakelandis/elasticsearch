@@ -408,7 +408,8 @@ public abstract class AggregatorTestCase extends ESTestCase {
             () -> false,
             q -> q,
             true,
-            isInSortOrderExecutionRequired
+            isInSortOrderExecutionRequired,
+            false
         );
         return context;
     }

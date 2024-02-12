@@ -84,8 +84,6 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
      */
     static final long MAX_ORDS_TO_TRY_FILTERS = 1000;
 
-    static final boolean EXCLUDE_DELETE_DOCS = true; //TODO: put this in the context
-
     /**
      * This supplier is used for all the field types that should be aggregated as bytes/strings,
      * including those that need global ordinals
@@ -193,12 +191,12 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
                 if (includeExclude != null) {
                     longFilter = includeExclude.convertToDoubleFilter();
                 }
-                resultStrategy = agg -> agg.new DoubleTermsResults(showTermDocCountError);
+                resultStrategy = agg -> agg.new DoubleTermsResults(showTermDocCountError, context.excludeDeletedDocs());
             } else {
                 if (includeExclude != null) {
                     longFilter = includeExclude.convertToLongFilter(valuesSourceConfig.format());
                 }
-                resultStrategy = agg -> agg.new LongTermsResults(showTermDocCountError);
+                resultStrategy = agg -> agg.new LongTermsResults(showTermDocCountError, context.excludeDeletedDocs());
             }
             return new NumericTermsAggregator(
                 name,
@@ -395,7 +393,7 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
                     name,
                     factories,
                     new MapStringTermsAggregator.ValuesSourceCollectorSource(valuesSourceConfig),
-                    a -> a.new StandardTermsResults(valuesSourceConfig.getValuesSource()),
+                    a -> a.new StandardTermsResults(valuesSourceConfig.getValuesSource(), context.excludeDeletedDocs()),
                     order,
                     valuesSourceConfig.format(),
                     bucketCountThresholds,
@@ -436,7 +434,7 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
                     && maxOrd <= MAX_ORDS_TO_TRY_FILTERS
                     && context.enableRewriteToFilterByFilter()
                     && false == context.isInSortOrderExecutionRequired()
-                    && false == EXCLUDE_DELETE_DOCS) {
+                    && false == context.excludeDeletedDocs()) {
                     StringTermsAggregatorFromFilters adapted = StringTermsAggregatorFromFilters.adaptIntoFiltersOrNull(
                         name,
                         factories,

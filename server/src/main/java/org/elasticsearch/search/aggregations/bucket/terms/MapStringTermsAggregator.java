@@ -355,9 +355,11 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
      */
     class StandardTermsResults extends ResultStrategy<StringTerms, StringTerms.Bucket> {
         private final ValuesSource valuesSource;
+        private final boolean excludeDeletedDocs;
 
-        StandardTermsResults(ValuesSource valuesSource) {
+        StandardTermsResults(ValuesSource valuesSource, boolean excludeDeletedDocs) {
             this.valuesSource = valuesSource;
+            this.excludeDeletedDocs = excludeDeletedDocs;
         }
 
         @Override
@@ -369,8 +371,6 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
         LeafBucketCollector wrapCollector(LeafBucketCollector primary) {
             return primary;
         }
-
-        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
 
         @Override
         void collectZeroDocEntriesIfNeeded(long owningBucketOrd) throws IOException {
@@ -385,7 +385,7 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
                 SortedBinaryDocValues values = valuesSource.bytesValues(ctx);
                 // brute force
                 for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
-                    if(EXCLUDE_DELETE_DOCS){
+                    if(excludeDeletedDocs){
                         if(ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false){ //deleted doc
                             continue;
                         }

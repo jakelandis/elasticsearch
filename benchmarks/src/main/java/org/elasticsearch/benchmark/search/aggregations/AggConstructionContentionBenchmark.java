@@ -366,6 +366,11 @@ public class AggConstructionContentionBenchmark {
         }
 
         @Override
+        public boolean excludeDeletedDocs() {
+            return false;
+        }
+
+        @Override
         public void close() {
             List<Releasable> releaseMe = new ArrayList<>(this.releaseMe);
             releaseMe.add(preallocated);
