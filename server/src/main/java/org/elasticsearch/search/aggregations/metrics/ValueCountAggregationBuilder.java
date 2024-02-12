@@ -30,7 +30,6 @@ import java.util.Map;
 public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder.SingleMetricAggregationBuilder<
     ValueCountAggregationBuilder> {
     public static final String NAME = "value_count";
-
     public static final ValuesSourceRegistry.RegistryKey<MetricAggregatorSupplier> REGISTRY_KEY = new ValuesSourceRegistry.RegistryKey<>(
         NAME,
         MetricAggregatorSupplier.class
@@ -75,20 +74,16 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
         return true;
     }
 
-
-
     /**
      * Read from a stream.
      */
     public ValueCountAggregationBuilder(StreamInput in) throws IOException {
-        // read and ignore the flag that indicates if the field is a script or not
         super(in);
-        // TODO: protect with transport version
     }
 
     @Override
     protected void innerWriteTo(StreamOutput out) {
-        // TODO: protect with transport version
+        // Do nothing, no extra state to write to stream
     }
 
     @Override
@@ -109,7 +104,6 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
 
     @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
-        // TODO: double check this is right
         return builder;
     }
 
