@@ -257,9 +257,9 @@ public final class NumericTermsAggregator extends TermsAggregator {
     abstract class StandardTermsResultStrategy<R extends InternalMappedTerms<R, B>, B extends InternalTerms.Bucket<B>> extends
         ResultStrategy<R, B> {
         protected final boolean showTermDocCountError;
-        private final boolean excludeDeletedDocs;
+        private final Supplier<Boolean> excludeDeletedDocs;
 
-        StandardTermsResultStrategy(boolean showTermDocCountError, boolean excludeDeletedDocs) {
+        StandardTermsResultStrategy(boolean showTermDocCountError, Supplier<Boolean> excludeDeletedDocs) {
             this.showTermDocCountError = showTermDocCountError;
             this.excludeDeletedDocs = excludeDeletedDocs;
         }
@@ -299,7 +299,7 @@ public final class NumericTermsAggregator extends TermsAggregator {
             for (LeafReaderContext ctx : searcher().getTopReaderContext().leaves()) {
                 SortedNumericDocValues values = getValues(ctx);
                 for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
-                    if (excludeDeletedDocs) {
+                    if (excludeDeletedDocs.get()) {
                         if (ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false) { // deleted doc
                             continue;
                         }
@@ -322,7 +322,7 @@ public final class NumericTermsAggregator extends TermsAggregator {
     }
 
     class LongTermsResults extends StandardTermsResultStrategy<LongTerms, LongTerms.Bucket> {
-        LongTermsResults(boolean showTermDocCountError, boolean excludeDeletedDocs) {
+        LongTermsResults(boolean showTermDocCountError, Supplier<Boolean> excludeDeletedDocs) {
             super(showTermDocCountError, excludeDeletedDocs);
         }
 
@@ -404,7 +404,7 @@ public final class NumericTermsAggregator extends TermsAggregator {
 
     class DoubleTermsResults extends StandardTermsResultStrategy<DoubleTerms, DoubleTerms.Bucket> {
 
-        DoubleTermsResults(boolean showTermDocCountError, boolean excludeDeletedDocs) {
+        DoubleTermsResults(boolean showTermDocCountError, Supplier<Boolean> excludeDeletedDocs) {
             super(showTermDocCountError, excludeDeletedDocs);
         }
 

@@ -48,6 +48,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.LongPredicate;
 import java.util.function.LongUnaryOperator;
+import java.util.function.Supplier;
 
 import static org.apache.lucene.index.SortedSetDocValues.NO_MORE_ORDS;
 import static org.elasticsearch.common.util.BigArrays.NON_RECYCLING_INSTANCE;
@@ -99,14 +100,14 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         this.valueCount = valuesSupplier.get().getValueCount();
         this.acceptedGlobalOrdinals = acceptedOrds;
         if (remapGlobalOrds) {
-            this.collectionStrategy = new RemapGlobalOrds(cardinality, excludeDeletedDocs);
+            this.collectionStrategy = new RemapGlobalOrds(cardinality, () -> excludeDeletedDocs || forceExcludeDeletedDocs());
         } else {
             this.collectionStrategy = cardinality.map(estimate -> {
                 if (estimate > 1) {
                     // This is a 500 class error, because we should never be able to reach it.
                     throw new AggregationExecutionException("Dense ords don't know how to collect from many buckets");
                 }
-                return new DenseGlobalOrds(excludeDeletedDocs);
+                return new DenseGlobalOrds(() -> excludeDeletedDocs || forceExcludeDeletedDocs());
             });
         }
     }
@@ -454,9 +455,9 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
      */
     class DenseGlobalOrds extends CollectionStrategy {
 
-        private final boolean excludeDeletedDocs;
+        private final Supplier<Boolean> excludeDeletedDocs;
 
-        DenseGlobalOrds(boolean excludeDeletedDocs) {
+        DenseGlobalOrds(Supplier<Boolean> excludeDeletedDocs) {
             this.excludeDeletedDocs = excludeDeletedDocs;
         }
 
@@ -490,7 +491,7 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         @Override
         void forEach(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
             assert owningBucketOrd == 0;
-            if (excludeDeletedDocs) {
+            if (excludeDeletedDocs.get()) {
                 forEachExcludeDeletedDocs(consumer);
             } else {
                 forEachIgnoreDeletedDocs(consumer);
@@ -573,9 +574,9 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
      */
     private class RemapGlobalOrds extends CollectionStrategy {
         private final LongKeyedBucketOrds bucketOrds;
-        private final boolean excludeDeletedDocs;
+        private final Supplier<Boolean> excludeDeletedDocs;
 
-        private RemapGlobalOrds(CardinalityUpperBound cardinality, boolean excludeDeletedDocs) {
+        private RemapGlobalOrds(CardinalityUpperBound cardinality, Supplier<Boolean> excludeDeletedDocs) {
             bucketOrds = LongKeyedBucketOrds.buildForValueRange(bigArrays(), cardinality, 0, valueCount - 1);
             this.excludeDeletedDocs = excludeDeletedDocs;
         }
@@ -611,7 +612,7 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
 
         @Override
         void forEach(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
-            if (excludeDeletedDocs && bucketCountThresholds.getMinDocCount() == 0) {
+            if (excludeDeletedDocs.get() && bucketCountThresholds.getMinDocCount() == 0) {
                 forEachExcludeDeletedDocs(owningBucketOrd, consumer);
             } else {
                 forEachInner(owningBucketOrd, consumer);

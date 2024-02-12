@@ -24,6 +24,7 @@ abstract class AbstractStringTermsAggregator extends TermsAggregator {
 
     protected final boolean showTermDocCountError;
 
+
     AbstractStringTermsAggregator(
         String name,
         AggregatorFactories factories,
