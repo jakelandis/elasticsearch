@@ -46,6 +46,7 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         TermsAggregatorSupplier.class
     );
 
+    //TODO: add the exclude_delete_docs here
     public static final ParseField EXECUTION_HINT_FIELD_NAME = new ParseField("execution_hint");
     public static final ParseField SHARD_SIZE_FIELD_NAME = new ParseField("shard_size");
     public static final ParseField MIN_DOC_COUNT_FIELD_NAME = new ParseField("min_doc_count");

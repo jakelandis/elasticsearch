@@ -284,6 +284,8 @@ public final class NumericTermsAggregator extends TermsAggregator {
 
         abstract B buildEmptyBucket();
 
+        boolean EXCLUDE_DELETE_DOCS = true; // TODO: model this as part of the agg itself
+
         @Override
         final void collectZeroDocEntriesIfNeeded(long owningBucketOrd) throws IOException {
             if (bucketCountThresholds.getMinDocCount() != 0) {
@@ -292,10 +294,16 @@ public final class NumericTermsAggregator extends TermsAggregator {
             if (InternalOrder.isCountDesc(order) && bucketOrds.bucketsInOrd(owningBucketOrd) >= bucketCountThresholds.getRequiredSize()) {
                 return;
             }
+
             // we need to fill-in the blanks
             for (LeafReaderContext ctx : searcher().getTopReaderContext().leaves()) {
                 SortedNumericDocValues values = getValues(ctx);
                 for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
+                    if(EXCLUDE_DELETE_DOCS){
+                        if(ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false){ //deleted doc
+                            continue;
+                        }
+                    }
                     if (values.advanceExact(docId)) {
                         int valueCount = values.docValueCount();
                         for (int v = 0; v < valueCount; ++v) {

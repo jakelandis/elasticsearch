@@ -84,6 +84,8 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
      */
     static final long MAX_ORDS_TO_TRY_FILTERS = 1000;
 
+    static final boolean EXCLUDE_DELETE_DOCS = true; //TODO: put this in the context
+
     /**
      * This supplier is used for all the field types that should be aggregated as bytes/strings,
      * including those that need global ordinals
@@ -433,7 +435,8 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
                 if (maxOrd > 0
                     && maxOrd <= MAX_ORDS_TO_TRY_FILTERS
                     && context.enableRewriteToFilterByFilter()
-                    && false == context.isInSortOrderExecutionRequired()) {
+                    && false == context.isInSortOrderExecutionRequired()
+                    && false == EXCLUDE_DELETE_DOCS) {
                     StringTermsAggregatorFromFilters adapted = StringTermsAggregatorFromFilters.adaptIntoFiltersOrNull(
                         name,
                         factories,

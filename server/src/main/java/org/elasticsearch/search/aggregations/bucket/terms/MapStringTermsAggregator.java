@@ -386,7 +386,7 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
                 // brute force
                 for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
                     if(EXCLUDE_DELETE_DOCS){
-                        if(ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false){
+                        if(ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false){ //deleted doc
                             continue;
                         }
                     }
