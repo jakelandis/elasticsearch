@@ -35,6 +35,10 @@ public class SearchRequestInterceptor extends FieldAndDocumentLevelSecurityReque
     ) {
         final SearchRequest request = (SearchRequest) indicesRequest;
         if (indexAccessControlByIndex.values().stream().anyMatch(iac -> iac.getDocumentPermissions().hasDocumentLevelPermissions())) {
+            if (hasZeroMinDocTermsAggregation(request)) {
+                assert request.source() != null && request.source().aggregations() != null; //checked via support method
+                request.source().aggregations().forceTermsAggsToExcludedDeletedDocs();
+            }
             if (hasSuggest(request)) {
                 listener.onFailure(
                     new ElasticsearchSecurityException(
@@ -60,7 +64,7 @@ public class SearchRequestInterceptor extends FieldAndDocumentLevelSecurityReque
     @Override
     public boolean supports(IndicesRequest request) {
         if (request instanceof SearchRequest searchRequest) {
-            return hasSuggest(searchRequest) || hasProfile(searchRequest);
+            return hasSuggest(searchRequest) || hasProfile(searchRequest) || hasZeroMinDocTermsAggregation(searchRequest);
         } else {
             return false;
         }
@@ -72,6 +76,12 @@ public class SearchRequestInterceptor extends FieldAndDocumentLevelSecurityReque
 
     private static boolean hasProfile(SearchRequest searchRequest) {
         return searchRequest.source() != null && searchRequest.source().profile();
+    }
+
+    private static boolean hasZeroMinDocTermsAggregation(SearchRequest searchRequest) {
+        return searchRequest.source() != null
+            && searchRequest.source().aggregations() != null
+            && searchRequest.source().aggregations().hasZeroMinDocTermsAggregation();
     }
 
 }
