@@ -35,14 +35,6 @@ import java.util.Set;
 public abstract class TermsAggregator extends DeferableBucketAggregator {
 
     /**
-     * mutable boolean which can be set before the query is executed to force the exclude_deleted_docs=true regardless of the request
-     * this value should be honored for all the buckets and sub-aggregations where applicable
-     */
-    // TODO: does this need to be volatile?
-    // TODO: since this is not serialized, is this guaranteed to be correct if security's parent action optimization kicks in?
-    private boolean forceExcludeDeletedDocs = false;
-
-    /**
      * This class provides bucket thresholds configuration, but can be used ensure default value immutability
      */
     public record ConstantBucketCountThresholds(long minDocCount, long shardMinDocCount, int requiredSize, int shardSize) {}
@@ -262,14 +254,6 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
             parent = parent.parent();
         }
         return false;
-    }
-
-    public boolean forceExcludeDeletedDocs() {
-        return forceExcludeDeletedDocs;
-    }
-
-    public void setForceExcludeDeletedDocs(boolean forceExcludeDeletedDocs) {
-        this.forceExcludeDeletedDocs = forceExcludeDeletedDocs;
     }
 
     private boolean subAggsNeedScore() {

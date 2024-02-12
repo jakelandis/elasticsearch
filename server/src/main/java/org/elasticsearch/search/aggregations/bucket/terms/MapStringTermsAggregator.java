@@ -52,7 +52,7 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
     private final ResultStrategy<?, ?> resultStrategy;
     private final BytesKeyedBucketOrds bucketOrds;
     private final IncludeExclude.StringFilter includeExclude;
-    private final Supplier<Boolean> excludeDeletedDocs;
+    private final boolean excludeDeletedDocs;
 
     public MapStringTermsAggregator(
         String name,
@@ -77,7 +77,7 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
         bucketOrds = BytesKeyedBucketOrds.build(context.bigArrays(), cardinality);
         // set last because if there is an error during construction the collector gets release outside the constructor.
         this.collectorSource = collectorSource;
-        this.excludeDeletedDocs = () -> excludeDeletedDocs || forceExcludeDeletedDocs();
+        this.excludeDeletedDocs = excludeDeletedDocs;
     }
 
     @Override
@@ -358,9 +358,9 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
      */
     class StandardTermsResults extends ResultStrategy<StringTerms, StringTerms.Bucket> {
         private final ValuesSource valuesSource;
-        private final Supplier<Boolean> excludeDeletedDocs;
+        private final boolean excludeDeletedDocs;
 
-        StandardTermsResults(ValuesSource valuesSource, Supplier<Boolean> excludeDeletedDocs) {
+        StandardTermsResults(ValuesSource valuesSource, boolean excludeDeletedDocs) {
             this.valuesSource = valuesSource;
             this.excludeDeletedDocs = excludeDeletedDocs;
         }
@@ -388,7 +388,7 @@ public final class MapStringTermsAggregator extends AbstractStringTermsAggregato
                 SortedBinaryDocValues values = valuesSource.bytesValues(ctx);
                 // brute force
                 for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
-                    if (excludeDeletedDocs.get()) {
+                    if (excludeDeletedDocs) {
                         if (ctx.reader().getLiveDocs() != null && ctx.reader().getLiveDocs().get(docId) == false) { // deleted doc
                             continue;
                         }

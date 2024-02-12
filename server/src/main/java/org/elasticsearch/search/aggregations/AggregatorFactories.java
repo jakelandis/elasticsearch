@@ -313,7 +313,7 @@ public class AggregatorFactories {
                 if (builder instanceof GlobalAggregationBuilder) {
                     return true;
                 } else if (builder instanceof TermsAggregationBuilder) {
-                    //TODO: should this take exclude_delete_docs into account?
+                    // TODO: should this take exclude_delete_docs into account?
                     if (((TermsAggregationBuilder) builder).minDocCount() == 0) {
                         return true;
                     }
@@ -352,11 +352,11 @@ public class AggregatorFactories {
         /**
          * Return true if any of the builders is a terms aggregation
          */
-        //TODO: does this need to be recursive for nested aggs? ... or is it enough to check the top level?
+        // TODO: does this need to be recursive for nested aggs? ... or is it enough to check the top level?
         public boolean hasZeroMinDocTermsAggregation() {
             for (AggregationBuilder builder : aggregationBuilders) {
                 if (builder instanceof TermsAggregationBuilder termsBuilder) {
-                    if(termsBuilder.minDocCount() == 0) {
+                    if (termsBuilder.minDocCount() == 0) {
                         return true;
                     }
                 }
@@ -367,7 +367,7 @@ public class AggregatorFactories {
         /**
          * Force all terms aggregations to exclude deleted docs.
          */
-        //TODO: does this need to be recursive for nested aggs? ... or is it enough to check the top level?
+        // TODO: does this need to be recursive for nested aggs? ... or is it enough to check the top level?
         public void forceTermsAggsToExcludedDeletedDocs() {
             assert hasZeroMinDocTermsAggregation(); // this method should only be called if there is a zero min_doc_count terms agg
             for (AggregationBuilder builder : aggregationBuilders) {

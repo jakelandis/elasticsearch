@@ -36,7 +36,7 @@ public class SearchRequestInterceptor extends FieldAndDocumentLevelSecurityReque
         final SearchRequest request = (SearchRequest) indicesRequest;
         if (indexAccessControlByIndex.values().stream().anyMatch(iac -> iac.getDocumentPermissions().hasDocumentLevelPermissions())) {
             if (hasZeroMinDocTermsAggregation(request)) {
-                assert request.source() != null && request.source().aggregations() != null; //checked via support method
+                assert request.source() != null && request.source().aggregations() != null; // checked via support method
                 request.source().aggregations().forceTermsAggsToExcludedDeletedDocs();
             }
             if (hasSuggest(request)) {

@@ -194,16 +194,12 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
                 if (includeExclude != null) {
                     longFilter = includeExclude.convertToDoubleFilter();
                 }
-                resultStrategy = agg -> agg.new DoubleTermsResults(
-                    showTermDocCountError, () -> excludeDeletedDocs || agg.forceExcludeDeletedDocs()
-                );
+                resultStrategy = agg -> agg.new DoubleTermsResults(showTermDocCountError, excludeDeletedDocs);
             } else {
                 if (includeExclude != null) {
                     longFilter = includeExclude.convertToLongFilter(valuesSourceConfig.format());
                 }
-                resultStrategy = agg -> agg.new LongTermsResults(
-                    showTermDocCountError, () -> excludeDeletedDocs || agg.forceExcludeDeletedDocs()
-                );
+                resultStrategy = agg -> agg.new LongTermsResults(showTermDocCountError, excludeDeletedDocs);
             }
             return new NumericTermsAggregator(
                 name,
@@ -405,9 +401,7 @@ public class TermsAggregatorFactory extends ValuesSourceAggregatorFactory {
                     name,
                     factories,
                     new MapStringTermsAggregator.ValuesSourceCollectorSource(valuesSourceConfig),
-                    a -> a.new StandardTermsResults(
-                        valuesSourceConfig.getValuesSource(), () -> excludeDeletedDocs || a.forceExcludeDeletedDocs()
-                    ),
+                    a -> a.new StandardTermsResults(valuesSourceConfig.getValuesSource(), excludeDeletedDocs),
                     order,
                     valuesSourceConfig.format(),
                     bucketCountThresholds,
