@@ -752,58 +752,12 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
                 if (bucketCountThresholds.getMinDocCount() == 0) {
                     // if minDocCount == 0 then we can end up with more buckets then maxBucketOrd() returns
                     size = (int) Math.min(valueCount, bucketCountThresholds.getShardSize());
-
-                    // TODO: remove all of this
-                    for (LeafReaderContext ctx : searcher().getIndexReader().leaves()) {
-                        Bits liveDocs = ctx.reader().getLiveDocs();
-                        if (liveDocs == null) { // all documents are live - no need to check per doc
-                            System.out.println("************** all alive" + "[ " + ctx.reader().maxDoc() + " docs]");
-                            for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
-                                System.out.println(
-                                    "************** kept :  "
-                                        + ctx.reader().document(docId).getField("_source").storedValue().getBinaryValue().utf8ToString()
-                                );
-                            }
-                        } else if (liveDocs instanceof Bits.MatchNoBits) { // no documents are live - no need to check per doc
-                            System.out.println("************** all deleted" + "[ " + ctx.reader().maxDoc() + " docs]");
-                            for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
-                                System.out.println(
-                                    "************** deleted :  "
-                                        + ctx.reader().document(docId).getField("_source").storedValue().getBinaryValue().utf8ToString()
-                                );
-                            }
-                        } else { // some deleted docs, step through each
-                            System.out.println(
-                                "************** some deleted, some not, step through them " + "[ " + ctx.reader().maxDoc() + " docs]"
-                            );
-                            for (int docId = 0; docId < ctx.reader().maxDoc(); ++docId) {
-                                if (liveDocs.get(docId)) {
-                                    System.out.println(
-                                        "************** (perdoc)kept :  "
-                                            + ctx.reader().document(docId).getField("_source").storedValue().getBinaryValue().utf8ToString()
-                                    );
-
-                                } else {
-                                    System.out.println(
-                                        "************** (perdoc) deleted :  "
-                                            + ctx.reader().document(docId).getField("_source").storedValue().getBinaryValue().utf8ToString()
-                                    );
-                                }
-                            }
-                        }
-
-                    }
                 } else {
                     size = (int) Math.min(maxBucketOrd(), bucketCountThresholds.getShardSize());
                 }
                 PriorityQueue<TB> ordered = buildPriorityQueue(size);
                 final int finalOrdIdx = ordIdx;
                 BucketUpdater<TB> updater = bucketUpdater(owningBucketOrds[ordIdx], lookupGlobalOrd);
-
-                for (long globalOrd = 0; globalOrd < valueCount; globalOrd++) {
-                    BytesRef term = BytesRef.deepCopyOf(lookupGlobalOrd.apply(globalOrd));
-                    System.out.println("*** global ord -> " + term.utf8ToString() + " <- ***");
-                }
 
                 collectionStrategy.forEach(owningBucketOrds[ordIdx], new BucketInfoConsumer() {
                     TB spare = null;

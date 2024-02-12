@@ -38,8 +38,8 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
      * mutable boolean which can be set before the query is executed to force the exclude_deleted_docs=true regardless of the request
      * this value should be honored for all the buckets and sub-aggregations where applicable
      */
-    //TODO: does this need to be volatile?
-    //TODO: since this is not serialized, is this guaranteed to be correct if security's parent action optimization kicks in?
+    // TODO: does this need to be volatile?
+    // TODO: since this is not serialized, is this guaranteed to be correct if security's parent action optimization kicks in?
     private boolean forceExcludeDeletedDocs = false;
 
     /**
@@ -267,6 +267,7 @@ public abstract class TermsAggregator extends DeferableBucketAggregator {
     public boolean forceExcludeDeletedDocs() {
         return forceExcludeDeletedDocs;
     }
+
     public void setForceExcludeDeletedDocs(boolean forceExcludeDeletedDocs) {
         this.forceExcludeDeletedDocs = forceExcludeDeletedDocs;
     }
