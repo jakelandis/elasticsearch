@@ -309,12 +309,6 @@ public abstract class AggregationContext implements Releasable {
     public abstract Set<String> sourcePath(String fullName);
 
     /**
-     * return {@code true} if delete documents are required to be omitted from the response. This is only applicable for some aggregations
-     * where the min_doc_count = 0 and may result in lower performance.
-     */
-    public abstract boolean excludeDeletedDocs();
-
-    /**
      * Returns the MappingLookup for the index, if one is initialized.
      */
     @Nullable
@@ -366,7 +360,6 @@ public abstract class AggregationContext implements Releasable {
         private final Function<Query, Query> filterQuery;
         private final boolean enableRewriteToFilterByFilter;
         private final boolean inSortOrderExecutionRequired;
-        private final boolean excludeDeletedDocs;
         private final AnalysisRegistry analysisRegistry;
 
         private final List<Aggregator> releaseMe = new ArrayList<>();
@@ -387,8 +380,7 @@ public abstract class AggregationContext implements Releasable {
             Supplier<Boolean> isCancelled,
             Function<Query, Query> filterQuery,
             boolean enableRewriteToFilterByFilter,
-            boolean inSortOrderExecutionRequired,
-            boolean excludeDeleteDocs
+            boolean inSortOrderExecutionRequired
         ) {
             this.analysisRegistry = analysisRegistry;
             this.context = context;
@@ -423,7 +415,6 @@ public abstract class AggregationContext implements Releasable {
             this.filterQuery = filterQuery;
             this.enableRewriteToFilterByFilter = enableRewriteToFilterByFilter;
             this.inSortOrderExecutionRequired = inSortOrderExecutionRequired;
-            this.excludeDeletedDocs = excludeDeleteDocs;
         }
 
         @Override
@@ -632,11 +623,6 @@ public abstract class AggregationContext implements Releasable {
         @Override
         public MappingLookup getMappingLookup() {
             return context.getMappingLookup();
-        }
-
-        @Override
-        public boolean excludeDeletedDocs() {
-            return excludeDeletedDocs;
         }
 
         @Override

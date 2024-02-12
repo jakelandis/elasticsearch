@@ -89,7 +89,8 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         SubAggCollectionMode collectionMode,
         boolean showTermDocCountError,
         CardinalityUpperBound cardinality,
-        Map<String, Object> metadata
+        Map<String, Object> metadata,
+        boolean excludeDeletedDocs
     ) throws IOException {
         super(name, factories, context, parent, order, format, bucketCountThresholds, collectionMode, showTermDocCountError, metadata);
         this.resultStrategy = resultStrategy.apply(this); // ResultStrategy needs a reference to the Aggregator to do its job.
@@ -98,14 +99,14 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
         this.valueCount = valuesSupplier.get().getValueCount();
         this.acceptedGlobalOrdinals = acceptedOrds;
         if (remapGlobalOrds) {
-            this.collectionStrategy = new RemapGlobalOrds(cardinality, context.excludeDeletedDocs());
+            this.collectionStrategy = new RemapGlobalOrds(cardinality, excludeDeletedDocs);
         } else {
             this.collectionStrategy = cardinality.map(estimate -> {
                 if (estimate > 1) {
                     // This is a 500 class error, because we should never be able to reach it.
                     throw new AggregationExecutionException("Dense ords don't know how to collect from many buckets");
                 }
-                return new DenseGlobalOrds(context.excludeDeletedDocs());
+                return new DenseGlobalOrds(excludeDeletedDocs);
             });
         }
     }
@@ -282,7 +283,8 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             boolean remapGlobalOrds,
             SubAggCollectionMode collectionMode,
             boolean showTermDocCountError,
-            Map<String, Object> metadata
+            Map<String, Object> metadata,
+            boolean excludeDeletedDocs
         ) throws IOException {
             super(
                 name,
@@ -300,7 +302,8 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
                 collectionMode,
                 showTermDocCountError,
                 CardinalityUpperBound.ONE,
-                metadata
+                metadata,
+                excludeDeletedDocs
             );
             assert factories == null || factories.countAggregators() == 0;
             this.segmentDocCounts = context.bigArrays().newLongArray(1, true);
@@ -484,7 +487,6 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
             return globalOrd;
         }
 
-
         @Override
         void forEach(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
             assert owningBucketOrd == 0;
@@ -658,7 +660,7 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
          */
         void forEachExcludeDeletedDocs(long owningBucketOrd, BucketInfoConsumer consumer) throws IOException {
 
-            //TODO: double check this logic
+            // TODO: double check this logic
             assert bucketCountThresholds.getMinDocCount() == 0;
             LongHash accepted = null;
             boolean acceptedAllGlobalOrdinals = false;
@@ -801,7 +803,6 @@ public class GlobalOrdinalsStringTermsAggregator extends AbstractStringTermsAggr
                     BytesRef term = BytesRef.deepCopyOf(lookupGlobalOrd.apply(globalOrd));
                     System.out.println("*** global ord -> " + term.utf8ToString() + " <- ***");
                 }
-
 
                 collectionStrategy.forEach(owningBucketOrds[ordIdx], new BucketInfoConsumer() {
                     TB spare = null;

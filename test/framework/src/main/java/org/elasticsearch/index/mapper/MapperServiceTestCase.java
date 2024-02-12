@@ -568,11 +568,6 @@ public abstract class MapperServiceTestCase extends ESTestCase {
             }
 
             @Override
-            public boolean excludeDeletedDocs() {
-                return false;
-            }
-
-            @Override
             public void close() {
                 throw new UnsupportedOperationException();
             }

@@ -194,7 +194,7 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         includeExclude = in.readOptionalWriteable(IncludeExclude::new);
         order = InternalOrder.Streams.readOrder(in);
         showTermDocCountError = in.readBoolean();
-        //TODO: protect with transport version
+        // TODO: protect with transport version
         excludeDeletedDocs = in.readBoolean();
     }
 
@@ -211,7 +211,7 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         out.writeOptionalWriteable(includeExclude);
         order.writeTo(out);
         out.writeBoolean(showTermDocCountError);
-        //TODO: protect with transport version
+        // TODO: protect with transport version
         out.writeBoolean(excludeDeletedDocs);
     }
 
@@ -409,7 +409,6 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         return excludeDeletedDocs;
     }
 
-
     @Override
     public BucketCardinality bucketCardinality() {
         return BucketCardinality.MANY;
@@ -436,7 +435,8 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
             parent,
             subFactoriesBuilder,
             metadata,
-            aggregatorSupplier
+            aggregatorSupplier,
+            excludeDeletedDocs
         );
     }
 

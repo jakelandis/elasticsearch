@@ -34,7 +34,6 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
     private boolean excludeDeletedDocuments;
     public static final ParseField EXCLUDE_DELETED_DOCS = new ParseField("exclude_deleted_docs");
 
-
     public static final ValuesSourceRegistry.RegistryKey<MetricAggregatorSupplier> REGISTRY_KEY = new ValuesSourceRegistry.RegistryKey<>(
         NAME,
         MetricAggregatorSupplier.class
@@ -48,7 +47,6 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
         ValuesSourceAggregationBuilder.declareFields(PARSER, true, true, false);
         PARSER.declareBoolean(ValueCountAggregationBuilder::excludeDeletedDocs, EXCLUDE_DELETED_DOCS);
     }
-
 
     public static void registerAggregators(ValuesSourceRegistry.Builder builder) {
         ValueCountAggregatorFactory.registerAggregators(builder);
@@ -93,15 +91,15 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
      * Read from a stream.
      */
     public ValueCountAggregationBuilder(StreamInput in) throws IOException {
-     // read and ignore the flag that indicates if the field is a script or not
+        // read and ignore the flag that indicates if the field is a script or not
         super(in);
-        //TODO: protect with transport version
+        // TODO: protect with transport version
         in.readBoolean();
     }
 
     @Override
     protected void innerWriteTo(StreamOutput out) throws IOException {
-        //TODO: protect with transport version
+        // TODO: protect with transport version
         out.writeBoolean(excludeDeletedDocuments);
     }
 
@@ -123,7 +121,7 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
 
     @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
-        //TODO: double check this is right
+        // TODO: double check this is right
         builder.field(EXCLUDE_DELETED_DOCS.getPreferredName(), excludeDeletedDocuments);
         return builder;
     }
