@@ -22,6 +22,7 @@ import org.elasticsearch.search.aggregations.support.ValuesSourceConfig;
 import org.elasticsearch.search.aggregations.support.ValuesSourceRegistry;
 import org.elasticsearch.search.aggregations.support.ValuesSourceType;
 import org.elasticsearch.xcontent.ObjectParser;
+import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.xcontent.XContentBuilder;
 
 import java.io.IOException;
@@ -30,6 +31,10 @@ import java.util.Map;
 public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder.SingleMetricAggregationBuilder<
     ValueCountAggregationBuilder> {
     public static final String NAME = "value_count";
+    private boolean excludeDeletedDocuments;
+    public static final ParseField EXCLUDE_DELETED_DOCS = new ParseField("exclude_deleted_docs");
+
+
     public static final ValuesSourceRegistry.RegistryKey<MetricAggregatorSupplier> REGISTRY_KEY = new ValuesSourceRegistry.RegistryKey<>(
         NAME,
         MetricAggregatorSupplier.class
@@ -41,7 +46,9 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
     );
     static {
         ValuesSourceAggregationBuilder.declareFields(PARSER, true, true, false);
+        PARSER.declareBoolean(ValueCountAggregationBuilder::excludeDeletedDocs, EXCLUDE_DELETED_DOCS);
     }
+
 
     public static void registerAggregators(ValuesSourceRegistry.Builder builder) {
         ValueCountAggregatorFactory.registerAggregators(builder);
@@ -74,16 +81,28 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
         return true;
     }
 
+    private void excludeDeletedDocs(Boolean excludeDeletedDocuments) {
+        this.excludeDeletedDocuments = excludeDeletedDocuments;
+    }
+
+    private Boolean excludeDeletedDocs() {
+        return excludeDeletedDocuments;
+    }
+
     /**
      * Read from a stream.
      */
     public ValueCountAggregationBuilder(StreamInput in) throws IOException {
+     // read and ignore the flag that indicates if the field is a script or not
         super(in);
+        //TODO: protect with transport version
+        in.readBoolean();
     }
 
     @Override
-    protected void innerWriteTo(StreamOutput out) {
-        // Do nothing, no extra state to write to stream
+    protected void innerWriteTo(StreamOutput out) throws IOException {
+        //TODO: protect with transport version
+        out.writeBoolean(excludeDeletedDocuments);
     }
 
     @Override
@@ -104,6 +123,8 @@ public class ValueCountAggregationBuilder extends ValuesSourceAggregationBuilder
 
     @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
+        //TODO: double check this is right
+        builder.field(EXCLUDE_DELETED_DOCS.getPreferredName(), excludeDeletedDocuments);
         return builder;
     }
 

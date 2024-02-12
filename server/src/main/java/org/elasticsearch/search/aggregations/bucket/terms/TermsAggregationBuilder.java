@@ -46,12 +46,12 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         TermsAggregatorSupplier.class
     );
 
-    //TODO: add the exclude_delete_docs here
     public static final ParseField EXECUTION_HINT_FIELD_NAME = new ParseField("execution_hint");
     public static final ParseField SHARD_SIZE_FIELD_NAME = new ParseField("shard_size");
     public static final ParseField MIN_DOC_COUNT_FIELD_NAME = new ParseField("min_doc_count");
     public static final ParseField SHARD_MIN_DOC_COUNT_FIELD_NAME = new ParseField("shard_min_doc_count");
     public static final ParseField REQUIRED_SIZE_FIELD_NAME = new ParseField("size");
+    public static final ParseField EXCLUDE_DELETED_DOCS = new ParseField("exclude_deleted_docs");
 
     static final TermsAggregator.ConstantBucketCountThresholds DEFAULT_BUCKET_COUNT_THRESHOLDS =
         new TermsAggregator.ConstantBucketCountThresholds(1, 0, 10, -1);
@@ -100,6 +100,8 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
             IncludeExclude.EXCLUDE_FIELD,
             ObjectParser.ValueType.STRING_ARRAY
         );
+
+        PARSER.declareBoolean(TermsAggregationBuilder::excludeDeletedDocs, EXCLUDE_DELETED_DOCS);
     }
 
     public static void registerAggregators(ValuesSourceRegistry.Builder builder) {
@@ -111,8 +113,8 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
     private String executionHint = null;
     private SubAggCollectionMode collectMode = null;
     private final TermsAggregator.BucketCountThresholds bucketCountThresholds;
-
     private boolean showTermDocCountError = false;
+    private boolean excludeDeletedDocs = false;
 
     public TermsAggregationBuilder(String name) {
         super(name);
@@ -131,6 +133,7 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         this.collectMode = clone.collectMode;
         this.bucketCountThresholds = new BucketCountThresholds(clone.bucketCountThresholds);
         this.showTermDocCountError = clone.showTermDocCountError;
+        this.excludeDeletedDocs = clone.excludeDeletedDocs;
     }
 
     @Override
@@ -191,6 +194,8 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         includeExclude = in.readOptionalWriteable(IncludeExclude::new);
         order = InternalOrder.Streams.readOrder(in);
         showTermDocCountError = in.readBoolean();
+        //TODO: protect with transport version
+        excludeDeletedDocs = in.readBoolean();
     }
 
     @Override
@@ -206,6 +211,8 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         out.writeOptionalWriteable(includeExclude);
         order.writeTo(out);
         out.writeBoolean(showTermDocCountError);
+        //TODO: protect with transport version
+        out.writeBoolean(excludeDeletedDocs);
     }
 
     /**
@@ -387,6 +394,22 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         return this;
     }
 
+    /**
+     * Set whether deleted documents should be excluded from the aggregation results
+     */
+    public TermsAggregationBuilder excludeDeletedDocs(boolean excludeDeletedDocs) {
+        this.excludeDeletedDocs = excludeDeletedDocs;
+        return this;
+    }
+
+    /**
+     * Get whether deleted documents should be excluded from the aggregation results
+     */
+    public boolean excludeDeletedDocs() {
+        return excludeDeletedDocs;
+    }
+
+
     @Override
     public BucketCardinality bucketCardinality() {
         return BucketCardinality.MANY;
@@ -432,6 +455,9 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         if (includeExclude != null) {
             includeExclude.toXContent(builder, params);
         }
+        if (excludeDeletedDocs) {
+            builder.field(EXCLUDE_DELETED_DOCS.getPreferredName(), excludeDeletedDocs);
+        }
         return builder;
     }
 
@@ -444,7 +470,8 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
             executionHint,
             includeExclude,
             order,
-            showTermDocCountError
+            showTermDocCountError,
+            excludeDeletedDocs
         );
     }
 
@@ -459,7 +486,8 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
             && Objects.equals(executionHint, other.executionHint)
             && Objects.equals(includeExclude, other.includeExclude)
             && Objects.equals(order, other.order)
-            && Objects.equals(showTermDocCountError, other.showTermDocCountError);
+            && Objects.equals(showTermDocCountError, other.showTermDocCountError)
+            && Objects.equals(excludeDeletedDocs, other.excludeDeletedDocs);
     }
 
     @Override
