@@ -362,7 +362,8 @@ public class Node implements Closeable {
             logger.info("JVM arguments {}", Arrays.toString(jvmInfo.getInputArguments()));
             if (Build.CURRENT.isProductionRelease() == false) {
                 logger.warn(
-                    "version [{}] is a pre-release version of Elasticsearch and is not suitable for production",
+                    //tODO: remove the ***
+                    "version [{}] is a pre-release version of Elasticsearch and is not suitable for production *** TEST BUILD ***",
                     Build.CURRENT.getQualifiedVersion()
                 );
             }
