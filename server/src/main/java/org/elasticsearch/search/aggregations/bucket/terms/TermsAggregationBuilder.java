@@ -7,6 +7,8 @@
  */
 package org.elasticsearch.search.aggregations.bucket.terms;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -146,6 +148,9 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         return new TermsAggregationBuilder(this, factoriesBuilder, metadata);
     }
 
+    //TODO: remove this
+    private static final Logger logger = LogManager.getLogger(TermsAggregationBuilder.class);
+
     /**
      * Read from a stream.
      */
@@ -157,7 +162,9 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         includeExclude = in.readOptionalWriteable(IncludeExclude::new);
         order = InternalOrder.Streams.readOrder(in);
         showTermDocCountError = in.readBoolean();
+        logger.error("[7x] Stream in version: ", in.getVersion());
         if (in.getVersion().onOrAfter(V_7_17_22) && in.getVersion().before(V_8_0_0)) {
+            logger.error("********* Reading from: ", in.getVersion());
             excludeDeletedDocs = in.readBoolean();
         }
     }
@@ -175,7 +182,9 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         out.writeOptionalWriteable(includeExclude);
         order.writeTo(out);
         out.writeBoolean(showTermDocCountError);
+        logger.error("[7x] Stream out version: ", out.getVersion());
         if (out.getVersion().onOrAfter(V_7_17_22) && out.getVersion().before(V_8_0_0)) {
+            logger.error("********* Writing to: ", out.getVersion());
             out.writeBoolean(excludeDeletedDocs);
         }
     }
