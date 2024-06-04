@@ -107,6 +107,7 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         TermsAggregatorFactory.registerAggregators(builder);
     }
 
+    private static final Version V_8_0_0 = Version.fromId(8_00_00_99);
     private BucketOrder order = BucketOrder.compound(BucketOrder.count(false)); // automatically adds tie-breaker key asc order
     private IncludeExclude includeExclude = null;
     private String executionHint = null;
@@ -156,7 +157,7 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         includeExclude = in.readOptionalWriteable(IncludeExclude::new);
         order = InternalOrder.Streams.readOrder(in);
         showTermDocCountError = in.readBoolean();
-        if (in.getVersion().onOrAfter(V_7_17_22)) {
+        if (in.getVersion().onOrAfter(V_7_17_22) && in.getVersion().before(V_8_0_0)) {
             excludeDeletedDocs = in.readBoolean();
         }
     }
@@ -174,7 +175,7 @@ public class TermsAggregationBuilder extends ValuesSourceAggregationBuilder<Term
         out.writeOptionalWriteable(includeExclude);
         order.writeTo(out);
         out.writeBoolean(showTermDocCountError);
-        if (out.getVersion().onOrAfter(V_7_17_22)) {
+        if (out.getVersion().onOrAfter(V_7_17_22) && out.getVersion().before(V_8_0_0)) {
             out.writeBoolean(excludeDeletedDocs);
         }
     }
