@@ -37,6 +37,7 @@ import org.elasticsearch.xpack.core.XPackClientPlugin;
 import org.elasticsearch.xpack.core.XPackPlugin;
 import org.elasticsearch.xpack.core.security.action.apikey.CrossClusterApiKeyRoleDescriptorBuilder;
 import org.elasticsearch.xpack.core.security.authz.privilege.IndexPrivilege;
+import org.elasticsearch.xpack.deprecation.Deprecation;
 import org.elasticsearch.xpack.downsample.Downsample;
 import org.elasticsearch.xpack.downsample.DownsampleShardPersistentTaskExecutor;
 import org.elasticsearch.xpack.eql.plugin.EqlPlugin;
@@ -45,6 +46,7 @@ import org.elasticsearch.xpack.frozen.FrozenIndices;
 import org.elasticsearch.xpack.graph.Graph;
 import org.elasticsearch.xpack.ilm.IndexLifecycle;
 import org.elasticsearch.xpack.inference.InferencePlugin;
+import org.elasticsearch.xpack.lucene.bwc.OldLuceneVersions;
 import org.elasticsearch.xpack.profiling.ProfilingPlugin;
 import org.elasticsearch.xpack.rollup.Rollup;
 import org.elasticsearch.xpack.search.AsyncSearch;
@@ -62,6 +64,7 @@ import java.util.Collection;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -87,9 +90,11 @@ public class CrossClusterShardTests extends ESSingleNodeTestCase {
 
     private static final Set<Class<?>> ignoredPlugins = Set.of(
 //        RestServerActionPlugin.class,
-        PainlessPlugin.class //has extendtino that causes issues,
-//        XPackPlugin.class, //using xpacklocal plugin instead
-//        XPackClientPlugin.class
+        PainlessPlugin.class, //has extendtino that causes issues,
+        XPackPlugin.class, //using xpacklocal plugin instead
+        XPackClientPlugin.class,
+        OldLuceneVersions.class, //not relevant
+        Deprecation.class
         );
 
     @Override
@@ -120,8 +125,11 @@ public class CrossClusterShardTests extends ESSingleNodeTestCase {
 
                 if(hasDefaultConstructor) {
 
-                    if(plugin.getCanonicalName().contains("xpack")){
-                        System.out.println("** ignoring (handled by xpack local): " + plugin);
+                    System.out.println("** candidate: " + plugin);
+                    //this maynot be working
+                    //class org.elasticsearch.xpack.core.XPackPluginTests$4
+                    if(plugin.getCanonicalName().toLowerCase(Locale.ROOT).contains("test")){
+                        System.out.println("** ignoring (test): " + plugin);
                     }else {
 
                         System.out.println("** adding: " + plugin);

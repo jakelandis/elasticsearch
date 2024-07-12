@@ -250,7 +250,10 @@ public class PluginsService implements ReportingService<PluginsAndModules> {
      * @param <T> The generic type of the collection
      */
     public final <T> Stream<T> flatMap(Function<Plugin, Collection<T>> function) {
-        return plugins().stream().map(LoadedPlugin::instance).flatMap(p -> function.apply(p).stream());
+        return plugins().stream().map(LoadedPlugin::instance).flatMap(p -> {
+            //System.out.println("********  " + p.getClass().getName());
+            return function.apply(p).stream();
+        });
     }
 
     /**
