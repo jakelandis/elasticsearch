@@ -18,7 +18,8 @@ import java.security.PrivilegedAction;
 
 /**
  * This class wraps the operations requiring access in {@link AccessController#doPrivileged(PrivilegedAction)} blocks.
- * Can't do these operations inline with giving too much access due to how the security manager calculates the stack for lambda expressions.
+ * Can't do these operations inline without giving too much access due to how the security manager
+ * calculates the stack for lambda expressions.
  * Isolating the calls here allows for least privilege access to this helper jar.
  */
 public class JoseWrapper {
