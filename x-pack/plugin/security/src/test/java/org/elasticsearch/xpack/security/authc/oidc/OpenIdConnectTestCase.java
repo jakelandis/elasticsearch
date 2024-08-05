@@ -9,13 +9,15 @@ package org.elasticsearch.xpack.security.authc.oidc;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.shaded.json.JSONStyle;
-import com.nimbusds.jose.shaded.json.JSONValue;
-import com.nimbusds.jose.shaded.json.reader.JsonWriterI;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.Nonce;
+
+import net.minidev.json.JSONStyle;
+import net.minidev.json.JSONValue;
+
+import net.minidev.json.reader.JsonWriterI;
 
 import org.elasticsearch.common.settings.MockSecureSettings;
 import org.elasticsearch.common.settings.Settings;
