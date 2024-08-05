@@ -68,3 +68,13 @@ grant codeBase "${codebase.nimbus-jose-jwt}" {
     permission java.lang.RuntimePermission "accessDeclaredMembers";
     permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
 };
+
+
+grant codeBase "file:/Users/jakelandis/workspace/elasticsearch/main/distribution/archives/darwin-aarch64-tar/build/install/elasticsearch-8.16.0-SNAPSHOT/modules/x-pack-security/elasticsearch-jose-wrapper-8.16.0-SNAPSHOT.jar" {
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.reflect.ReflectPermission "suppress
+};
+grant codeBase "file:/Users/jakelandis/workspace/elasticsearch/main/distribution/archives/darwin-aarch64-tar/build/install/elasticsearch-8.16.0-SNAPSHOT/modules/x-pack-security/x-pack-security-8.16.0-SNAPSHOT.jar" {
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+};

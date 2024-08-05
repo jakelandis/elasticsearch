@@ -1,0 +1,9 @@
+apply plugin: 'elasticsearch.build'
+
+base {
+  archivesName = 'elasticsearch-jose-wrapper'
+}
+
+dependencies {
+  api "com.nimbusds:nimbus-jose-jwt:9.37.3"
+}

@@ -16,6 +16,8 @@ base {
 }
 
 dependencies {
+
+  api project(xpackModule('security:lib:jose-wrapper'))
   compileOnly project(path: xpackModule('core'))
   api project(path: ':modules:transport-netty4')
 
