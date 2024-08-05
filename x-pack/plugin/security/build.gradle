@@ -81,6 +81,7 @@ dependencies {
   // Dependencies for oidc
   api "com.nimbusds:oauth2-oidc-sdk:11.10.1"
   api "com.nimbusds:nimbus-jose-jwt:9.37.3"
+  api project(xpackModule('security:lib:jose-wrapper'))
   api "com.nimbusds:lang-tag:1.4.4"
   api "com.sun.mail:jakarta.mail:1.6.3"
   api "net.jcip:jcip-annotations:1.0"
