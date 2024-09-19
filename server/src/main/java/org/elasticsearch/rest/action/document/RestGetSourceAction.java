@@ -17,7 +17,6 @@ import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.xcontent.XContentHelper;
-import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestRequest;
@@ -43,13 +42,9 @@ import static org.elasticsearch.rest.RestStatus.OK;
 public class RestGetSourceAction extends BaseRestHandler {
     private final DeprecationLogger deprecationLogger = DeprecationLogger.getLogger(RestGetSourceAction.class);
 
-
     @Override
     public List<Route> routes() {
-        return List.of(
-            new Route(GET, "/{index}/_source/{id}"),
-            new Route(HEAD, "/{index}/_source/{id}")
-        );
+        return List.of(new Route(GET, "/{index}/_source/{id}"), new Route(HEAD, "/{index}/_source/{id}"));
     }
 
     @Override

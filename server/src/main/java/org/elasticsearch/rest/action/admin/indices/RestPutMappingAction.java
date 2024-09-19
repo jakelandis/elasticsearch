@@ -60,7 +60,6 @@ public class RestPutMappingAction extends BaseRestHandler {
         }
         putMappingRequest.source(sourceAsMap);
 
-
         putMappingRequest.ackTimeout(getAckTimeout(request));
         putMappingRequest.masterNodeTimeout(getMasterNodeTimeout(request));
         putMappingRequest.indicesOptions(IndicesOptions.fromRequest(request, putMappingRequest.indicesOptions()));
