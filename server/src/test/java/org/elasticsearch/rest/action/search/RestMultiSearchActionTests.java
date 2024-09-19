@@ -38,18 +38,6 @@ public final class RestMultiSearchActionTests extends RestActionTestCase {
         verifyingClient.setExecuteLocallyVerifier((actionType, request) -> mock(MultiSearchResponse.class));
     }
 
-    public void testTypeInPath() {
-        String content = "{ \"index\": \"some_index\" } \n {} \n";
-        BytesArray bytesContent = new BytesArray(content.getBytes(StandardCharsets.UTF_8));
-
-        RestRequest request = new FakeRestRequest.Builder(xContentRegistry()).withHeaders(
-            Map.of("Content-Type", contentTypeHeader, "Accept", contentTypeHeader)
-        ).withMethod(RestRequest.Method.GET).withPath("/some_index/some_type/_msearch").withContent(bytesContent, null).build();
-
-        dispatchRequest(request);
-        assertCriticalWarnings(RestMultiSearchAction.TYPES_DEPRECATION_MESSAGE);
-    }
-
     public void testTypeInBody() {
         String content = "{ \"index\": \"some_index\", \"type\": \"some_type\" } \n {} \n";
         BytesArray bytesContent = new BytesArray(content.getBytes(StandardCharsets.UTF_8));

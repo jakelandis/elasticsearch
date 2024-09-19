@@ -74,9 +74,7 @@ public class RestBulkAction extends BaseRestHandler {
             new Route(POST, "/_bulk"),
             new Route(PUT, "/_bulk"),
             new Route(POST, "/{index}/_bulk"),
-            new Route(PUT, "/{index}/_bulk"),
-            Route.builder(POST, "/{index}/{type}/_bulk").deprecated(TYPES_DEPRECATION_MESSAGE, RestApiVersion.V_7).build(),
-            Route.builder(PUT, "/{index}/{type}/_bulk").deprecated(TYPES_DEPRECATION_MESSAGE, RestApiVersion.V_7).build()
+            new Route(PUT, "/{index}/_bulk")
         );
     }
 
@@ -88,9 +86,6 @@ public class RestBulkAction extends BaseRestHandler {
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
         if (request.isStreamedContent() == false) {
-            if (request.getRestApiVersion() == RestApiVersion.V_7 && request.hasParam("type")) {
-                request.param("type");
-            }
             BulkRequest bulkRequest = new BulkRequest();
             String defaultIndex = request.param("index");
             String defaultRouting = request.param("routing");
@@ -121,10 +116,6 @@ public class RestBulkAction extends BaseRestHandler {
 
             return channel -> client.bulk(bulkRequest, new RestRefCountedChunkedToXContentListener<>(channel));
         } else {
-            if (request.getRestApiVersion() == RestApiVersion.V_7 && request.hasParam("type")) {
-                request.param("type");
-            }
-
             String waitForActiveShards = request.param("wait_for_active_shards");
             TimeValue timeout = request.paramAsTime("timeout", BulkShardRequest.DEFAULT_TIMEOUT);
             String refresh = request.param("refresh");

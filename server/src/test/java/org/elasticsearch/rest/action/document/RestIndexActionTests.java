@@ -85,34 +85,4 @@ public final class RestIndexActionTests extends RestActionTestCase {
         dispatchRequest(autoIdRequest);
         assertThat(executeCalled.get(), equalTo(true));
     }
-
-    public void testTypeInPath() {
-        // using CompatibleRestIndexAction
-        RestRequest deprecatedRequest = new FakeRestRequest.Builder(xContentRegistry()).withMethod(RestRequest.Method.PUT)
-            .withHeaders(Map.of("Content-Type", contentTypeHeader, "Accept", contentTypeHeader))
-            .withPath("/some_index/some_type/some_id")
-            .build();
-        dispatchRequest(deprecatedRequest);
-        assertCriticalWarnings(RestIndexAction.TYPES_DEPRECATION_MESSAGE);
-    }
-
-    public void testCreateWithTypeInPath() {
-        // using CompatibleCreateHandler
-        RestRequest deprecatedRequest = new FakeRestRequest.Builder(xContentRegistry()).withMethod(RestRequest.Method.PUT)
-            .withHeaders(Map.of("Content-Type", contentTypeHeader, "Accept", contentTypeHeader))
-            .withPath("/some_index/some_type/some_id/_create")
-            .build();
-        dispatchRequest(deprecatedRequest);
-        assertCriticalWarnings(RestIndexAction.TYPES_DEPRECATION_MESSAGE);
-    }
-
-    public void testAutoIdWithType() {
-        // using CompatibleAutoIdHandler
-        RestRequest deprecatedRequest = new FakeRestRequest.Builder(xContentRegistry()).withMethod(RestRequest.Method.POST)
-            .withHeaders(Map.of("Content-Type", contentTypeHeader, "Accept", contentTypeHeader))
-            .withPath("/some_index/some_type/")
-            .build();
-        dispatchRequest(deprecatedRequest);
-        assertCriticalWarnings(RestIndexAction.TYPES_DEPRECATION_MESSAGE);
-    }
 }

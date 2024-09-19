@@ -40,12 +40,7 @@ public class RestDeleteByQueryAction extends AbstractBulkByQueryRestHandler<Dele
 
     @Override
     public List<Route> routes() {
-        return List.of(
-            new Route(POST, "/{index}/_delete_by_query"),
-            Route.builder(POST, "/{index}/{type}/_delete_by_query")
-                .deprecated(RestSearchAction.TYPES_DEPRECATION_MESSAGE, RestApiVersion.V_7)
-                .build()
-        );
+        return List.of(new Route(POST, "/{index}/_delete_by_query"));
 
     }
 

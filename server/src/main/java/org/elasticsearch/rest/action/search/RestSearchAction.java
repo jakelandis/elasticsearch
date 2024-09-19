@@ -59,7 +59,6 @@ import static org.elasticsearch.search.suggest.SuggestBuilders.termSuggestion;
 @ServerlessScope(Scope.PUBLIC)
 public class RestSearchAction extends BaseRestHandler {
     private static final DeprecationLogger deprecationLogger = DeprecationLogger.getLogger(RestSearchAction.class);
-    public static final String TYPES_DEPRECATION_MESSAGE = "[types removal] Specifying types in search requests is deprecated.";
 
     /**
      * Indicates whether hits.total should be rendered as an integer or an object
@@ -89,9 +88,7 @@ public class RestSearchAction extends BaseRestHandler {
             new Route(GET, "/_search"),
             new Route(POST, "/_search"),
             new Route(GET, "/{index}/_search"),
-            new Route(POST, "/{index}/_search"),
-            Route.builder(GET, "/{index}/{type}/_search").deprecated(TYPES_DEPRECATION_MESSAGE, RestApiVersion.V_7).build(),
-            Route.builder(POST, "/{index}/{type}/_search").deprecated(TYPES_DEPRECATION_MESSAGE, RestApiVersion.V_7).build()
+            new Route(POST, "/{index}/_search")
         );
     }
 
@@ -166,11 +163,6 @@ public class RestSearchAction extends BaseRestHandler {
         IntConsumer setSize,
         @Nullable SearchUsageHolder searchUsageHolder
     ) throws IOException {
-        if (request.getRestApiVersion() == RestApiVersion.V_7 && request.hasParam("type")) {
-            request.param("type");
-            deprecationLogger.compatibleCritical("search_with_types", TYPES_DEPRECATION_MESSAGE);
-        }
-
         if (searchRequest.source() == null) {
             searchRequest.source(new SearchSourceBuilder());
         }

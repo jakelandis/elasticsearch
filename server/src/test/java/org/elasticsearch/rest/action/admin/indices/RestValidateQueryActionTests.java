@@ -160,33 +160,6 @@ public class RestValidateQueryActionTests extends AbstractSearchTestCase {
             .build();
     }
 
-    public void testTypeInPath() {
-        List<String> compatibleMediaType = Collections.singletonList(randomCompatibleMediaType(RestApiVersion.V_7));
-
-        RestRequest request = new FakeRestRequest.Builder(xContentRegistry()).withHeaders(Map.of("Accept", compatibleMediaType))
-            .withMethod(RestRequest.Method.GET)
-            .withPath("/some_index/some_type/_validate/query")
-            .build();
-
-        performRequest(request);
-        assertCriticalWarnings(RestValidateQueryAction.TYPES_DEPRECATION_MESSAGE);
-    }
-
-    public void testTypeParameter() {
-        List<String> compatibleMediaType = Collections.singletonList(randomCompatibleMediaType(RestApiVersion.V_7));
-
-        Map<String, String> params = new HashMap<>();
-        params.put("type", "some_type");
-        RestRequest request = new FakeRestRequest.Builder(xContentRegistry()).withHeaders(Map.of("Accept", compatibleMediaType))
-            .withMethod(RestRequest.Method.GET)
-            .withPath("_validate/query")
-            .withParams(params)
-            .build();
-
-        performRequest(request);
-        assertCriticalWarnings(RestValidateQueryAction.TYPES_DEPRECATION_MESSAGE);
-    }
-
     private void performRequest(RestRequest request) {
         RestChannel channel = new FakeRestChannel(request, false, 1);
         ThreadContext threadContext = new ThreadContext(Settings.EMPTY);

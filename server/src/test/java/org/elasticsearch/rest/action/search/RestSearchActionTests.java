@@ -43,27 +43,6 @@ public final class RestSearchActionTests extends RestActionTestCase {
         verifyingClient.setExecuteLocallyVerifier((actionType, request) -> mock(SearchResponse.class));
     }
 
-    public void testTypeInPath() {
-        RestRequest request = new FakeRestRequest.Builder(xContentRegistry()).withHeaders(
-            Map.of("Content-Type", contentTypeHeader, "Accept", contentTypeHeader)
-        ).withMethod(RestRequest.Method.GET).withPath("/some_index/some_type/_search").build();
-
-        dispatchRequest(request);
-        assertCriticalWarnings(RestSearchAction.TYPES_DEPRECATION_MESSAGE);
-    }
-
-    public void testTypeParameter() {
-        Map<String, String> params = new HashMap<>();
-        params.put("type", "some_type");
-
-        RestRequest request = new FakeRestRequest.Builder(xContentRegistry()).withHeaders(
-            Map.of("Content-Type", contentTypeHeader, "Accept", contentTypeHeader)
-        ).withMethod(RestRequest.Method.GET).withPath("/some_index/_search").withParams(params).build();
-
-        dispatchRequest(request);
-        assertCriticalWarnings(RestSearchAction.TYPES_DEPRECATION_MESSAGE);
-    }
-
     /**
      * The "enable_fields_emulation" flag on search requests is a no-op but should not raise an error
      */

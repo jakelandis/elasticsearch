@@ -20,6 +20,7 @@ import org.elasticsearch.core.RefCounted;
 import org.elasticsearch.core.Releasable;
 import org.elasticsearch.core.RestApiVersion;
 import org.elasticsearch.core.Tuple;
+import org.elasticsearch.core.UpdateForV9;
 import org.elasticsearch.http.HttpBody;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.rest.action.admin.cluster.RestNodesUsageAction;
@@ -50,6 +51,7 @@ public abstract class BaseRestHandler implements RestHandler {
      * Parameter that controls whether certain REST apis should include type names in their requests or responses.
      * Note: This parameter is only available through compatible rest api for {@link RestApiVersion#V_7}.
      */
+    @UpdateForV9 // remove when V_7 is removed
     public static final String INCLUDE_TYPE_NAME_PARAMETER = "include_type_name";
     public static final boolean DEFAULT_INCLUDE_TYPE_NAME_POLICY = false;
 

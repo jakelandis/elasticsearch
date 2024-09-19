@@ -90,35 +90,4 @@ public final class RestGetSourceActionTests extends RestActionTestCase {
         assertThat(exception.getMessage(), equalTo("Source not found [index1]/[1]"));
     }
 
-    /**
-     * test deprecation is logged if type is used in path
-     */
-    public void testTypeInPath() {
-        for (RestRequest.Method method : Arrays.asList(RestRequest.Method.GET, RestRequest.Method.HEAD)) {
-            RestRequest request = new FakeRestRequest.Builder(xContentRegistry()).withHeaders(Map.of("Accept", compatibleMediaType))
-                .withMethod(method)
-                .withPath("/some_index/some_type/id/_source")
-                .build();
-            dispatchRequest(request);
-            assertCriticalWarnings(RestGetSourceAction.TYPES_DEPRECATION_MESSAGE);
-        }
-    }
-
-    /**
-     * test deprecation is logged if type is used as parameter
-     */
-    public void testTypeParameter() {
-        Map<String, String> params = new HashMap<>();
-        params.put("type", "some_type");
-        for (RestRequest.Method method : Arrays.asList(RestRequest.Method.GET, RestRequest.Method.HEAD)) {
-            RestRequest request = new FakeRestRequest.Builder(xContentRegistry()).withHeaders(Map.of("Accept", compatibleMediaType))
-                .withMethod(method)
-                .withPath("/some_index/_source/id")
-                .withParams(params)
-                .build();
-            dispatchRequest(request);
-            assertCriticalWarnings(RestGetSourceAction.TYPES_DEPRECATION_MESSAGE);
-        }
-    }
-
 }
