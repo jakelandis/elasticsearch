@@ -148,7 +148,7 @@ public class RestController implements HttpServerTransport.Dispatcher {
      * Registers a REST handler to be executed when the provided {@code method} and {@code path} match the request.
      *
      * @param method GET, POST, etc.
-     * @param path Path to handle (e.g. "/{index}/{type}/_bulk")
+     * @param path Path to handle (e.g. "/{index}/_bulk")
      * @param version API version to handle (e.g. RestApiVersion.V_8)
      * @param handler The handler to actually execute
      * @param deprecationMessage The message to log and send as a header in the response
@@ -167,7 +167,7 @@ public class RestController implements HttpServerTransport.Dispatcher {
      * Registers a REST handler to be executed when the provided {@code method} and {@code path} match the request.
      *
      * @param method GET, POST, etc.
-     * @param path Path to handle (e.g. "/{index}/{type}/_bulk")
+     * @param path Path to handle (e.g. "/{index}/_bulk")
      * @param version API version to handle (e.g. RestApiVersion.V_8)
      * @param handler The handler to actually execute
      * @param deprecationMessage The message to log and send as a header in the response
@@ -271,7 +271,7 @@ public class RestController implements HttpServerTransport.Dispatcher {
      * Registers a REST handler to be executed when one of the provided methods and path match the request.
      *
      * @param method GET, POST, etc.
-     * @param path Path to handle (e.g. "/{index}/{type}/_bulk")
+     * @param path Path to handle (e.g. "/{index}/_bulk")
      * @param version API version to handle (e.g. RestApiVersion.V_8)
      * @param handler The handler to actually execute
      */
