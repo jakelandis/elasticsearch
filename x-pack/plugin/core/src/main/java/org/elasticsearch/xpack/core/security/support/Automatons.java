@@ -97,24 +97,28 @@ public final class Automatons {
         if (patterns.isEmpty()) {
             return EMPTY;
         }
-        if (cache == null) {
-            return maybeRecordPatterns(buildAutomaton(patterns), patterns);
-        } else {
-            try {
-                return cache.computeIfAbsent(
-                    Sets.newHashSet(patterns),
-                    p -> maybeRecordPatterns(buildAutomaton((Set<String>) p), patterns)
-                );
-            } catch (ExecutionException e) {
-                throw unwrapCacheException(e);
-            }
-        }
+        return buildAutomaton(patterns);
+//        if (cache == null) {
+//            return maybeRecordPatterns(buildAutomaton(patterns), patterns);
+//        } else {
+//            try {
+//                return cache.computeIfAbsent(
+//                    Sets.newHashSet(patterns),
+//                    p -> maybeRecordPatterns(buildAutomaton((Set<String>) p), patterns)
+//                );
+//            } catch (ExecutionException e) {
+//                throw unwrapCacheException(e);
+//            }
+//        }
     }
 
     private static Automaton buildAutomaton(Collection<String> patterns) {
-        if (patterns.size() == 1) {
-            return minimize(pattern(patterns.iterator().next()));
-        }
+
+//        if (patterns.size() == 1) {
+//            final String pattern = patterns.iterator().next();
+//            return minimize(pattern(pattern));
+//        }
+
 
         final Function<Collection<String>, Automaton> build = strings -> {
             List<Automaton> automata = new ArrayList<>(strings.size());
@@ -140,6 +144,7 @@ public final class Automatons {
         final Set<String> infix = new HashSet<>();
         final Set<String> suffix = new HashSet<>();
         final Set<String> misc = new HashSet<>();
+        final Set<String> complement = new HashSet<>();
 
         for (String p : patterns) {
             if (p.length() <= 1) {
@@ -153,10 +158,12 @@ public final class Automatons {
             if (first == '/') {
                 // regex ("/something/")
                 misc.add(p);
+                complement.add(p.substring(1, p.length() - 1) + "::failures/");
             } else if (first == '*') {
                 if (last == '*') {
                     // *something*
                     infix.add(p.substring(1, p.length() - 1));
+                    complement.add(p + "::failures");
                 } else {
                     // *something
                     suffix.add(p.substring(1));
@@ -170,13 +177,20 @@ public final class Automatons {
                 // However, that's not true if the string has an embedded '*' in it - in that case it is more efficient to determinize
                 // the set of prefixes (with the embedded MATCH_ANY) and then concatenate another MATCH_ANY and minimize.
                 prefix.add(p.substring(0, p.length() - 1));
+                complement.add(p + "::failures");
             } else {
                 // something* / some*thing / some?thing / etc
                 misc.add(p);
+                if(last == '*') {
+                    complement.add(p + "::failures");
+                }
             }
         }
 
         final List<Automaton> automata = new ArrayList<>();
+        final List<Automaton> automataComplements = new ArrayList<>();
+
+
         if (prefix.isEmpty() == false) {
             automata.add(Operations.concatenate(build.apply(prefix), Automata.makeAnyString()));
         }
@@ -189,22 +203,26 @@ public final class Automatons {
         if (misc.isEmpty() == false) {
             automata.add(build.apply(misc));
         }
-        return unionAndMinimize(automata);
+        if (complement.isEmpty() == false) {
+            automataComplements.add((build.apply(complement)));
+        }
+        return minimize(intersection(union(automata), Operations.complement(union(automataComplements), maxDeterminizedStates)));
+        //return unionAndMinimize(automataToUnion);
     }
 
     /**
      * Builds and returns an automaton that represents the given pattern.
      */
     static Automaton pattern(String pattern) {
-        if (cache == null) {
+       // if (cache == null) {
             return buildAutomaton(pattern);
-        } else {
-            try {
-                return cache.computeIfAbsent(pattern, p -> buildAutomaton((String) p));
-            } catch (ExecutionException e) {
-                throw unwrapCacheException(e);
-            }
-        }
+//        } else {
+//            try {
+//                return cache.computeIfAbsent(pattern, p -> buildAutomaton((String) p));
+//            } catch (ExecutionException e) {
+//                throw unwrapCacheException(e);
+//            }
+//        }
     }
 
     /**

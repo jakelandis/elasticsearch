@@ -157,7 +157,8 @@ public final class IndicesPermission {
                 if (group.allowRestrictedIndices) {
                     restrictedIndices.addAll(Arrays.asList(group.indices()));
                 } else {
-                    ordinaryIndices.addAll(Arrays.asList(maybeAddFailureExclusions(group.indices())));
+                   // ordinaryIndices.addAll(Arrays.asList(maybeAddFailureExclusions(group.indices())));
+                    ordinaryIndices.addAll(Arrays.asList(group.indices()));
                 }
             } else if (isMappingUpdateAction && containsPrivilegeThatGrantsMappingUpdatesForBwc(group)) {
                 // special BWC case for certain privileges: allow put mapping on indices and aliases (but not on data streams), even if
@@ -839,7 +840,8 @@ public final class IndicesPermission {
             // TODO: [Jake] can regular expressions can be used to match failure indices with a single expression ?
             // TODO: [Jake] ensure that only ::failure selectors can be added the role
             // TODO: [Jake] ensure that no selectors can be added to remote_indices (or gate usage with a feature flag, or just test)
-            String[] indicesResolved = resolvePatternsForNameMatching(indices);
+            //String[] indicesResolved = resolvePatternsForNameMatching(indices);
+            String[] indicesResolved = indices;
             this.allowRestrictedIndices = allowRestrictedIndices;
             ConcurrentHashMap<String[], Automaton> indexNameAutomatonMemo = new ConcurrentHashMap<>(1);
             if (allowRestrictedIndices) {
