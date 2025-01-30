@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -430,7 +431,7 @@ class IndicesAndAliasesResolver {
      * request's concrete index is not in the list of authorized indices, then we need to look to
      * see if this can be authorized against an alias
      */
-    static String getPutMappingIndexOrAlias(PutMappingRequest request, Predicate<String> isAuthorized, Metadata metadata) {
+    static String getPutMappingIndexOrAlias(PutMappingRequest request, BiPredicate<String, IndexComponentSelector> isAuthorized, Metadata metadata) {
         final String concreteIndexName = request.getConcreteIndex().getName();
 
         // validate that the concrete index exists, otherwise there is no remapping that we could do
@@ -446,7 +447,7 @@ class IndicesAndAliasesResolver {
                     + indexAbstraction.getType().getDisplayName()
                     + "], but a concrete index is expected"
             );
-        } else if (isAuthorized.test(concreteIndexName)) {
+        } else if (isAuthorized.test(concreteIndexName, IndexComponentSelector.DATA)) {
             // user is authorized to put mappings for this index
             resolvedAliasOrIndex = concreteIndexName;
         } else {
@@ -455,7 +456,8 @@ class IndicesAndAliasesResolver {
             Map<String, List<AliasMetadata>> foundAliases = metadata.findAllAliases(new String[] { concreteIndexName });
             List<AliasMetadata> aliasMetadata = foundAliases.get(concreteIndexName);
             if (aliasMetadata != null) {
-                Optional<String> foundAlias = aliasMetadata.stream().map(AliasMetadata::alias).filter(isAuthorized).filter(aliasName -> {
+                Optional<String> foundAlias = aliasMetadata.stream().map(AliasMetadata::alias)
+                    .filter(a -> isAuthorized.test(a, IndexComponentSelector.DATA)).filter(aliasName -> {
                     IndexAbstraction alias = metadata.getIndicesLookup().get(aliasName);
                     List<Index> indices = alias.getIndices();
                     if (indices.size() == 1) {

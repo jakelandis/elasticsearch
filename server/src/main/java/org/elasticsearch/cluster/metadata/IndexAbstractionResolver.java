@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -37,7 +38,7 @@ public class IndexAbstractionResolver {
         IndicesOptions indicesOptions,
         Metadata metadata,
         Supplier<Set<String>> allAuthorizedAndAvailable,
-        Predicate<String> isAuthorized,
+        BiPredicate<String,IndexComponentSelector> isAuthorized,
         boolean includeDataStreams
     ) {
         List<String> finalIndices = new ArrayList<>();
@@ -103,11 +104,33 @@ public class IndexAbstractionResolver {
                 resolveSelectorsAndCombine(indexAbstraction, selectorString, indicesOptions, resolvedIndices, metadata);
                 if (minus) {
                     finalIndices.removeAll(resolvedIndices);
-                } else if (indicesOptions.ignoreUnavailable() == false || isAuthorized.test(indexAbstraction)) {
+                } else if (indicesOptions.ignoreUnavailable() ) {
+                    if(selectorString == null || IndexComponentSelector.getByKey(selectorString) == IndexComponentSelector.DATA) {
+                        if(isAuthorized.test(indexAbstraction, IndexComponentSelector.DATA)) {
+                            finalIndices.addAll(resolvedIndices);
+                        }
+                    } else if (IndexComponentSelector.getByKey(selectorString) == IndexComponentSelector.FAILURES) {
+                        if(isAuthorized.test(indexAbstraction, IndexComponentSelector.FAILURES)) {
+                            finalIndices.addAll(resolvedIndices);
+                        }
+                    } else {
+                        assert IndexComponentSelector.getByKey(selectorString) == IndexComponentSelector.ALL_APPLICABLE;
+                        //we may not be able to support this case ???
+                        if(isAuthorized.test(indexAbstraction, IndexComponentSelector.DATA)
+                            || isAuthorized.test(indexAbstraction, IndexComponentSelector.FAILURES)) {
+                            finalIndices.addAll(resolvedIndices);
+                        }
+                    }
+                    // else silently discard
                     // Unauthorized names are considered unavailable, so if `ignoreUnavailable` is `true` they should be silently
                     // discarded from the `finalIndices` list. Other "ways of unavailable" must be handled by the action
                     // handler, see: https://github.com/elastic/elasticsearch/issues/90215
-                    finalIndices.addAll(resolvedIndices);
+                } else {
+                    //only test for the name without any selectors (authz for failures selectors will be checked later)
+                    if(isAuthorized.test(indexAbstraction, IndexComponentSelector.DATA)) {
+                        finalIndices.addAll(resolvedIndices);
+                    }
+
                 }
             }
         }

@@ -31,6 +31,7 @@ import org.elasticsearch.action.search.TransportClearScrollAction;
 import org.elasticsearch.action.search.TransportClosePointInTimeAction;
 import org.elasticsearch.action.search.TransportMultiSearchAction;
 import org.elasticsearch.action.search.TransportSearchScrollAction;
+import org.elasticsearch.action.support.IndexComponentSelector;
 import org.elasticsearch.action.termvectors.MultiTermVectorsAction;
 import org.elasticsearch.cluster.metadata.DataStream;
 import org.elasticsearch.cluster.metadata.IndexAbstraction;
@@ -106,6 +107,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -899,19 +901,39 @@ public class RBACEngine implements AuthorizationEngine {
             }
             timeChecker.accept(indicesAndAliases);
             return indicesAndAliases;
-        }, name -> {
+        }, (name, selector) -> {
             final IndexAbstraction indexAbstraction = lookup.get(name);
             if (indexAbstraction == null) {
                 // test access (by name) to a resource that does not currently exist
                 // the action handler must handle the case of accessing resources that do not exist
                 return predicate.test(name, null);
             } else {
-                // We check the parent data stream first if there is one. For testing requested indices, this is most likely
-                // more efficient than checking the index name first because we recommend grant privileges over data stream
-                // instead of backing indices.
-                return (indexAbstraction.getParentDataStream() != null && predicate.test(indexAbstraction.getParentDataStream()))
-                    || predicate.test(indexAbstraction);
+                    assert selector != null : "selector must be provided for data streams";
+                    assert selector != IndexComponentSelector.ALL_APPLICABLE : "all selector is not supported in this context";
+                    assert selector == IndexComponentSelector.DATA || selector == IndexComponentSelector.FAILURES
+                        : "selector must include data or failures";
+//                 We check the parent data stream first if there is one. For testing requested indices, this is most likely
+//                 more efficient than checking the index name first because we recommend grant privileges over data stream
+//                 instead of backing indices.
+                if (indexAbstraction.getParentDataStream() != null) { // concrete index belongs to a data stream, check data stream name
+                    if(selector == IndexComponentSelector.DATA) {
+                        return predicate.test(indexAbstraction.getParentDataStream());
+                    } else if(selector == IndexComponentSelector.FAILURES) {
+                        return predicate.testDataStreamForFailureAccess(indexAbstraction.getParentDataStream());
+                    }
+                } else { //index abstraction is either a data stream or a concrete index
+                    if(indexAbstraction.isDataStreamRelated()){ //is either data stream or data stream alias
+                        if(selector == IndexComponentSelector.DATA) {
+                            return predicate.test(indexAbstraction);
+                        } else if(selector == IndexComponentSelector.FAILURES) {
+                            return predicate.testDataStreamForFailureAccess(indexAbstraction);
+                        }
+                    }
+                       return predicate.test(indexAbstraction); //concrete index, not related to a data stream
+                }
             }
+            //TODO: [Jake] why is this needed here? aren't all paths covered?
+            throw new IllegalStateException("should not reach here");
         });
     }
 
@@ -1038,9 +1060,9 @@ public class RBACEngine implements AuthorizationEngine {
     static final class AuthorizedIndices implements AuthorizationEngine.AuthorizedIndices {
 
         private final CachedSupplier<Set<String>> allAuthorizedAndAvailableSupplier;
-        private final Predicate<String> isAuthorizedPredicate;
+        private final BiPredicate<String, IndexComponentSelector> isAuthorizedPredicate;
 
-        AuthorizedIndices(Supplier<Set<String>> allAuthorizedAndAvailableSupplier, Predicate<String> isAuthorizedPredicate) {
+        AuthorizedIndices(Supplier<Set<String>> allAuthorizedAndAvailableSupplier, BiPredicate<String, IndexComponentSelector> isAuthorizedPredicate) {
             this.allAuthorizedAndAvailableSupplier = CachedSupplier.wrap(allAuthorizedAndAvailableSupplier);
             this.isAuthorizedPredicate = Objects.requireNonNull(isAuthorizedPredicate);
         }
@@ -1051,8 +1073,8 @@ public class RBACEngine implements AuthorizationEngine {
         }
 
         @Override
-        public boolean check(String name) {
-            return this.isAuthorizedPredicate.test(name);
+        public boolean check(String name, IndexComponentSelector selector) {
+            return this.isAuthorizedPredicate.test(name, selector);
         }
     }
 }

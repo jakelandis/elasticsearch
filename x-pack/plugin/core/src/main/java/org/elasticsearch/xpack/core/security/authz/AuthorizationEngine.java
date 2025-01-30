@@ -11,6 +11,7 @@ import org.elasticsearch.TransportVersion;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
+import org.elasticsearch.action.support.IndexComponentSelector;
 import org.elasticsearch.cluster.metadata.IndexAbstraction;
 import org.elasticsearch.cluster.metadata.Metadata;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -295,7 +296,7 @@ public interface AuthorizationEngine {
         /**
          * Checks if an index-like resource name is authorized, for an action by a user. The resource might or might not exist.
          */
-        boolean check(String name);
+        boolean check(String name, IndexComponentSelector selector);
     }
 
     /**
